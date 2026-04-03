@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { api } from '../services/api';
 
 function HomePage() {
@@ -11,8 +11,7 @@ function HomePage() {
   };
 
   if (!user) {
-    navigate('/login');
-    return null;
+    return <Navigate to="/login" replace />;
   }
 
   return (
