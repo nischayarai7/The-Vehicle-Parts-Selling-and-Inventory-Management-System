@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { api } from '../services/api';
+import { loginSuccess } from '../store/slices/authSlice';
 
 function LoginPage() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,8 +22,16 @@ function LoginPage() {
 
     try {
       const data = await api.login(form.email, form.password);
-      api.saveAuth(data);
-      navigate('/');
+      
+      // Dispatch to Redux store (this also saves to localStorage)
+      dispatch(loginSuccess(data));
+      
+      // Redirect based on role
+      if (data.role === 'Admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.message);
     } finally {

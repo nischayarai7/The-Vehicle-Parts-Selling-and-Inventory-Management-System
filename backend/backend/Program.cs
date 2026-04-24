@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authorization;
 using System.Text;
 using backend.Data;
 using backend.Middleware;
@@ -57,8 +58,16 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// ── 5.1 RBAC Authorization ───────────────────────────────────────────────────
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
+
 // ── 6. Controllers & OpenAPI ─────────────────────────────────────────────────
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddOpenApi();
 
 // ════════════════════════════════════════════════════════════════════════════

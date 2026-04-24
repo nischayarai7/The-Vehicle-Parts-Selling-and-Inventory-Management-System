@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260424060338_AddUserRole")]
+    partial class AddUserRole
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,32 +24,6 @@ namespace backend.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("backend.Models.AppRole", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("character varying(250)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Roles");
-                });
 
             modelBuilder.Entity("backend.Models.Category", b =>
                 {
@@ -312,49 +289,6 @@ namespace backend.Migrations
                     b.ToTable("part_compatibilities", (string)null);
                 });
 
-            modelBuilder.Entity("backend.Models.Permission", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Group")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Permissions");
-                });
-
-            modelBuilder.Entity("backend.Models.RolePermission", b =>
-                {
-                    b.Property<int>("RoleId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PermissionId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("RoleId", "PermissionId");
-
-                    b.HasIndex("PermissionId");
-
-                    b.ToTable("RolePermissions");
-                });
-
             modelBuilder.Entity("backend.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -387,6 +321,14 @@ namespace backend.Migrations
                         .HasColumnType("text")
                         .HasColumnName("password_hash");
 
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Customer")
+                        .HasColumnName("role");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -394,24 +336,6 @@ namespace backend.Migrations
                         .HasDatabaseName("ix_users_email");
 
                     b.ToTable("users", (string)null);
-                });
-
-            modelBuilder.Entity("backend.Models.UserRole", b =>
-                {
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("RoleId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("AssignedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("UserId", "RoleId");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("UserRoles");
                 });
 
             modelBuilder.Entity("backend.Models.Vehicle", b =>
@@ -517,51 +441,6 @@ namespace backend.Migrations
                     b.Navigation("Vehicle");
                 });
 
-            modelBuilder.Entity("backend.Models.RolePermission", b =>
-                {
-                    b.HasOne("backend.Models.Permission", "Permission")
-                        .WithMany("RolePermissions")
-                        .HasForeignKey("PermissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.AppRole", "Role")
-                        .WithMany("RolePermissions")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Permission");
-
-                    b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("backend.Models.UserRole", b =>
-                {
-                    b.HasOne("backend.Models.AppRole", "Role")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.User", "User")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Role");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("backend.Models.AppRole", b =>
-                {
-                    b.Navigation("RolePermissions");
-
-                    b.Navigation("UserRoles");
-                });
-
             modelBuilder.Entity("backend.Models.Category", b =>
                 {
                     b.Navigation("Parts");
@@ -577,16 +456,6 @@ namespace backend.Migrations
                     b.Navigation("Compatibilities");
 
                     b.Navigation("OrderItems");
-                });
-
-            modelBuilder.Entity("backend.Models.Permission", b =>
-                {
-                    b.Navigation("RolePermissions");
-                });
-
-            modelBuilder.Entity("backend.Models.User", b =>
-                {
-                    b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("backend.Models.Vehicle", b =>

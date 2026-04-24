@@ -1,6 +1,7 @@
 using backend.Common;
 using backend.DTOs.Category;
 using backend.Services.Interfaces;
+using backend.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -53,42 +54,37 @@ namespace backend.Controllers
         }
 
         // ── POST /api/categories ─────────────────────────────────────────────────
-        /// <summary>Creates a new category. Requires authentication.</summary>
+        /// <summary>Creates a new category. Requires Admin authentication.</summary>
         [HttpPost]
-        [Authorize]
+        [HasPermission("categories.manage")]
         public async Task<IActionResult> Create([FromBody] CreateCategoryDto dto)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ApiResponse.Fail("Validation failed",
-                    ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                return BadRequest(ApiResponse.Fail("Validation failed", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
 
-            var created = await _categoryService.CreateCategoryAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id },
-                ApiResponse<CategoryResponseDto>.Ok(created, "Category created successfully."));
+            var category = await _categoryService.CreateCategoryAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = category.Id }, ApiResponse<CategoryResponseDto>.Ok(category, "Category created successfully"));
         }
 
-        // ── PUT /api/categories/{id} ─────────────────────────────────────────────
-        /// <summary>Updates an existing category. Requires authentication.</summary>
-        [HttpPut("{id:int}")]
-        [Authorize]
+        [HttpPut("{id}")]
+        [HasPermission("categories.manage")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateCategoryDto dto)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ApiResponse.Fail("Validation failed",
-                    ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                return BadRequest(ApiResponse.Fail("Validation failed", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
 
-            var updated = await _categoryService.UpdateCategoryAsync(id, dto);
-            return Ok(ApiResponse<CategoryResponseDto>.Ok(updated, "Category updated successfully."));
+            var category = await _categoryService.UpdateCategoryAsync(id, dto);
+            if (category == null) return NotFound(ApiResponse.Fail("Category not found"));
+
+            return Ok(ApiResponse<CategoryResponseDto>.Ok(category, "Category updated successfully"));
         }
 
-        // ── DELETE /api/categories/{id} ──────────────────────────────────────────
-        /// <summary>Deletes a category. Requires authentication.</summary>
-        [HttpDelete("{id:int}")]
-        [Authorize]
+        [HttpDelete("{id}")]
+        [HasPermission("categories.manage")]
         public async Task<IActionResult> Delete(int id)
         {
             await _categoryService.DeleteCategoryAsync(id);
-            return Ok(ApiResponse.Ok("Category deleted successfully."));
+            return Ok(ApiResponse.Ok("Category deleted successfully"));
         }
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Linq;
 using backend.Common;
 using backend.Data;
 using backend.DTOs.Auth;
@@ -47,15 +48,32 @@ namespace backend.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // Generate JWT token
-            var token = GenerateJwtToken(user);
+            // Assign default Customer role
+            var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Customer");
+            if (customerRole != null)
+            {
+                _context.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = customerRole.Id });
+                await _context.SaveChangesAsync();
+            }
 
-            return Ok(new AuthResponseDto
+            // Reload user with roles/permissions for token generation
+            var userWithRoles = await _context.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .ThenInclude(r => r.RolePermissions)
+                .ThenInclude(rp => rp.Permission)
+                .FirstAsync(u => u.Id == user.Id);
+
+            // Generate JWT token
+            var token = GenerateJwtToken(userWithRoles);
+
+            return Ok(ApiResponse<AuthResponseDto>.Ok(new AuthResponseDto
             {
                 Token = token,
                 Email = user.Email,
-                FullName = user.FullName
-            });
+                FullName = user.FullName,
+                Role = "Customer"
+            }, "Registration successful."));
         }
 
         [HttpPost("login")]
@@ -64,24 +82,34 @@ namespace backend.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Find user by email
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email.ToLower());
+            // Find user by email and include roles/permissions
+            var user = await _context.Users
+                .Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                .ThenInclude(r => r.RolePermissions)
+                .ThenInclude(rp => rp.Permission)
+                .FirstOrDefaultAsync(u => u.Email == dto.Email.ToLower());
+
             if (user == null)
-                return Unauthorized(new { message = "Invalid email or password" });
+                return Unauthorized(ApiResponse.Fail("Invalid email or password."));
 
             // Verify password
             if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-                return Unauthorized(new { message = "Invalid email or password" });
+                return Unauthorized(ApiResponse.Fail("Invalid email or password."));
 
             // Generate JWT token
             var token = GenerateJwtToken(user);
 
-            return Ok(new AuthResponseDto
+            // For the response, just send the first role name or "Customer"
+            var primaryRole = user.UserRoles.FirstOrDefault()?.Role?.Name ?? "Customer";
+
+            return Ok(ApiResponse<AuthResponseDto>.Ok(new AuthResponseDto
             {
                 Token = token,
                 Email = user.Email,
-                FullName = user.FullName
-            });
+                FullName = user.FullName,
+                Role = primaryRole
+            }, "Login successful."));
         }
 
         private string GenerateJwtToken(User user)
@@ -95,13 +123,31 @@ namespace backend.Controllers
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, user.FullName),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
+
+            // Add Role claims
+            var roles = user.UserRoles.Select(ur => ur.Role.Name).Distinct();
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            // Add Permission claims
+            var permissions = user.UserRoles
+                .SelectMany(ur => ur.Role.RolePermissions)
+                .Select(rp => rp.Permission.Name)
+                .Distinct();
+
+            foreach (var permission in permissions)
+            {
+                claims.Add(new Claim("permission", permission));
+            }
 
             var token = new JwtSecurityToken(
                 issuer: issuer,

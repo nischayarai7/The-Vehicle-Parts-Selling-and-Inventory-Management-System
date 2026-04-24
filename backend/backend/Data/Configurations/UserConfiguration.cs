@@ -24,12 +24,12 @@ namespace backend.Data.Configurations
                 .IsRequired();
 
             builder.Property(u => u.PasswordHash)
-                .HasColumnName("password_hash")
-                .IsRequired();
+                .IsRequired()
+                .HasColumnName("password_hash");
 
             builder.Property(u => u.CreatedAt)
-                .HasColumnName("created_at")
-                .HasDefaultValueSql("NOW()");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnName("created_at");
 
             // Unique index on email for fast lookup + constraint enforcement
             builder.HasIndex(u => u.Email)

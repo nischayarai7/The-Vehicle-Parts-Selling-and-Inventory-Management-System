@@ -1,6 +1,7 @@
 using backend.Common;
 using backend.DTOs.Part;
 using backend.Services.Interfaces;
+using backend.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -77,7 +78,7 @@ namespace backend.Controllers
         // ── GET /api/parts/low-stock ─────────────────────────────────────────────
         /// <summary>Admin view: parts at or below their reorder level.</summary>
         [HttpGet("low-stock")]
-        [Authorize]
+        [HasPermission("parts.view")]
         public async Task<IActionResult> GetLowStock()
         {
             var parts = await _partService.GetLowStockPartsAsync();
@@ -86,7 +87,7 @@ namespace backend.Controllers
 
         // ── POST /api/parts ──────────────────────────────────────────────────────
         [HttpPost]
-        [Authorize]
+        [HasPermission("parts.create")]
         public async Task<IActionResult> Create([FromBody] CreatePartDto dto)
         {
             if (!ModelState.IsValid)
@@ -100,7 +101,7 @@ namespace backend.Controllers
 
         // ── PUT /api/parts/{id} ──────────────────────────────────────────────────
         [HttpPut("{id:int}")]
-        [Authorize]
+        [HasPermission("parts.edit")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdatePartDto dto)
         {
             if (!ModelState.IsValid)
@@ -114,7 +115,7 @@ namespace backend.Controllers
         // ── PATCH /api/parts/{id}/stock ──────────────────────────────────────────
         /// <summary>Updates only the stock quantity of a part.</summary>
         [HttpPatch("{id:int}/stock")]
-        [Authorize]
+        [HasPermission("parts.edit")]
         public async Task<IActionResult> UpdateStock(int id, [FromBody] int quantity)
         {
             var updated = await _partService.UpdateStockAsync(id, quantity);
@@ -123,7 +124,7 @@ namespace backend.Controllers
 
         // ── DELETE /api/parts/{id} ───────────────────────────────────────────────
         [HttpDelete("{id:int}")]
-        [Authorize]
+        [HasPermission("parts.delete")]
         public async Task<IActionResult> Delete(int id)
         {
             await _partService.DeletePartAsync(id);

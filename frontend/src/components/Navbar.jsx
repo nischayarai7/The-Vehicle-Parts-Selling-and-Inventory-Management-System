@@ -1,15 +1,17 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../store/slices/authSlice';
 import { api } from '../services/api';
-import './Navbar.css'; // We will create this
+import './Navbar.css';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const isAuthenticated = api.isAuthenticated();
-  const user = api.getUser();
+  const dispatch = useDispatch();
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
 
   const handleLogout = () => {
-    api.logout();
+    dispatch(logout());
     navigate('/login');
   };
 
@@ -65,6 +67,13 @@ const Navbar = () => {
           <ul className="nav-links">
             <li><Link to="/" className="active">Home</Link></li>
             <li><Link to="/shop">Shop</Link></li>
+            {isAuthenticated && user?.role === 'Admin' && (
+              <li>
+                <Link to="/admin" className="dashboard-btn">
+                  Dashboard
+                </Link>
+              </li>
+            )}
             <li><Link to="/elements">Elements</Link></li>
             <li><Link to="/pages">Pages</Link></li>
             <li><Link to="/vendors">Vendors</Link></li>

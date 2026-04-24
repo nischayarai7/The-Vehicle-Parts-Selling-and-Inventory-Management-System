@@ -29,6 +29,43 @@ export const api = {
     return handleResponse(response);
   },
 
+  // ── Roles & Permissions ───────────────────────────────────────────────────
+  getRoles: () => fetch(`${API_BASE}/roles`, { headers: getAuthHeaders() }).then(handleResponse),
+  getPermissions: () => fetch(`${API_BASE}/roles/permissions`, { headers: getAuthHeaders() }).then(handleResponse),
+  createRole: (role) => fetch(`${API_BASE}/roles`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(role)
+  }).then(handleResponse),
+  assignPermissions: (roleId, permissionIds) => fetch(`${API_BASE}/roles/${roleId}/permissions`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(permissionIds)
+  }).then(handleResponse),
+  deleteRole: (id) => fetch(`${API_BASE}/roles/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  // ── Permissions ────────────────────────────────────────────────────────────
+  createPermission: (permission) => fetch(`${API_BASE}/permissions`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(permission)
+  }).then(handleResponse),
+  deletePermission: (id) => fetch(`${API_BASE}/permissions/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  // ── User Management ────────────────────────────────────────────────────────
+  getUsers: () => fetch(`${API_BASE}/users`, { headers: getAuthHeaders() }).then(handleResponse),
+  assignUserRoles: (userId, roleIds) => fetch(`${API_BASE}/users/${userId}/roles`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(roleIds)
+  }).then(handleResponse),
+
   // --- Categories ---
   async getCategories() {
     const response = await fetch(`${API_BASE}/categories`);
@@ -63,7 +100,11 @@ export const api = {
 
   saveAuth(data) {
     localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify({ email: data.email, fullName: data.fullName }));
+    localStorage.setItem('user', JSON.stringify({ 
+      email: data.email, 
+      fullName: data.fullName,
+      role: data.role // Save the role
+    }));
   },
 
   logout() {
@@ -75,3 +116,12 @@ export const api = {
     return !!localStorage.getItem('token');
   }
 };
+
+// Helper for authenticated requests
+function getAuthHeaders() {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+}
