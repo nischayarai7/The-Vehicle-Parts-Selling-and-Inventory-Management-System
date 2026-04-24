@@ -4,8 +4,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using backend.Common;
 using backend.Data;
-using backend.DTOs;
+using backend.DTOs.Auth;
 using backend.Models;
 
 namespace backend.Controllers

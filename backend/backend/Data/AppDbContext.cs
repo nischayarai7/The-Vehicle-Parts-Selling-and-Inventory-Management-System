@@ -1,23 +1,33 @@
-using Microsoft.EntityFrameworkCore;
 using backend.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Data
 {
+    /// <summary>
+    /// The single EF Core database context for the application.
+    /// All entity configurations are loaded automatically from the
+    /// Data/Configurations/ folder via ApplyConfigurationsFromAssembly.
+    /// </summary>
     public class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+        // ── DbSets (one per table) ───────────────────────────────────────────────
         public DbSet<User> Users { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Part> Parts { get; set; }
+        public DbSet<Vehicle> Vehicles { get; set; }
+        public DbSet<PartCompatibility> PartCompatibilities { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<User>(entity =>
-            {
-                entity.HasIndex(u => u.Email).IsUnique();
-                entity.Property(u => u.CreatedAt).HasDefaultValueSql("NOW()");
-            });
+            // Automatically discovers and applies every IEntityTypeConfiguration<T>
+            // class found in this assembly — keeps this file clean as the schema grows.
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
         }
     }
 }
