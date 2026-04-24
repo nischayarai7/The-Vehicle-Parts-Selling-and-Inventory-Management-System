@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Security.Claims;
 using backend.Data;
 using backend.Models;
 using backend.Common;
@@ -54,6 +55,33 @@ namespace backend.Controllers
 
             await _context.SaveChangesAsync();
             return Ok(ApiResponse.Ok("Roles assigned successfully"));
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            // Get current user's email or ID from claims
+            var currentUserEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+            
+            var userToDelete = await _context.Users.FindAsync(id);
+            if (userToDelete == null) return NotFound(ApiResponse.Fail("User not found"));
+
+            // Prevent self-deletion
+            if (userToDelete.Email == currentUserEmail)
+            {
+                return BadRequest(ApiResponse.Fail("You cannot delete your own account"));
+            }
+
+            // Optional: Prevent deleting the system admin
+            if (userToDelete.Email == "admin@6ix7even.com")
+            {
+                return BadRequest(ApiResponse.Fail("The primary system administrator cannot be deleted"));
+            }
+
+            _context.Users.Remove(userToDelete);
+            await _context.SaveChangesAsync();
+            
+            return Ok(ApiResponse.Ok("User deleted successfully"));
         }
     }
 }

@@ -60,7 +60,7 @@ namespace backend.Data
                 }
 
                 // ── 2. Seed/Fix Admin User ───────────────────────────────────────────
-                var adminEmail = "admin@elessi.com";
+                var adminEmail = "admin@6ix7even.com";
                 var adminUser = await context.Users
                     .Include(u => u.UserRoles)
                     .FirstOrDefaultAsync(u => u.Email == adminEmail);

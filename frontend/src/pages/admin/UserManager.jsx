@@ -1,12 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
+import { useSelector } from 'react-redux';
+import ConfirmModal from '../../components/common/ConfirmModal';
 
 const UserManager = () => {
+  const { user: currentUser } = useSelector((state) => state.auth);
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
   const [selectedRoleIds, setSelectedRoleIds] = useState([]);
+  
+  // Modal state
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, userId: null, userName: '' });
 
   useEffect(() => {
     loadData();
@@ -55,7 +61,30 @@ const UserManager = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  const openDeleteConfirm = (user) => {
+    if (user.email === currentUser?.email) {
+      alert("You cannot delete your own account");
+      return;
+    }
+    if (user.email === 'admin@6ix7even.com') {
+      alert("The primary system administrator cannot be deleted");
+      return;
+    }
+    setConfirmModal({ isOpen: true, userId: user.id, userName: user.fullName });
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      await api.deleteUser(confirmModal.userId);
+      setConfirmModal({ isOpen: false, userId: null, userName: '' });
+      loadData();
+    } catch (error) {
+      alert(error.message || "Failed to delete user");
+      setConfirmModal({ isOpen: false, userId: null, userName: '' });
+    }
+  };
+
+  if (loading) return <div className="admin-loading">Loading Users...</div>;
 
   return (
     <div className="admin-content-inner">
@@ -97,13 +126,23 @@ const UserManager = () => {
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>
                 <td style={{ textAlign: 'right' }}>
-                  <button 
-                    className="btn-primary" 
-                    style={{ padding: '5px 10px', fontSize: '12px' }}
-                    onClick={() => handleEditClick(user)}
-                  >
-                    Assign Roles
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <button 
+                      className="btn-primary" 
+                      style={{ padding: '5px 10px', fontSize: '12px' }}
+                      onClick={() => handleEditClick(user)}
+                    >
+                      Roles
+                    </button>
+                    {user.email !== currentUser?.email && user.email !== 'admin@6ix7even.com' && (
+                      <button 
+                        style={{ padding: '5px 10px', fontSize: '12px', background: 'transparent', border: '1px solid var(--admin-border)', color: 'var(--primary)', borderRadius: '4px', cursor: 'pointer' }}
+                        onClick={() => openDeleteConfirm(user)}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -145,6 +184,16 @@ const UserManager = () => {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title="Delete User"
+        message={`Are you sure you want to delete the user "${confirmModal.userName}"? This will permanently remove their access to the system.`}
+        confirmText="Delete User"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmModal({ isOpen: false, userId: null, userName: '' })}
+      />
     </div>
   );
 };

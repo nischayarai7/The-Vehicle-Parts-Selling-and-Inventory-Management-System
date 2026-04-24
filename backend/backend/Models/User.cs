@@ -18,6 +18,8 @@ namespace backend.Models
         [Required]
         public string PasswordHash { get; set; } = string.Empty;
 
+        public string? AvatarUrl { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties

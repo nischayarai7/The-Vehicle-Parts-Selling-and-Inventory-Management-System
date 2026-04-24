@@ -63,6 +63,7 @@ builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProv
 builder.Services.AddScoped<IAuthorizationHandler, PermissionHandler>();
 
 // ── 6. Controllers & OpenAPI ─────────────────────────────────────────────────
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {

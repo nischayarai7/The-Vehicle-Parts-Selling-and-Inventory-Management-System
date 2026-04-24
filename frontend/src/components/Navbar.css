@@ -52,6 +52,47 @@
   gap: 25px;
 }
 
+.navbar-action.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.nav-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.nav-profile:hover {
+  color: var(--primary);
+}
+
+.nav-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border-color);
+}
+
+.nav-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-dark);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
 .user-menu {
   display: flex;
   flex-direction: column;

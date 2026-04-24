@@ -21,7 +21,7 @@ const Navbar = () => {
         {/* Logo */}
         <div className="navbar-logo">
           <Link to="/">
-            <h2>ELESSI.</h2>
+            <h2>6IX7EVEN.</h2>
           </Link>
         </div>
 
@@ -39,7 +39,16 @@ const Navbar = () => {
         <div className="navbar-actions">
           {isAuthenticated ? (
             <div className="user-menu">
-              <span>Hi, {user?.fullName?.split(' ')[0] || 'User'}</span>
+              <Link to="/settings" className="nav-profile">
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="Avatar" className="nav-avatar" />
+                ) : (
+                  <div className="nav-avatar-placeholder">
+                    {user?.fullName?.charAt(0) || 'U'}
+                  </div>
+                )}
+                <span>{user?.fullName?.split(' ')[0] || 'User'}</span>
+              </Link>
               <button onClick={handleLogout} className="logout-link">Logout</button>
             </div>
           ) : (

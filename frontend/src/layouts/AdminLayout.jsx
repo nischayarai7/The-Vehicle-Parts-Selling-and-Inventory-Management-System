@@ -55,6 +55,9 @@ const AdminLayout = () => {
           <NavLink to="/admin/users" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
             <span>👥</span> User Accounts
           </NavLink>
+          <NavLink to="/admin/settings" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+            <span>⚙️</span> Profile Settings
+          </NavLink>
           <button onClick={handleLogout} className="nav-item" style={{ background: 'none', border: 'none', width: '100%', cursor: 'pointer' }}>
             <span>🚪</span> Logout
           </button>

@@ -6,14 +6,14 @@ const Footer = () => {
     <footer className="footer">
       <div className="container footer-container">
         <div className="footer-col brand-col">
-          <h2 className="footer-logo">ELESSI.</h2>
+          <h2 className="footer-logo">6IX7EVEN.</h2>
           <p className="footer-desc">
             We provide the best vehicle parts for all brands. High quality, affordable prices, and excellent customer service.
           </p>
           <div className="contact-info">
             <p><strong>Address:</strong> 123 Auto Parts Street, City</p>
             <p><strong>Phone:</strong> +1 234 567 8900</p>
-            <p><strong>Email:</strong> support@elessi.com</p>
+            <p><strong>Email:</strong> support@6ix7even.com</p>
           </div>
         </div>
 
@@ -50,7 +50,7 @@ const Footer = () => {
       </div>
       <div className="footer-bottom">
         <div className="container bottom-container">
-          <p>&copy; {new Date().getFullYear()} Elessi Vehicle Parts. All Rights Reserved.</p>
+          <p>&copy; {new Date().getFullYear()} 6ix7even Auto Parts. All Rights Reserved.</p>
           <div className="payment-methods">
             {/* Payment icons placeholder */}
             <span>💳</span> <span>🏦</span> <span>💵</span>

@@ -65,6 +65,32 @@ export const api = {
     headers: getAuthHeaders(),
     body: JSON.stringify(roleIds)
   }).then(handleResponse),
+  deleteUser: (id) => fetch(`${API_BASE}/users/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  // ── Profile & Settings ─────────────────────────────────────────────────────
+  getProfile: () => fetch(`${API_BASE}/profile`, { headers: getAuthHeaders() }).then(handleResponse),
+  updateProfile: (data) => fetch(`${API_BASE}/profile`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  changePassword: (data) => fetch(`${API_BASE}/profile/change-password`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  uploadAvatar: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return fetch(`${API_BASE}/profile/upload-avatar`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }, // No Content-Type for FormData
+      body: formData
+    }).then(handleResponse);
+  },
 
   // --- Categories ---
   async getCategories() {

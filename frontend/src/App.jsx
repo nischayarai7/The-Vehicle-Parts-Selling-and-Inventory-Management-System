@@ -10,6 +10,7 @@ import CategoriesManager from './pages/admin/CategoriesManager'
 import RoleManager from './pages/admin/RoleManager'
 import PermissionManager from './pages/admin/PermissionManager'
 import UserManager from './pages/admin/UserManager'
+import ProfileSettings from './pages/ProfileSettings'
 import { api } from './services/api'
 import './App.css'
 
@@ -20,6 +21,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/" element={<HomePage />} />
+      <Route path="/settings" element={<ProfileSettings />} />
       
       {/* Admin Routes - Protected by AdminRoute */}
       <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
@@ -29,6 +31,7 @@ function App() {
         <Route path="roles" element={<RoleManager />} />
         <Route path="permissions" element={<PermissionManager />} />
         <Route path="users" element={<UserManager />} />
+        <Route path="settings" element={<ProfileSettings />} />
         <Route path="orders" element={<div>Order Management Coming Soon</div>} />
       </Route>
 

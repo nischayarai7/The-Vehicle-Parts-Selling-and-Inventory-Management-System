@@ -92,14 +92,16 @@
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
   color: white;
+  transform: translateX(4px);
 }
 
 .nav-item.active {
   background: var(--admin-accent-glow);
   color: var(--admin-accent);
-  font-weight: 500;
+  font-weight: 600;
+  box-shadow: inset 4px 0 0 var(--admin-accent);
 }
 
 /* --- Main Content --- */
