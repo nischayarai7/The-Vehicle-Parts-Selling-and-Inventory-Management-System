@@ -1,15 +1,23 @@
 const API_BASE = 'http://localhost:5270/api';
 
+// Helper to handle the new ApiResponse wrapper format
+async function handleResponse(response) {
+  const json = await response.json();
+  if (!response.ok || !json.success) {
+    throw new Error(json.message || 'An error occurred');
+  }
+  return json.data; // Return the actual payload
+}
+
 export const api = {
+  // --- Auth ---
   async register(fullName, email, password) {
     const response = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fullName, email, password }),
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Registration failed');
-    return data;
+    return handleResponse(response);
   },
 
   async login(email, password) {
@@ -18,11 +26,32 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Login failed');
-    return data;
+    return handleResponse(response);
   },
 
+  // --- Categories ---
+  async getCategories() {
+    const response = await fetch(`${API_BASE}/categories`);
+    return handleResponse(response);
+  },
+
+  async getActiveCategories() {
+    const response = await fetch(`${API_BASE}/categories/active`);
+    return handleResponse(response);
+  },
+
+  // --- Parts ---
+  async getAllParts() {
+    const response = await fetch(`${API_BASE}/parts`);
+    return handleResponse(response);
+  },
+  
+  async searchParts(keyword) {
+    const response = await fetch(`${API_BASE}/parts/search?keyword=${encodeURIComponent(keyword)}`);
+    return handleResponse(response);
+  },
+
+  // --- Utility ---
   getToken() {
     return localStorage.getItem('token');
   },

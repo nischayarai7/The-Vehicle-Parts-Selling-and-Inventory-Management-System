@@ -1,0 +1,88 @@
+.footer {
+  background-color: var(--bg-dark);
+  color: #cccccc;
+  padding-top: 60px;
+}
+
+.footer-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  gap: 40px;
+  padding-bottom: 50px;
+}
+
+.footer-col h3 {
+  color: white;
+  font-size: 18px;
+  margin-bottom: 25px;
+  font-weight: 600;
+}
+
+.footer-logo {
+  color: white;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+}
+
+.footer-desc {
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.contact-info p {
+  margin-bottom: 10px;
+}
+
+.contact-info strong {
+  color: white;
+}
+
+.links-col ul li {
+  margin-bottom: 15px;
+}
+
+.links-col ul li a {
+  color: #cccccc;
+}
+
+.links-col ul li a:hover {
+  color: var(--primary);
+  padding-left: 5px;
+}
+
+.newsletter-col p {
+  margin-bottom: 20px;
+}
+
+.newsletter-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.newsletter-form input {
+  padding: 12px 15px;
+  background: #222222;
+  border: 1px solid #333333;
+  color: white;
+  border-radius: 4px;
+}
+
+.footer-bottom {
+  background-color: #0a0a0a;
+  padding: 20px 0;
+  border-top: 1px solid #222222;
+}
+
+.bottom-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.payment-methods span {
+  font-size: 24px;
+  margin-left: 10px;
+}

@@ -1,44 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 :root {
-  --text: #374151;
-  --text-h: #111827;
-  --bg: #f9fafb;
-  --card-bg: #ffffff;
-  --border: #e5e7eb;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --error-bg: #fef2f2;
-  --error-text: #dc2626;
-  --error-border: #fecaca;
-  --muted: #9ca3af;
-  --input-bg: #ffffff;
-  --input-border: #d1d5db;
-  --input-focus: #2563eb;
+  /* Color Palette based on design */
+  --primary: #e33b3b;
+  --primary-hover: #c92f2f;
+  
+  --text-main: #222222;
+  --text-muted: #888888;
+  --text-light: #ffffff;
+  
+  --bg-main: #ffffff;
+  --bg-light: #f8f9fa;
+  --bg-dark: #111111;
+  
+  --border-color: #eaeaea;
+  
+  --success: #2ecc71;
+  --warning: #f39c12;
+  --danger: #e74c3c;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 16px/1.5 var(--sans);
-  color: var(--text);
-  background: var(--bg);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #d1d5db;
-    --text-h: #f9fafb;
-    --bg: #111827;
-    --card-bg: #1f2937;
-    --border: #374151;
-    --primary: #3b82f6;
-    --primary-hover: #2563eb;
-    --error-bg: #451a1a;
-    --error-text: #f87171;
-    --error-border: #7f1d1d;
-    --muted: #6b7280;
-    --input-bg: #1f2937;
-    --input-border: #4b5563;
-    --input-focus: #3b82f6;
-  }
+  /* Typography */
+  --font-family: 'Inter', sans-serif;
 }
 
 * {
@@ -48,10 +30,64 @@
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
+  font-family: var(--font-family);
+  color: var(--text-main);
+  background-color: var(--bg-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
-#root {
-  min-height: 100vh;
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--primary);
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-family);
+}
+
+ul {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Common Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+/* Typography Utilities */
+.section-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--text-main);
+}
+
+/* Button Utilities */
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--text-light);
+  border: none;
+  padding: 10px 20px;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
 }

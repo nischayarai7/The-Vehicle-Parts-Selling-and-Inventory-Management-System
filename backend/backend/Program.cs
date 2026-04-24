@@ -65,11 +65,16 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 // ════════════════════════════════════════════════════════════════════════════
 
-// ── 7. Auto-migrate database on startup ──────────────────────────────────────
+// ── 7. Auto-migrate and Seed database on startup ─────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
     db.Database.Migrate();
+
+    // Seed the database with initial data
+    await DbSeeder.SeedAsync(db, logger);
 }
 
 // ── 8. Middleware Pipeline (ORDER MATTERS) ────────────────────────────────────

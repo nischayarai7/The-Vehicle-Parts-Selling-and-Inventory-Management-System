@@ -1,0 +1,141 @@
+.navbar {
+  background-color: var(--bg-main);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.navbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 15px;
+}
+
+.navbar-logo h2 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.navbar-search {
+  display: flex;
+  flex: 1;
+  max-width: 500px;
+  margin: 0 40px;
+  border: 2px solid var(--primary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.navbar-search input {
+  flex: 1;
+  border: none;
+  padding: 12px 15px;
+  font-size: 14px;
+  outline: none;
+}
+
+.navbar-search .search-btn {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.user-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 14px;
+}
+
+.logout-link {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.logout-link:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.login-link {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.cart-icon {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background-color: var(--primary);
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  height: 18px;
+  width: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bottom Nav */
+.navbar-bottom {
+  border-top: 1px solid var(--border-color);
+}
+
+.nav-links-container {
+  display: flex;
+  align-items: center;
+}
+
+.browse-categories-btn {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 15px 25px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.nav-links {
+  display: flex;
+  margin-left: 30px;
+  gap: 30px;
+}
+
+.nav-links a {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-main);
+  padding: 15px 0;
+  display: block;
+}
+
+.nav-links a:hover, .nav-links a.active {
+  color: var(--primary);
+}
