@@ -129,6 +129,7 @@ export const api = {
     body: JSON.stringify(data)
   }).then(handleResponse),
   
+  getStaffCustomerReports: () => fetch(`${API_BASE}/StaffCustomers/reports`, { headers: getAuthHeaders() }).then(handleResponse),
   getStaffOrders: () => fetch(`${API_BASE}/StaffOrders`, { headers: getAuthHeaders() }).then(handleResponse),
   getStaffOrderDetails: (id) => fetch(`${API_BASE}/StaffOrders/${id}`, { headers: getAuthHeaders() }).then(handleResponse),
   createStaffOrder: (data) => fetch(`${API_BASE}/StaffOrders`, {
