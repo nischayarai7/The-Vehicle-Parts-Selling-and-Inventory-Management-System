@@ -4,6 +4,7 @@ namespace backend.DTOs.Staff
     {
         public List<ReportCustomerInfo> Regulars { get; set; } = new List<ReportCustomerInfo>();
         public List<ReportCustomerInfo> HighSpenders { get; set; } = new List<ReportCustomerInfo>();
+        public List<ReportPendingCreditInfo> PendingCredits { get; set; } = new List<ReportPendingCreditInfo>();
     }
 
     public class ReportCustomerInfo
@@ -13,5 +14,13 @@ namespace backend.DTOs.Staff
         public string Email { get; set; } = string.Empty;
         public int OrderCount { get; set; }
         public decimal TotalSpent { get; set; }
+    }
+
+    public class ReportPendingCreditInfo
+    {
+        public int Id { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public decimal PendingAmount { get; set; }
     }
 }

@@ -5,10 +5,19 @@ import { api } from '../../services/api';
 const CustomerDirectory = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    fetchCustomers();
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      if (searchTerm) {
+        searchCustomers(searchTerm);
+      } else {
+        fetchCustomers();
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
 
   const fetchCustomers = async () => {
     try {
@@ -21,11 +30,33 @@ const CustomerDirectory = () => {
     }
   };
 
+  const searchCustomers = async (query) => {
+    setLoading(true);
+    try {
+      const res = await api.searchStaffCustomers(query);
+      setCustomers(res);
+    } catch (err) {
+      console.error('Failed to search customers', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2>Customer Directory</h2>
-        <Link to="/staff/register-customer" className="btn-primary">➕ New Customer</Link>
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <input 
+            type="text" 
+            placeholder="Search by name, phone, ID, or vehicle..." 
+            className="form-input" 
+            style={{ width: '300px', margin: 0 }}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <Link to="/staff/register-customer" className="btn-primary">➕ New Customer</Link>
+        </div>
       </div>
 
       {loading ? (

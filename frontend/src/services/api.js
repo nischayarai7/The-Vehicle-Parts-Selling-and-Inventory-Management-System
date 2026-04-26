@@ -121,6 +121,7 @@ export const api = {
 
   // --- Staff Operations ---
   getStaffCustomers: () => fetch(`${API_BASE}/StaffCustomers`, { headers: getAuthHeaders() }).then(handleResponse),
+  searchStaffCustomers: (query) => fetch(`${API_BASE}/StaffCustomers/search?query=${encodeURIComponent(query)}`, { headers: getAuthHeaders() }).then(handleResponse),
   getStaffCustomerDetails: (id) => fetch(`${API_BASE}/StaffCustomers/${id}`, { headers: getAuthHeaders() }).then(handleResponse),
   getAvailableVehicles: () => fetch(`${API_BASE}/StaffCustomers/vehicles`, { headers: getAuthHeaders() }).then(handleResponse),
   registerStaffCustomer: (data) => fetch(`${API_BASE}/StaffCustomers/register`, {

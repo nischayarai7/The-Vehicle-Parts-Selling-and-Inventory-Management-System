@@ -216,10 +216,26 @@ namespace backend.Controllers
                 .Take(10)
                 .ToListAsync();
 
+            // 3. Pending Credits
+            var pendingCredits = await _context.PendingCredits
+                .Include(p => p.User)
+                .Where(p => p.Status == "Pending")
+                .GroupBy(p => new { p.UserId, p.User.FullName, p.User.Email })
+                .Select(g => new ReportPendingCreditInfo
+                {
+                    Id = g.Key.UserId,
+                    FullName = g.Key.FullName,
+                    Email = g.Key.Email,
+                    PendingAmount = g.Sum(p => p.Amount)
+                })
+                .OrderByDescending(p => p.PendingAmount)
+                .ToListAsync();
+
             var reportDto = new CustomerReportDto
             {
                 Regulars = regulars,
-                HighSpenders = highSpenders
+                HighSpenders = highSpenders,
+                PendingCredits = pendingCredits
             };
 
             return Ok(new { success = true, data = reportDto });
