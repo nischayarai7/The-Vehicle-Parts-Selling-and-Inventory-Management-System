@@ -72,7 +72,8 @@ namespace backend.Controllers
                 Token = token,
                 Email = user.Email,
                 FullName = user.FullName,
-                Role = "Customer"
+                Role = "Customer",
+                AvatarUrl = user.AvatarUrl
             }, "Registration successful."));
         }
 
@@ -108,7 +109,8 @@ namespace backend.Controllers
                 Token = token,
                 Email = user.Email,
                 FullName = user.FullName,
-                Role = primaryRole
+                Role = primaryRole,
+                AvatarUrl = user.AvatarUrl
             }, "Login successful."));
         }
 

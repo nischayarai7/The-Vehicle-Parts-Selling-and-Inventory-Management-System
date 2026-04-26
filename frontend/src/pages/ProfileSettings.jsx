@@ -180,7 +180,21 @@ const ProfileSettings = () => {
                 <span className="input-hint">Email cannot be changed.</span>
               </div>
 
-              <button type="submit" className="btn-primary" disabled={loading}>
+              {selectedFile && (
+                <div className="settings-message warning" style={{ marginBottom: '15px' }}>
+                  Please confirm or cancel your avatar upload before saving changes.
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                className="btn-primary" 
+                disabled={
+                  loading || 
+                  selectedFile !== null || 
+                  (profileData.fullName === (user?.fullName || '') && profileData.avatarUrl === (user?.avatarUrl || ''))
+                }
+              >
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>
             </form>

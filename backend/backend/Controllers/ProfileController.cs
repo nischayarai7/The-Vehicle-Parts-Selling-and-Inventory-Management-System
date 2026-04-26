@@ -83,6 +83,17 @@ namespace backend.Controllers
                 var url = await _cloudinaryService.UploadImageAsync(file);
                 if (url == null) return BadRequest(ApiResponse.Fail("Upload failed"));
 
+                var email = User.FindFirst(ClaimTypes.Email)?.Value;
+                if (!string.IsNullOrEmpty(email))
+                {
+                    var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+                    if (user != null)
+                    {
+                        user.AvatarUrl = url;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
                 return Ok(ApiResponse<object>.Ok(new { url }, "Image uploaded successfully"));
             }
             catch (Exception ex)

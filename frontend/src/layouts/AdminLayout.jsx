@@ -19,7 +19,17 @@ const AdminLayout = () => {
       {/* Left Sidebar */}
       <aside className="admin-sidebar">
         <div className="admin-profile-top">
-          <div className="profile-avatar">{user?.fullName?.charAt(0) || 'A'}</div>
+          <div className="profile-avatar">
+            {user?.avatarUrl ? (
+              <img 
+                src={user.avatarUrl} 
+                alt="Profile" 
+                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
+              />
+            ) : (
+              user?.fullName?.charAt(0) || 'A'
+            )}
+          </div>
           <div className="profile-info">
             <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{user?.fullName || 'Admin'}</div>
             <div style={{ fontSize: '11px', color: 'var(--admin-text-muted)' }}>Administrator</div>
