@@ -19,6 +19,16 @@ import ProfileSettings from './pages/ProfileSettings'
 import { api } from './services/api'
 import './App.css'
 
+// Staff Pages
+import StaffLayout from './layouts/StaffLayout';
+import StaffRoute from './components/StaffRoute';
+import StaffDashboard from './pages/staff/StaffDashboard';
+import RegisterCustomer from './pages/staff/RegisterCustomer';
+import PointOfSale from './pages/staff/PointOfSale';
+import CustomerDirectory from './pages/staff/CustomerDirectory';
+import CustomerDetails from './pages/staff/CustomerDetails';
+import StaffInvoice from './pages/staff/StaffInvoice';
+
 function App() {
   return (
     <Routes>
@@ -36,6 +46,21 @@ function App() {
         <Route path="/settings" element={<ProfileSettings />} />
       </Route>
       
+      {/* Staff Routes */}
+      <Route path="/staff" element={
+        <StaffRoute>
+          <StaffLayout />
+        </StaffRoute>
+      }>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<StaffDashboard />} />
+        <Route path="pos" element={<PointOfSale />} />
+        <Route path="customers" element={<CustomerDirectory />} />
+        <Route path="customers/:id" element={<CustomerDetails />} />
+        <Route path="register-customer" element={<RegisterCustomer />} />
+        <Route path="invoice/:id" element={<StaffInvoice />} />
+      </Route>
+
       {/* Admin Routes - Protected by AdminRoute */}
       <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
         <Route index element={<AdminDashboard />} />

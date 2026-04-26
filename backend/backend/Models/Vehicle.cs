@@ -24,5 +24,6 @@ namespace backend.Models
 
         // Navigation
         public ICollection<PartCompatibility> Compatibilities { get; set; } = new List<PartCompatibility>();
+        public ICollection<CustomerVehicle> CustomerVehicles { get; set; } = new List<CustomerVehicle>();
     }
 }

@@ -55,7 +55,7 @@ namespace backend.Data.Configurations
 
             // Relationship: Order belongs to User
             builder.HasOne(o => o.User)
-                .WithMany()
+                .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
