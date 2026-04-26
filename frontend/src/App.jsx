@@ -16,6 +16,7 @@ import RoleManager from './pages/admin/RoleManager'
 import PermissionManager from './pages/admin/PermissionManager'
 import UserManager from './pages/admin/UserManager'
 import ProfileSettings from './pages/ProfileSettings'
+import AppointmentsPage from './pages/AppointmentsPage'
 import { api } from './services/api'
 import './App.css'
 
@@ -29,6 +30,7 @@ import CustomerDirectory from './pages/staff/CustomerDirectory';
 import CustomerDetails from './pages/staff/CustomerDetails';
 import StaffInvoice from './pages/staff/StaffInvoice';
 import CustomerReports from './pages/staff/CustomerReports';
+import AppointmentsManager from './pages/staff/AppointmentsManager';
 
 function App() {
   return (
@@ -45,6 +47,7 @@ function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/settings" element={<ProfileSettings />} />
+        <Route path="/appointments" element={<AppointmentsPage />} />
       </Route>
       
       {/* Staff Routes */}
@@ -61,6 +64,7 @@ function App() {
         <Route path="register-customer" element={<RegisterCustomer />} />
         <Route path="invoice/:id" element={<StaffInvoice />} />
         <Route path="reports" element={<CustomerReports />} />
+        <Route path="appointments" element={<AppointmentsManager />} />
       </Route>
 
       {/* Admin Routes - Protected by AdminRoute */}

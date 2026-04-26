@@ -47,6 +47,9 @@ const StaffLayout = () => {
           <NavLink to="/staff/customers" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
             <span>👥</span> Customer Directory
           </NavLink>
+          <NavLink to="/staff/appointments" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
+            <span>📅</span> Appointments
+          </NavLink>
           <NavLink to="/staff/register-customer" className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}>
             <span>➕</span> Register Customer
           </NavLink>

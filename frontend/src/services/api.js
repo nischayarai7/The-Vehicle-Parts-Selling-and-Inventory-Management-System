@@ -105,6 +105,39 @@ export const api = {
     headers: getAuthHeaders()
   }).then(handleResponse),
 
+  // Appointments
+  async bookAppointment(data) {
+    const response = await fetch(`${API_BASE}/appointments`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async getMyAppointments() {
+    const response = await fetch(`${API_BASE}/appointments/my`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async getAllAppointments() {
+    const response = await fetch(`${API_BASE}/appointments`, {
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
+  async updateAppointmentStatus(id, status) {
+    const response = await fetch(`${API_BASE}/appointments/${id}/status`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ status }),
+    });
+    return handleResponse(response);
+  },
+
   // --- Categories ---
   async getCategories() {
     const response = await fetch(`${API_BASE}/categories`);
