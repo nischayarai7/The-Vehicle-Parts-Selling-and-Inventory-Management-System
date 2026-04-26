@@ -13,10 +13,12 @@ namespace backend.Controllers
     public class StaffOrdersController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IEmailService _emailService;
 
-        public StaffOrdersController(AppDbContext context)
+        public StaffOrdersController(AppDbContext context, IEmailService emailService)
         {
             _context = context;
+            _emailService = emailService;
         }
 
         [HttpGet]
@@ -117,6 +119,63 @@ namespace backend.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { success = true, data = new { Message = "Order created successfully.", OrderId = newOrder.Id } });
+        }
+
+        [HttpPost("{id}/send-invoice")]
+        public async Task<ActionResult> SendInvoice(int id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.Items)
+                    .ThenInclude(i => i.Part)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null) return NotFound(new { success = false, message = "Order not found." });
+
+            try
+            {
+                var body = $@"
+                    <h2>Invoice for Order {order.OrderNumber}</h2>
+                    <p>Hello {order.User.FullName},</p>
+                    <p>Thank you for your purchase. Here are your order details:</p>
+                    <table border='1' cellpadding='10' style='border-collapse: collapse;'>
+                        <thead>
+                            <tr>
+                                <th>Part Name</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {string.Join("", order.Items.Select(i => $@"
+                                <tr>
+                                    <td>{i.Part.Name}</td>
+                                    <td>{i.Quantity}</td>
+                                    <td>${i.UnitPrice:F2}</td>
+                                    <td>${(i.Quantity * i.UnitPrice):F2}</td>
+                                </tr>
+                            "))}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan='3' align='right'><strong>Total Amount:</strong></td>
+                                <td><strong>${order.TotalAmount:F2}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <p>Status: {order.Status}</p>
+                    <p>Date: {order.CreatedAt:yyyy-MM-dd HH:mm}</p>
+                    <p>Best regards,<br/>6ix7even Auto Parts Team</p>";
+
+                await _emailService.SendEmailAsync(order.User.Email, $"Invoice: {order.OrderNumber}", body);
+
+                return Ok(new { success = true, message = "Invoice sent successfully." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Failed to send email: {ex.Message}" });
+            }
         }
     }
 }

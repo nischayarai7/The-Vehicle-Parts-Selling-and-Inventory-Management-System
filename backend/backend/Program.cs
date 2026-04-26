@@ -23,6 +23,7 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 // ── 3. Services (Business Logic Layer) ──────────────────────────────────────
 builder.Services.AddScoped<IPartService, PartService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // ── 4. CORS ──────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
