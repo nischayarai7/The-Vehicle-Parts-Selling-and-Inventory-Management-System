@@ -25,6 +25,7 @@ namespace backend.Data
         public DbSet<CustomerVehicle> CustomerVehicles { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<PendingCredit> PendingCredits { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

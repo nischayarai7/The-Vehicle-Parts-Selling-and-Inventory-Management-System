@@ -31,6 +31,10 @@ namespace backend.Data.Configurations
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnName("created_at");
 
+            builder.Property(u => u.PhoneNumber)
+                .HasColumnName("phone_number")
+                .HasMaxLength(20);
+
             // Unique index on email for fast lookup + constraint enforcement
             builder.HasIndex(u => u.Email)
                 .IsUnique()

@@ -13,6 +13,9 @@ namespace backend.DTOs.Staff
         [MaxLength(150)]
         public string Email { get; set; } = string.Empty;
 
+        [MaxLength(20)]
+        public string? PhoneNumber { get; set; }
+
         // Optional vehicle linking during registration
         public int? VehicleId { get; set; }
         

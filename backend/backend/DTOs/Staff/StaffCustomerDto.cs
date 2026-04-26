@@ -5,6 +5,7 @@ namespace backend.DTOs.Staff
         public int Id { get; set; }
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        public string? PhoneNumber { get; set; }
         public DateTime CreatedAt { get; set; }
         public int TotalOrders { get; set; }
     }
@@ -14,6 +15,7 @@ namespace backend.DTOs.Staff
         public int Id { get; set; }
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        public string? PhoneNumber { get; set; }
         public DateTime CreatedAt { get; set; }
         
         public List<CustomerVehicleDto> Vehicles { get; set; } = new();
