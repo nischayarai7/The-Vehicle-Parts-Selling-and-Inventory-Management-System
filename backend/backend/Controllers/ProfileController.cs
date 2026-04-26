@@ -101,5 +101,71 @@ namespace backend.Controllers
                 return BadRequest(ApiResponse.Fail(ex.Message));
             }
         }
+        [HttpGet("vehicles")]
+        public async Task<IActionResult> GetMyVehicles()
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var user = await _context.Users
+                .Include(u => u.CustomerVehicles)
+                .ThenInclude(cv => cv.Vehicle)
+                .FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user == null) return NotFound(ApiResponse.Fail("User not found"));
+
+            var vehicles = user.CustomerVehicles.Select(cv => new MyVehicleDto
+            {
+                Id = cv.Id,
+                VehicleId = cv.VehicleId,
+                DisplayName = $"{cv.Vehicle.Year} {cv.Vehicle.Make} {cv.Vehicle.Model} {cv.Vehicle.Trim}".Trim(),
+                LicensePlate = cv.LicensePlate,
+                VIN = cv.VIN,
+                Color = cv.Color
+            }).ToList();
+
+            return Ok(ApiResponse<List<MyVehicleDto>>.Ok(vehicles));
+        }
+
+        [HttpPost("vehicles")]
+        public async Task<IActionResult> AddMyVehicle([FromBody] AddVehicleDto dto)
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user == null) return NotFound(ApiResponse.Fail("User not found"));
+
+            var vehicleExists = await _context.Vehicles.AnyAsync(v => v.Id == dto.VehicleId);
+            if (!vehicleExists) return BadRequest(ApiResponse.Fail("Invalid vehicle selected."));
+
+            var cv = new CustomerVehicle
+            {
+                UserId = user.Id,
+                VehicleId = dto.VehicleId,
+                LicensePlate = dto.LicensePlate,
+                VIN = dto.VIN,
+                Color = dto.Color
+            };
+
+            _context.CustomerVehicles.Add(cv);
+            await _context.SaveChangesAsync();
+
+            return Ok(ApiResponse.Ok("Vehicle added to your garage successfully."));
+        }
+
+        [HttpDelete("vehicles/{id}")]
+        public async Task<IActionResult> DeleteMyVehicle(int id)
+        {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user == null) return NotFound(ApiResponse.Fail("User not found"));
+
+            var cv = await _context.CustomerVehicles.FirstOrDefaultAsync(v => v.Id == id && v.UserId == user.Id);
+            if (cv == null) return NotFound(ApiResponse.Fail("Vehicle not found in your garage."));
+
+            _context.CustomerVehicles.Remove(cv);
+            await _context.SaveChangesAsync();
+
+            return Ok(ApiResponse.Ok("Vehicle removed from your garage."));
+        }
     }
 }

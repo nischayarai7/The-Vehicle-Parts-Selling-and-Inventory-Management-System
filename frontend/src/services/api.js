@@ -92,6 +92,19 @@ export const api = {
     }).then(handleResponse);
   },
 
+  // --- Vehicles ---
+  getVehicles: () => fetch(`${API_BASE}/vehicles`).then(handleResponse),
+  getMyVehicles: () => fetch(`${API_BASE}/profile/vehicles`, { headers: getAuthHeaders() }).then(handleResponse),
+  addMyVehicle: (data) => fetch(`${API_BASE}/profile/vehicles`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  deleteMyVehicle: (id) => fetch(`${API_BASE}/profile/vehicles/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
   // --- Categories ---
   async getCategories() {
     const response = await fetch(`${API_BASE}/categories`);

@@ -18,6 +18,12 @@ const ProfileSettings = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
+  // Vehicle states
+  const [myVehicles, setMyVehicles] = useState([]);
+  const [availableVehicles, setAvailableVehicles] = useState([]);
+  const [newVehicle, setNewVehicle] = useState({ vehicleId: '', licensePlate: '', vin: '', color: '' });
+  const [showAddForm, setShowAddForm] = useState(false);
+
   useEffect(() => {
     if (user) {
       setProfileData({
@@ -26,6 +32,58 @@ const ProfileSettings = () => {
       });
     }
   }, [user]);
+
+  useEffect(() => {
+    if (activeTab === 'vehicles') {
+      fetchMyVehicles();
+      fetchAvailableVehicles();
+    }
+  }, [activeTab]);
+
+  const fetchMyVehicles = async () => {
+    try {
+      const data = await api.getMyVehicles();
+      setMyVehicles(data);
+    } catch (err) {
+      showMessage('error', 'Failed to load your vehicles');
+    }
+  };
+
+  const fetchAvailableVehicles = async () => {
+    try {
+      const data = await api.getVehicles();
+      setAvailableVehicles(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAddVehicle = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.addMyVehicle(newVehicle);
+      showMessage('success', 'Vehicle added successfully!');
+      setNewVehicle({ vehicleId: '', licensePlate: '', vin: '', color: '' });
+      setShowAddForm(false);
+      fetchMyVehicles();
+    } catch (err) {
+      showMessage('error', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteVehicle = async (id) => {
+    if (!window.confirm('Are you sure you want to remove this vehicle?')) return;
+    try {
+      await api.deleteMyVehicle(id);
+      showMessage('success', 'Vehicle removed!');
+      fetchMyVehicles();
+    } catch (err) {
+      showMessage('error', err.message);
+    }
+  };
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -120,6 +178,12 @@ const ProfileSettings = () => {
           >
             🔐 Password & Security
           </button>
+          <button 
+            className={`tab-btn ${activeTab === 'vehicles' ? 'active' : ''}`}
+            onClick={() => setActiveTab('vehicles')}
+          >
+            🚗 My Vehicles
+          </button>
         </div>
 
         {message.text && (
@@ -198,7 +262,7 @@ const ProfileSettings = () => {
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>
             </form>
-          ) : (
+          ) : activeTab === 'security' ? (
             <form onSubmit={handlePasswordChange} className="settings-form">
               <div className="form-group">
                 <label>Current Password</label>
@@ -235,6 +299,87 @@ const ProfileSettings = () => {
                 {loading ? 'Updating...' : 'Update Password'}
               </button>
             </form>
+          ) : (
+            <div className="settings-form">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0 }}>My Garage</h3>
+                {!showAddForm && (
+                  <button onClick={() => setShowAddForm(true)} className="btn-primary" style={{ padding: '8px 15px', fontSize: '14px' }}>
+                    + Add Vehicle
+                  </button>
+                )}
+              </div>
+
+              {showAddForm && (
+                <form onSubmit={handleAddVehicle} style={{ background: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
+                  <h4>Add New Vehicle</h4>
+                  <div className="form-group">
+                    <label>Select Vehicle Model</label>
+                    <select 
+                      value={newVehicle.vehicleId} 
+                      onChange={e => setNewVehicle({...newVehicle, vehicleId: e.target.value})}
+                      required
+                      style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
+                    >
+                      <option value="">-- Choose a vehicle --</option>
+                      {availableVehicles.map(v => (
+                        <option key={v.id} value={v.id}>{v.displayName}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>License Plate (Optional)</label>
+                    <input 
+                      type="text" 
+                      value={newVehicle.licensePlate} 
+                      onChange={e => setNewVehicle({...newVehicle, licensePlate: e.target.value})}
+                      placeholder="e.g. ABC-1234"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Color (Optional)</label>
+                    <input 
+                      type="text" 
+                      value={newVehicle.color} 
+                      onChange={e => setNewVehicle({...newVehicle, color: e.target.value})}
+                      placeholder="e.g. Red"
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button type="submit" className="btn-primary" disabled={loading}>
+                      {loading ? 'Adding...' : 'Add to Garage'}
+                    </button>
+                    <button type="button" className="btn-secondary" onClick={() => setShowAddForm(false)}>
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {myVehicles.length > 0 ? (
+                <div style={{ display: 'grid', gap: '15px' }}>
+                  {myVehicles.map(v => (
+                    <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', border: '1px solid #eee', borderRadius: '8px' }}>
+                      <div>
+                        <h4 style={{ margin: '0 0 5px 0' }}>{v.displayName}</h4>
+                        <div style={{ fontSize: '14px', color: '#666', display: 'flex', gap: '15px' }}>
+                          {v.licensePlate && <span><strong>Plate:</strong> {v.licensePlate}</span>}
+                          {v.color && <span><strong>Color:</strong> {v.color}</span>}
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteVehicle(v.id)}
+                        style={{ background: 'none', border: 'none', color: '#ff4d4f', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                !showAddForm && <p style={{ color: '#666', textAlign: 'center', padding: '20px 0' }}>No vehicles in your garage yet.</p>
+              )}
+            </div>
           )}
         </div>
       </div>
