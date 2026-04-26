@@ -186,6 +186,28 @@ namespace backend.Controllers
             return Ok(new { success = true, data = new { Message = "Customer registered successfully.", CustomerId = user.Id } });
         }
 
+        [HttpPut("{id}")]
+        public async Task<ActionResult> UpdateCustomer(int id, [FromBody] UpdateCustomerDto dto)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound(new { success = false, message = "Customer not found." });
+
+            // Ensure email isn't taken by someone else
+            if (await _context.Users.AnyAsync(u => u.Email == dto.Email && u.Id != id))
+            {
+                return BadRequest(new { success = false, message = "Email is already in use by another account." });
+            }
+
+            user.FullName = dto.FullName;
+            user.Email = dto.Email;
+            user.PhoneNumber = dto.PhoneNumber;
+
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, message = "Customer updated successfully." });
+        }
+
         [HttpGet("reports")]
         public async Task<ActionResult<CustomerReportDto>> GetCustomerReports()
         {

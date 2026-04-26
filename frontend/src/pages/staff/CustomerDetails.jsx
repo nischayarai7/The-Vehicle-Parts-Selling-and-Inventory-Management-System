@@ -8,6 +8,11 @@ const CustomerDetails = () => {
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Edit state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({ fullName: '', email: '', phoneNumber: '' });
+  const [isSaving, setIsSaving] = useState(false);
+
   useEffect(() => {
     fetchCustomerDetails();
   }, [id]);
@@ -16,10 +21,33 @@ const CustomerDetails = () => {
     try {
       const res = await api.getStaffCustomerDetails(id);
       setCustomer(res);
+      setEditData({
+        fullName: res.fullName,
+        email: res.email,
+        phoneNumber: res.phoneNumber || ''
+      });
     } catch (err) {
       console.error('Failed to fetch customer details', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await api.updateStaffCustomer(id, editData);
+      await fetchCustomerDetails(); // Refresh
+      setIsEditing(false);
+    } catch (err) {
+      alert('Failed to update customer: ' + err.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -38,7 +66,7 @@ const CustomerDetails = () => {
           </svg>
           <h2>Customer Details</h2>
         </div>
-        <button className="edit-btn">
+        <button className="edit-btn" onClick={() => setIsEditing(true)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -145,6 +173,49 @@ const CustomerDetails = () => {
         </div>
       </div>
 
+      {isEditing && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Edit Customer Details</h3>
+            <div className="form-group">
+              <label>Full Name</label>
+              <input 
+                type="text" 
+                name="fullName" 
+                value={editData.fullName} 
+                onChange={handleEditChange} 
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Email Address</label>
+              <input 
+                type="email" 
+                name="email" 
+                value={editData.email} 
+                onChange={handleEditChange} 
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Phone Number</label>
+              <input 
+                type="text" 
+                name="phoneNumber" 
+                value={editData.phoneNumber} 
+                onChange={handleEditChange} 
+                className="form-input"
+              />
+            </div>
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={() => setIsEditing(false)} disabled={isSaving}>Cancel</button>
+              <button className="btn-save" onClick={handleSave} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

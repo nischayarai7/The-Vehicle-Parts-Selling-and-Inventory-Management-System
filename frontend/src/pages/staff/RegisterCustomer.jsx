@@ -5,6 +5,7 @@ const RegisterCustomer = () => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
+    phoneNumber: '',
     vehicleId: '',
     licensePlate: '',
     vin: '',
@@ -47,6 +48,14 @@ const RegisterCustomer = () => {
     setMessage('');
     setError('');
 
+    // Phone validation
+    const phoneRegex = /^\+?[\d\s-]{10,15}$/;
+    if (!phoneRegex.test(formData.phoneNumber)) {
+      setError('Please enter a valid phone number (10-15 digits, optional + or dashes).');
+      setLoading(false);
+      return;
+    }
+
     try {
       const payload = { ...formData };
       if (payload.vehicleId) {
@@ -58,7 +67,7 @@ const RegisterCustomer = () => {
       const res = await api.registerStaffCustomer(payload);
       setMessage(res.Message || 'Customer registered successfully.');
       setFormData({
-        fullName: '', email: '', vehicleId: '', licensePlate: '', vin: '', color: ''
+        fullName: '', email: '', phoneNumber: '', vehicleId: '', licensePlate: '', vin: '', color: ''
       });
     } catch (err) {
       setError(err.message || 'Failed to register customer');
@@ -94,6 +103,12 @@ const RegisterCustomer = () => {
           <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-muted)' }}>Email *</label>
           <input type="email" name="email" value={formData.email} onChange={handleChange} required 
                  style={{ width: '100%', padding: '10px', background: '#1c2128', border: '1px solid var(--admin-border)', color: 'white', borderRadius: '4px' }} />
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-muted)' }}>Phone Number *</label>
+          <input type="tel" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} required 
+                 style={{ width: '100%', padding: '10px', background: '#1c2128', border: '1px solid var(--admin-border)', color: 'white', borderRadius: '4px' }}
+                 placeholder="e.g. 123-456-7890" />
         </div>
 
         <h4 style={{ marginTop: '20px', color: 'var(--admin-text)' }}>Vehicle Details (Optional)</h4>

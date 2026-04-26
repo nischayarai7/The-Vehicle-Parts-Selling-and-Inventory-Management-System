@@ -10,6 +10,13 @@ namespace backend.DTOs.Staff
         public int TotalOrders { get; set; }
     }
 
+    public class UpdateCustomerDto
+    {
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? PhoneNumber { get; set; }
+    }
+
     public class StaffCustomerDetailsDto
     {
         public int Id { get; set; }

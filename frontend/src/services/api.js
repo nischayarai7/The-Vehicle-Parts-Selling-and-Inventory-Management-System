@@ -129,6 +129,11 @@ export const api = {
     headers: getAuthHeaders(),
     body: JSON.stringify(data)
   }).then(handleResponse),
+  updateStaffCustomer: (id, data) => fetch(`${API_BASE}/StaffCustomers/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
   
   getStaffCustomerReports: () => fetch(`${API_BASE}/StaffCustomers/reports`, { headers: getAuthHeaders() }).then(handleResponse),
   getStaffOrders: () => fetch(`${API_BASE}/StaffOrders`, { headers: getAuthHeaders() }).then(handleResponse),
