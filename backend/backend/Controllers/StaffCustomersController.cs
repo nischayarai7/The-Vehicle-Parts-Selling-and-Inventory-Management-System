@@ -32,12 +32,48 @@ namespace backend.Controllers
                     Id = u.Id,
                     FullName = u.FullName,
                     Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
                     CreatedAt = u.CreatedAt,
                     TotalOrders = u.Orders.Count
                 })
                 .ToListAsync();
 
             return Ok(new { success = true, data = customers });
+        }
+
+        [HttpGet("search")]
+        public async Task<ActionResult<IEnumerable<StaffCustomerListDto>>> SearchCustomers([FromQuery] string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return await GetCustomers();
+            }
+
+            var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Customer");
+            if (customerRole == null) return Ok(new { success = true, data = new List<StaffCustomerListDto>() });
+
+            // Search by Name, Phone, ID, or Vehicle License Plate
+            var customersQuery = _context.Users
+                .Where(u => u.UserRoles.Any(ur => ur.RoleId == customerRole.Id))
+                .Where(u => u.FullName.Contains(query) || 
+                            u.Email.Contains(query) || 
+                            u.PhoneNumber != null && u.PhoneNumber.Contains(query) ||
+                            u.Id.ToString() == query ||
+                            u.CustomerVehicles.Any(cv => cv.LicensePlate != null && cv.LicensePlate.Contains(query)));
+
+            var results = await customersQuery
+                .Select(u => new StaffCustomerListDto
+                {
+                    Id = u.Id,
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
+                    CreatedAt = u.CreatedAt,
+                    TotalOrders = u.Orders.Count
+                })
+                .ToListAsync();
+
+            return Ok(new { success = true, data = results });
         }
 
         [HttpGet("{id}")]
@@ -56,6 +92,7 @@ namespace backend.Controllers
                 Id = user.Id,
                 FullName = user.FullName,
                 Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
                 CreatedAt = user.CreatedAt,
                 Vehicles = user.CustomerVehicles.Select(cv => new CustomerVehicleDto
                 {
@@ -116,6 +153,7 @@ namespace backend.Controllers
             {
                 FullName = dto.FullName,
                 Email = dto.Email,
+                PhoneNumber = dto.PhoneNumber,
                 // Staff sets a temporary password. Customer should ideally change it later.
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Welcome123!"), 
                 CreatedAt = DateTime.UtcNow
