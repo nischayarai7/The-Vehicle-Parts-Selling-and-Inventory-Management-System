@@ -58,7 +58,27 @@
 }
 
 .report-table-container {
-  overflow-x: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+/* Custom Scrollbar */
+.report-table-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.report-table-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.report-table-container::-webkit-scrollbar-thumb {
+  background: var(--admin-border);
+  border-radius: 4px;
+}
+
+.report-table-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .report-table {
@@ -75,6 +95,9 @@
   text-transform: uppercase;
   background: #1c2128;
   border-bottom: 1px solid var(--admin-border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .report-table td {
