@@ -17,7 +17,7 @@ const StaffDashboard = () => {
         </div>
       </div>
 
-      <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+      <div className="dashboard-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
         <div className="large-card" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <h3>🛒 Point of Sale</h3>
           <p style={{ color: 'var(--admin-text-muted)' }}>Create new sales and invoices for customers.</p>
@@ -34,6 +34,12 @@ const StaffDashboard = () => {
           <h3>➕ Register Customer</h3>
           <p style={{ color: 'var(--admin-text-muted)' }}>Add new customers with their vehicle information.</p>
           <Link to="/staff/register-customer" className="btn-primary" style={{ textAlign: 'center', marginTop: 'auto', background: '#30363d', color: 'white' }}>Register Now</Link>
+        </div>
+
+        <div className="large-card" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <h3>📊 Customer Reports</h3>
+          <p style={{ color: 'var(--admin-text-muted)' }}>Generate analytics on regulars and spenders.</p>
+          <Link to="/staff/reports" className="btn-primary" style={{ textAlign: 'center', marginTop: 'auto', background: '#30363d', color: 'white' }}>View Reports</Link>
         </div>
       </div>
     </div>

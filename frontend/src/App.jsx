@@ -28,6 +28,7 @@ import PointOfSale from './pages/staff/PointOfSale';
 import CustomerDirectory from './pages/staff/CustomerDirectory';
 import CustomerDetails from './pages/staff/CustomerDetails';
 import StaffInvoice from './pages/staff/StaffInvoice';
+import CustomerReports from './pages/staff/CustomerReports';
 
 function App() {
   return (
@@ -59,6 +60,7 @@ function App() {
         <Route path="customers/:id" element={<CustomerDetails />} />
         <Route path="register-customer" element={<RegisterCustomer />} />
         <Route path="invoice/:id" element={<StaffInvoice />} />
+        <Route path="reports" element={<CustomerReports />} />
       </Route>
 
       {/* Admin Routes - Protected by AdminRoute */}

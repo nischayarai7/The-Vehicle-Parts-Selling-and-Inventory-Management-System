@@ -185,5 +185,44 @@ namespace backend.Controllers
 
             return Ok(new { success = true, data = new { Message = "Customer registered successfully.", CustomerId = user.Id } });
         }
+
+        [HttpGet("reports")]
+        public async Task<ActionResult<CustomerReportDto>> GetCustomerReports()
+        {
+            var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Customer");
+            if (customerRole == null) return Ok(new { success = true, data = new CustomerReportDto() });
+
+            // Base query for customers
+            var customersQuery = _context.Users
+                .Where(u => u.UserRoles.Any(ur => ur.RoleId == customerRole.Id))
+                .Select(u => new ReportCustomerInfo
+                {
+                    Id = u.Id,
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    OrderCount = u.Orders.Count(o => o.Status == "Delivered" || o.Status == "Shipped" || o.Status == "Completed" || o.Status == "Pending" || o.Status == "Processing"), // Excluding Cancelled if needed, but let's count all non-cancelled for now. Actually let's just count all for regulars.
+                    TotalSpent = u.Orders.Where(o => o.Status != "Cancelled").Sum(o => o.TotalAmount)
+                });
+
+            // 1. Regulars: Top 10 by Order Count
+            var regulars = await customersQuery
+                .OrderByDescending(c => c.OrderCount)
+                .Take(10)
+                .ToListAsync();
+
+            // 2. High Spenders: Top 10 by Total Spent
+            var highSpenders = await customersQuery
+                .OrderByDescending(c => c.TotalSpent)
+                .Take(10)
+                .ToListAsync();
+
+            var reportDto = new CustomerReportDto
+            {
+                Regulars = regulars,
+                HighSpenders = highSpenders
+            };
+
+            return Ok(new { success = true, data = reportDto });
+        }
     }
 }
