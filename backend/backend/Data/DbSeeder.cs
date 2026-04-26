@@ -90,13 +90,9 @@ namespace backend.Data
                 }
 
                 // Check if categories already exist
-                if (await context.Categories.AnyAsync())
+                if (!await context.Categories.AnyAsync())
                 {
-                    logger.LogInformation("Categories already exist. Skipping category/part seeding.");
-                    return;
-                }
-
-                logger.LogInformation("Starting core data seeding...");
+                    logger.LogInformation("Starting core data seeding...");
 
                 // ── 1. Seed Categories ────────────────────────────────────────────────
                 var categories = new List<Category>
@@ -176,6 +172,23 @@ namespace backend.Data
                 await context.Parts.AddRangeAsync(parts);
                 await context.SaveChangesAsync();
                 logger.LogInformation($"Seeded {parts.Count} parts.");
+                } // End of Categories/Parts seeding
+
+                // ── 3. Seed Vehicles ─────────────────────────────────────────────────────
+                if (!await context.Vehicles.AnyAsync())
+                {
+                    var vehicles = new List<Vehicle>
+                    {
+                        new() { Make = "Toyota", Model = "Camry", Year = 2023, Trim = "SE" },
+                        new() { Make = "Honda", Model = "Civic", Year = 2022, Trim = "EX" },
+                        new() { Make = "Ford", Model = "Mustang", Year = 2024, Trim = "GT" },
+                        new() { Make = "Tesla", Model = "Model 3", Year = 2023, Trim = "Long Range" },
+                        new() { Make = "Chevrolet", Model = "Silverado", Year = 2021, Trim = "LT" }
+                    };
+                    await context.Vehicles.AddRangeAsync(vehicles);
+                    await context.SaveChangesAsync();
+                    logger.LogInformation($"Seeded {vehicles.Count} vehicles.");
+                }
 
                 logger.LogInformation("Database seeding completed successfully.");
             }

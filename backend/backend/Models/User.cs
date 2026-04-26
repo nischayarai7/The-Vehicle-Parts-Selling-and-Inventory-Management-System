@@ -24,5 +24,7 @@ namespace backend.Models
 
         // Navigation properties
         public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+        public ICollection<CustomerVehicle> CustomerVehicles { get; set; } = new List<CustomerVehicle>();
+        public ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }

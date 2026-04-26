@@ -22,6 +22,7 @@ namespace backend.Data
         public DbSet<Part> Parts { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<PartCompatibility> PartCompatibilities { get; set; }
+        public DbSet<CustomerVehicle> CustomerVehicles { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
 

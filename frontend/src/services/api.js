@@ -119,6 +119,27 @@ export const api = {
     return localStorage.getItem('token');
   },
 
+  // --- Staff Operations ---
+  getStaffCustomers: () => fetch(`${API_BASE}/StaffCustomers`, { headers: getAuthHeaders() }).then(handleResponse),
+  getStaffCustomerDetails: (id) => fetch(`${API_BASE}/StaffCustomers/${id}`, { headers: getAuthHeaders() }).then(handleResponse),
+  getAvailableVehicles: () => fetch(`${API_BASE}/StaffCustomers/vehicles`, { headers: getAuthHeaders() }).then(handleResponse),
+  registerStaffCustomer: (data) => fetch(`${API_BASE}/StaffCustomers/register`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  
+  getStaffOrders: () => fetch(`${API_BASE}/StaffOrders`, { headers: getAuthHeaders() }).then(handleResponse),
+  getStaffOrderDetails: (id) => fetch(`${API_BASE}/StaffOrders/${id}`, { headers: getAuthHeaders() }).then(handleResponse),
+  createStaffOrder: (data) => fetch(`${API_BASE}/StaffOrders`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  getToken() {
+    return localStorage.getItem('token');
+  },
+
   getUser() {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
