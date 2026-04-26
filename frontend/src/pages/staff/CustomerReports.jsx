@@ -32,10 +32,10 @@ const CustomerReports = () => {
 
   const exportToPDF = () => {
     const doc = new jsPDF();
-    
+
     doc.setFontSize(16);
     doc.text("Customer Analytics Report", 14, 15);
-    
+
     // Top Regulars Table
     doc.setFontSize(12);
     doc.text("Top Regulars", 14, 25);
