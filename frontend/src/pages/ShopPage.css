@@ -1,0 +1,126 @@
+.shop-page {
+  padding: 40px 15px;
+}
+
+.shop-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.shop-header h1 {
+  font-size: 28px;
+  color: var(--text-main);
+}
+
+.shop-filters {
+  display: flex;
+  gap: 15px;
+}
+
+.shop-filters select {
+  padding: 10px 15px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-family: var(--font-family);
+  color: var(--text-main);
+  background-color: var(--bg-main);
+  outline: none;
+  cursor: pointer;
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 30px;
+}
+
+.product-card {
+  background: var(--bg-main);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+}
+
+.product-image-wrapper {
+  position: relative;
+  height: 220px;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+.product-category-tag {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.product-info {
+  padding: 20px;
+}
+
+.product-info h3 {
+  font-size: 16px;
+  margin-bottom: 15px;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.product-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-price-row .price {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.add-to-cart-btn {
+  padding: 8px 15px;
+  font-size: 13px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .shop-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .shop-filters {
+    width: 100%;
+  }
+  
+  .shop-filters select {
+    flex: 1;
+  }
+}

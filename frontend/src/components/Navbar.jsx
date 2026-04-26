@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
 import { api } from '../services/api';
@@ -38,8 +38,8 @@ const Navbar = () => {
         {/* Icons & Account */}
         <div className="navbar-actions">
           {isAuthenticated ? (
-            <div className="user-menu">
-              <Link to="/settings" className="nav-profile">
+            <div className="user-menu dropdown-container">
+              <div className="nav-profile dropdown-trigger">
                 {user?.avatarUrl ? (
                   <img src={user.avatarUrl} alt="Avatar" className="nav-avatar" />
                 ) : (
@@ -48,8 +48,15 @@ const Navbar = () => {
                   </div>
                 )}
                 <span>{user?.fullName?.split(' ')[0] || 'User'}</span>
-              </Link>
-              <button onClick={handleLogout} className="logout-link">Logout</button>
+              </div>
+              <div className="dropdown-menu">
+                {user?.role === 'Admin' && (
+                  <Link to="/admin" className="dropdown-item">Dashboard</Link>
+                )}
+                <Link to="/settings" className="dropdown-item">Profile Settings</Link>
+                <div className="dropdown-divider"></div>
+                <button onClick={handleLogout} className="dropdown-item">Logout</button>
+              </div>
             </div>
           ) : (
             <Link to="/login" className="login-link">Login / Register</Link>
@@ -74,18 +81,11 @@ const Navbar = () => {
             Browse Categories
           </button>
           <ul className="nav-links">
-            <li><Link to="/" className="active">Home</Link></li>
-            <li><Link to="/shop">Shop</Link></li>
-            {isAuthenticated && user?.role === 'Admin' && (
-              <li>
-                <Link to="/admin" className="dashboard-btn">
-                  Dashboard
-                </Link>
-              </li>
-            )}
-            <li><Link to="/elements">Elements</Link></li>
-            <li><Link to="/pages">Pages</Link></li>
-            <li><Link to="/vendors">Vendors</Link></li>
+            <li><NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>Home</NavLink></li>
+            <li><NavLink to="/shop" className={({ isActive }) => (isActive ? 'active' : '')}>Shop</NavLink></li>
+            <li><NavLink to="/categories" className={({ isActive }) => (isActive ? 'active' : '')}>Categories</NavLink></li>
+            <li><NavLink to="/about" className={({ isActive }) => (isActive ? 'active' : '')}>About Us</NavLink></li>
+            <li><NavLink to="/contact" className={({ isActive }) => (isActive ? 'active' : '')}>Contact</NavLink></li>
           </ul>
         </div>
       </div>
