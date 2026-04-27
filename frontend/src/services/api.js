@@ -143,6 +143,24 @@ export const api = {
     headers: getAuthHeaders(),
     body: JSON.stringify(data)
   }).then(handleResponse),
+
+  // ── Vendors ───────────────────────────────────────────────────────────────
+  getVendors: () => fetch(`${API_BASE}/vendors`, { headers: getAuthHeaders() }).then(handleResponse),
+  createVendor: (data) => fetch(`${API_BASE}/vendors`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  updateVendor: (id, data) => fetch(`${API_BASE}/vendors/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  deleteVendor: (id) => fetch(`${API_BASE}/vendors/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
   getToken() {
     return localStorage.getItem('token');
   },

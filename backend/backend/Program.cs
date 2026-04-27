@@ -19,10 +19,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // ── 2. Repositories (Data Access Layer) ─────────────────────────────────────
 builder.Services.AddScoped<IPartRepository, PartRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IVendorRepository, VendorRepository>();
 
 // ── 3. Services (Business Logic Layer) ──────────────────────────────────────
 builder.Services.AddScoped<IPartService, PartService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 // ── 4. CORS ──────────────────────────────────────────────────────────────────
@@ -30,7 +32,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://localhost:3000")
+        policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });

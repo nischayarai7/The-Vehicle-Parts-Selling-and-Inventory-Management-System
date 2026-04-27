@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import './CustomerReports.css';
 
 const CustomerReports = () => {
@@ -40,27 +40,27 @@ const CustomerReports = () => {
     doc.setFontSize(12);
     doc.text("Top Regulars", 14, 25);
     const regularsData = reports.regulars.map((c, i) => [i + 1, c.fullName, c.email, c.orderCount]);
-    doc.autoTable({
+    autoTable(doc, {
       startY: 30,
       head: [['Rank', 'Customer Name', 'Email', 'Total Orders']],
       body: regularsData,
     });
 
     // High Spenders Table
-    let finalY = doc.lastAutoTable.finalY || 30;
+    let finalY = doc.lastAutoTable?.finalY || 30;
     doc.text("High Spenders", 14, finalY + 15);
     const spendersData = reports.highSpenders.map((c, i) => [i + 1, c.fullName, c.email, formatCurrency(c.totalSpent)]);
-    doc.autoTable({
+    autoTable(doc, {
       startY: finalY + 20,
       head: [['Rank', 'Customer Name', 'Email', 'Total Spent']],
       body: spendersData,
     });
 
     // Pending Credits Table
-    finalY = doc.lastAutoTable.finalY || finalY + 20;
+    finalY = doc.lastAutoTable?.finalY || finalY + 20;
     doc.text("Pending Credits", 14, finalY + 15);
     const creditsData = (reports.pendingCredits || []).map((c, i) => [i + 1, c.fullName, c.email, formatCurrency(c.pendingAmount)]);
-    doc.autoTable({
+    autoTable(doc, {
       startY: finalY + 20,
       head: [['Rank', 'Customer Name', 'Email', 'Pending Amount']],
       body: creditsData,

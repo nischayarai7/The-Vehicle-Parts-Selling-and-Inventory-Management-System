@@ -24,7 +24,9 @@ namespace backend.Data
                         new() { Name = "categories.manage", Description = "Can manage categories", Group = "Categories" },
                         new() { Name = "users.view", Description = "Can view users", Group = "Users" },
                         new() { Name = "users.manage", Description = "Can manage user roles", Group = "Users" },
-                        new() { Name = "roles.manage", Description = "Can manage roles and permissions", Group = "Roles" }
+                        new() { Name = "roles.manage", Description = "Can manage roles and permissions", Group = "Roles" },
+                        new() { Name = "vendors.view", Description = "Can view vendors", Group = "Vendors" },
+                        new() { Name = "vendors.manage", Description = "Can manage vendors", Group = "Vendors" }
                     };
                     await context.Permissions.AddRangeAsync(permissions);
                     await context.SaveChangesAsync();
