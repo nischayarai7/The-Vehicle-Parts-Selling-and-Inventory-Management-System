@@ -5,6 +5,7 @@ import { logout } from '../store/slices/authSlice';
 import './AdminLayout.css';
 
 const AdminLayout = () => {
+  const [searchTerm, setSearchTerm] = React.useState('');
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
@@ -79,14 +80,19 @@ const AdminLayout = () => {
           <div className="top-bar-actions">
             <div className="admin-top-search">
               <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input type="text" placeholder="Search products, orders..." />
+              <input 
+                type="text" 
+                placeholder="Search anything..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
             <button className="btn-primary" onClick={() => navigate('/')}>Storefront</button>
           </div>
         </header>
 
         <div className="admin-content">
-          <Outlet />
+          <Outlet context={{ searchTerm }} />
         </div>
       </main>
 

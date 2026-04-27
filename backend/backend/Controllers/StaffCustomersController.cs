@@ -134,7 +134,12 @@ namespace backend.Controllers
         {
             if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
             {
-                return BadRequest(new { success = false, message = "Email is already in use." });
+                return BadRequest(new { success = false, message = "A customer with this email already exists." });
+            }
+
+            if (!string.IsNullOrEmpty(dto.PhoneNumber) && await _context.Users.AnyAsync(u => u.PhoneNumber == dto.PhoneNumber))
+            {
+                return BadRequest(new { success = false, message = "A customer with this phone number already exists." });
             }
 
             if (!string.IsNullOrEmpty(dto.LicensePlate))
@@ -196,6 +201,12 @@ namespace backend.Controllers
             if (await _context.Users.AnyAsync(u => u.Email == dto.Email && u.Id != id))
             {
                 return BadRequest(new { success = false, message = "Email is already in use by another account." });
+            }
+
+            // Ensure phone isn't taken by someone else
+            if (!string.IsNullOrEmpty(dto.PhoneNumber) && await _context.Users.AnyAsync(u => u.PhoneNumber == dto.PhoneNumber && u.Id != id))
+            {
+                return BadRequest(new { success = false, message = "Phone number is already in use by another account." });
             }
 
             user.FullName = dto.FullName;

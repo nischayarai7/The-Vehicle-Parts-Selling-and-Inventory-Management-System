@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { api } from '../../services/api';
 import './VendorsManager.css';
 
 const VendorsManager = () => {
+  const context = useOutletContext() || {};
+  const searchTerm = context.searchTerm || '';
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -126,7 +129,18 @@ const VendorsManager = () => {
       </div>
 
       <div className="vendors-grid">
-        {vendors.map(vendor => (
+        {vendors
+          .filter(v => {
+            const search = searchTerm.toLowerCase();
+            return (
+              v.name?.toLowerCase().includes(search) ||
+              v.contactPerson?.toLowerCase().includes(search) ||
+              v.email?.toLowerCase().includes(search) ||
+              v.phone?.toLowerCase().includes(search) ||
+              v.address?.toLowerCase().includes(search)
+            );
+          })
+          .map(vendor => (
           <div key={vendor.id} className="vendor-card">
             <span className={`vendor-status ${vendor.isActive ? 'status-active' : 'status-inactive'}`}>
               {vendor.isActive ? 'Active' : 'Inactive'}

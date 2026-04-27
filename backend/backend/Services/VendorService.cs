@@ -31,6 +31,12 @@ namespace backend.Services
 
         public async Task<VendorDto> CreateVendorAsync(CreateVendorDto dto)
         {
+            if (!string.IsNullOrWhiteSpace(dto.Email) && await _vendorRepository.ExistsByEmailAsync(dto.Email.Trim()))
+                throw new InvalidOperationException("A vendor with this email already exists.");
+
+            if (!string.IsNullOrWhiteSpace(dto.Phone) && await _vendorRepository.ExistsByPhoneAsync(dto.Phone.Trim()))
+                throw new InvalidOperationException("A vendor with this phone number already exists.");
+
             var vendor = new Vendor
             {
                 Name = dto.Name.Trim(),
@@ -51,6 +57,12 @@ namespace backend.Services
         {
             var vendor = await _vendorRepository.GetByIdAsync(id)
                 ?? throw new KeyNotFoundException($"Vendor with ID {id} was not found.");
+
+            if (!string.IsNullOrWhiteSpace(dto.Email) && dto.Email.Trim() != vendor.Email && await _vendorRepository.ExistsByEmailAsync(dto.Email.Trim()))
+                throw new InvalidOperationException("A vendor with this email already exists.");
+
+            if (!string.IsNullOrWhiteSpace(dto.Phone) && dto.Phone.Trim() != vendor.Phone && await _vendorRepository.ExistsByPhoneAsync(dto.Phone.Trim()))
+                throw new InvalidOperationException("A vendor with this phone number already exists.");
 
             vendor.Name = dto.Name.Trim();
             vendor.ContactPerson = dto.ContactPerson?.Trim();

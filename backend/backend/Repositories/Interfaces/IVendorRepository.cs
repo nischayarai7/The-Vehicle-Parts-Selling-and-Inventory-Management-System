@@ -9,5 +9,7 @@ namespace backend.Repositories.Interfaces
         Task<Vendor> CreateAsync(Vendor vendor);
         Task UpdateAsync(Vendor vendor);
         Task DeleteAsync(int id);
+        Task<bool> ExistsByEmailAsync(string email);
+        Task<bool> ExistsByPhoneAsync(string phone);
     }
 }

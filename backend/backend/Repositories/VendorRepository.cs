@@ -47,5 +47,15 @@ namespace backend.Repositories
                 await _context.SaveChangesAsync();
             }
         }
+        
+        public async Task<bool> ExistsByEmailAsync(string email)
+        {
+            return await _context.Vendors.AnyAsync(v => v.Email == email);
+        }
+
+        public async Task<bool> ExistsByPhoneAsync(string phone)
+        {
+            return await _context.Vendors.AnyAsync(v => v.Phone == phone);
+        }
     }
 }
