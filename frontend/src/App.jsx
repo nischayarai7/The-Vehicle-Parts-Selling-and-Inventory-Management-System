@@ -17,6 +17,7 @@ import RoleManager from './pages/admin/RoleManager'
 import PermissionManager from './pages/admin/PermissionManager'
 import UserManager from './pages/admin/UserManager'
 import VendorsManager from './pages/admin/VendorsManager'
+import PurchaseInvoiceManager from './pages/admin/PurchaseInvoiceManager'
 import ProfileSettings from './pages/ProfileSettings'
 import { api } from './services/api'
 import './App.css'
@@ -75,6 +76,7 @@ function App() {
         <Route path="permissions" element={<PermissionManager />} />
         <Route path="users" element={<UserManager />} />
         <Route path="vendors" element={<VendorsManager />} />
+        <Route path="purchase-invoices" element={<PurchaseInvoiceManager />} />
         <Route path="settings" element={<ProfileSettings />} />
         <Route path="orders" element={<div>Order Management Coming Soon</div>} />
       </Route>

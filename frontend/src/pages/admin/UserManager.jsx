@@ -54,6 +54,14 @@ const UserManager = () => {
   };
 
   const toggleRole = (roleId) => {
+    const role = roles.find(r => r.id === roleId);
+    
+    // Prevent removing Admin role from oneself
+    if (editingUser.email === currentUser?.email && role?.name === 'Admin' && selectedRoleIds.includes(roleId)) {
+      alert("Security Alert: You cannot remove the Administrator role from your own account to prevent lockout.");
+      return;
+    }
+
     if (selectedRoleIds.includes(roleId)) {
       setSelectedRoleIds(selectedRoleIds.filter(id => id !== roleId));
     } else {
@@ -161,20 +169,32 @@ const UserManager = () => {
             <p style={{ fontSize: '12px', color: 'var(--admin-text-muted)', margin: '10px 0 20px 0' }}>{editingUser.email}</p>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-              {roles.map(role => (
-                <div 
-                  key={role.id}
-                  onClick={() => toggleRole(role.id)}
-                  style={{ 
-                    padding: '12px', borderRadius: '8px', border: '1px solid var(--admin-border)',
-                    background: selectedRoleIds.includes(role.id) ? 'var(--admin-accent-glow)' : 'transparent',
-                    display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'
-                  }}
-                >
-                   <input type="checkbox" checked={selectedRoleIds.includes(role.id)} readOnly />
-                   <span>{role.name}</span>
-                </div>
-              ))}
+              {roles.map(role => {
+                const isSelfAdminRemoval = editingUser.email === currentUser?.email && role.name === 'Admin';
+                
+                return (
+                  <div 
+                    key={role.id}
+                    onClick={() => !isSelfAdminRemoval && toggleRole(role.id)}
+                    style={{ 
+                      padding: '12px', borderRadius: '8px', border: '1px solid var(--admin-border)',
+                      background: selectedRoleIds.includes(role.id) ? 'var(--admin-accent-glow)' : 'transparent',
+                      display: 'flex', alignItems: 'center', gap: '10px', 
+                      cursor: isSelfAdminRemoval ? 'not-allowed' : 'pointer',
+                      opacity: isSelfAdminRemoval ? 0.6 : 1
+                    }}
+                    title={isSelfAdminRemoval ? "You cannot remove your own Admin role" : ""}
+                  >
+                     <input 
+                       type="checkbox" 
+                       checked={selectedRoleIds.includes(role.id)} 
+                       disabled={isSelfAdminRemoval}
+                       readOnly 
+                     />
+                     <span>{role.name}</span>
+                  </div>
+                );
+              })}
             </div>
 
             <div style={{ display: 'flex', gap: '10px' }}>

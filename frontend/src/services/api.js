@@ -139,6 +139,23 @@ export const api = {
     return handleResponse(response);
   },
 
+  createCategory: (data) => fetch(`${API_BASE}/categories`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+
+  updateCategory: (id, data) => fetch(`${API_BASE}/categories/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+
+  deleteCategory: (id) => fetch(`${API_BASE}/categories/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
   // --- Parts ---
   async getAllParts() {
     const response = await fetch(`${API_BASE}/parts`);
@@ -149,6 +166,23 @@ export const api = {
     const response = await fetch(`${API_BASE}/parts/search?keyword=${encodeURIComponent(keyword)}`);
     return handleResponse(response);
   },
+
+  createPart: (data) => fetch(`${API_BASE}/parts`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+
+  updatePart: (id, data) => fetch(`${API_BASE}/parts/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+
+  deletePart: (id) => fetch(`${API_BASE}/parts/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
 
   // --- Utility ---
   getToken() {
@@ -195,6 +229,15 @@ export const api = {
   deleteVendor: (id) => fetch(`${API_BASE}/vendors/${id}`, {
     method: 'DELETE',
     headers: getAuthHeaders()
+  }).then(handleResponse),
+
+  // ── Purchase Invoices ────────────────────────────────────────────────────
+  getPurchaseInvoices: () => fetch(`${API_BASE}/PurchaseInvoices`, { headers: getAuthHeaders() }).then(handleResponse),
+  getPurchaseInvoiceDetails: (id) => fetch(`${API_BASE}/PurchaseInvoices/${id}`, { headers: getAuthHeaders() }).then(handleResponse),
+  createPurchaseInvoice: (data) => fetch(`${API_BASE}/PurchaseInvoices`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
   }).then(handleResponse),
 
   getToken() {
