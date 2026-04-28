@@ -61,35 +61,7 @@ namespace backend.Data
                     logger.LogInformation("Seeded default roles and linked permissions.");
                 }
 
-                // ── 2. Seed/Fix Admin User ───────────────────────────────────────────
-                var adminEmail = "admin@6ix7even.com";
-                var adminUser = await context.Users
-                    .Include(u => u.UserRoles)
-                    .FirstOrDefaultAsync(u => u.Email == adminEmail);
-
-                var targetAdminRole = await context.Roles.FirstAsync(r => r.Name == "Admin");
-
-                if (adminUser == null)
-                {
-                    adminUser = new User
-                    {
-                        FullName = "System Administrator",
-                        Email = adminEmail,
-                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
-                        CreatedAt = DateTime.UtcNow
-                    };
-                    await context.Users.AddAsync(adminUser);
-                    await context.SaveChangesAsync();
-                    logger.LogInformation($"Created new admin user: {adminEmail}");
-                }
-
-                // Ensure the user has the Admin role
-                if (!adminUser.UserRoles.Any(ur => ur.RoleId == targetAdminRole.Id))
-                {
-                    await context.UserRoles.AddAsync(new UserRole { UserId = adminUser.Id, RoleId = targetAdminRole.Id });
-                    await context.SaveChangesAsync();
-                    logger.LogInformation($"Assigned 'Admin' role to {adminEmail}");
-                }
+                // Seeding of roles and permissions is still required for the system to function.
 
                 // Check if categories already exist
                 if (!await context.Categories.AnyAsync())

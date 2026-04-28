@@ -185,32 +185,42 @@ namespace backend.Controllers
         {
             try
             {
-                var settings = new GoogleJsonWebSignature.ValidationSettings()
+                // 1. Use the access token to fetch user info from Google's UserInfo endpoint
+                using var client = new HttpClient();
+                var response = await client.GetAsync($"https://www.googleapis.com/oauth2/v3/userinfo?access_token={dto.IdToken}");
+                
+                if (!response.IsSuccessStatusCode)
                 {
-                    Audience = new List<string>() { _configuration["Authentication:Google:ClientId"]! }
-                };
+                    return BadRequest(ApiResponse.Fail("Invalid Google Access Token."));
+                }
 
-                var payload = await GoogleJsonWebSignature.ValidateAsync(dto.IdToken, settings);
+                var content = await response.Content.ReadAsStringAsync();
+                var googleUser = System.Text.Json.JsonSerializer.Deserialize<GoogleUserInfo>(content);
+
+                if (googleUser == null || string.IsNullOrEmpty(googleUser.Email))
+                {
+                    return BadRequest(ApiResponse.Fail("Failed to retrieve user info from Google."));
+                }
 
                 var user = await _context.Users
                     .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
                     .ThenInclude(r => r.RolePermissions)
                     .ThenInclude(rp => rp.Permission)
-                    .FirstOrDefaultAsync(u => u.Email == payload.Email.ToLower());
+                    .FirstOrDefaultAsync(u => u.Email == googleUser.Email.ToLower());
 
                 if (user == null)
                 {
                     // Create new user if they don't exist
                     user = new User
                     {
-                        FullName = payload.Name,
-                        Email = payload.Email.ToLower(),
-                        PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()), // Random password
-                        AvatarUrl = payload.Picture,
-                        IsEmailVerified = true, // Google emails are already verified
+                        FullName = googleUser.Name,
+                        Email = googleUser.Email.ToLower(),
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()),
+                        AvatarUrl = googleUser.Picture,
+                        IsEmailVerified = true,
                         AuthProvider = "Google",
-                        GoogleId = payload.Subject,
+                        GoogleId = googleUser.Sub,
                         CreatedAt = DateTime.UtcNow
                     };
 
@@ -298,5 +308,20 @@ namespace backend.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+    }
+
+    public class GoogleUserInfo
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("sub")]
+        public string Sub { get; set; } = string.Empty;
+
+        [System.Text.Json.Serialization.JsonPropertyName("name")]
+        public string Name { get; set; } = string.Empty;
+
+        [System.Text.Json.Serialization.JsonPropertyName("email")]
+        public string Email { get; set; } = string.Empty;
+
+        [System.Text.Json.Serialization.JsonPropertyName("picture")]
+        public string Picture { get; set; } = string.Empty;
     }
 }

@@ -2,11 +2,20 @@ const API_BASE = 'http://localhost:5270/api';
 
 // Helper to handle the new ApiResponse wrapper format
 async function handleResponse(response) {
-  const json = await response.json();
+  if (response.status === 401) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+    throw new Error('Session expired. Please login again.');
+  }
+
+  const text = await response.text();
+  const json = text ? JSON.parse(text) : {};
+
   if (!response.ok || !json.success) {
     throw new Error(json.message || 'An error occurred');
   }
-  return json.data; // Return the actual payload
+  return json.data;
 }
 
 export const api = {
