@@ -22,6 +22,13 @@ namespace backend.Models
         
         public string? PhoneNumber { get; set; }
 
+        public bool IsEmailVerified { get; set; } = false;
+        public string? EmailVerificationToken { get; set; }
+        public DateTime? EmailVerificationTokenExpiry { get; set; }
+        
+        public string? GoogleId { get; set; }
+        public string AuthProvider { get; set; } = "Local";
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation properties

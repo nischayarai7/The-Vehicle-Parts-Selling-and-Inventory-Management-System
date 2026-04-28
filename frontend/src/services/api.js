@@ -29,6 +29,33 @@ export const api = {
     return handleResponse(response);
   },
 
+  async verifyEmail(email, token) {
+    const response = await fetch(`${API_BASE}/auth/verify-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, token }),
+    });
+    return handleResponse(response);
+  },
+
+  async resendVerification(email) {
+    const response = await fetch(`${API_BASE}/auth/resend-verification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    return handleResponse(response);
+  },
+
+  async googleLogin(idToken) {
+    const response = await fetch(`${API_BASE}/auth/google-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    });
+    return handleResponse(response);
+  },
+
   // ── Roles & Permissions ───────────────────────────────────────────────────
   getRoles: () => fetch(`${API_BASE}/roles`, { headers: getAuthHeaders() }).then(handleResponse),
   getPermissions: () => fetch(`${API_BASE}/roles/permissions`, { headers: getAuthHeaders() }).then(handleResponse),

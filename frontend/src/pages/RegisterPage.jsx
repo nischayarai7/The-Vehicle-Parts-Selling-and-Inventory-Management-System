@@ -34,9 +34,8 @@ function RegisterPage() {
     setLoading(true);
 
     try {
-      const data = await api.register(form.fullName, form.email, form.password);
-      api.saveAuth(data);
-      navigate('/');
+      await api.register(form.fullName, form.email, form.password);
+      navigate('/verify-email', { state: { email: form.email } });
     } catch (err) {
       setError(err.message);
     } finally {
