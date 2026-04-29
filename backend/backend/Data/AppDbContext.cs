@@ -29,6 +29,7 @@ namespace backend.Data
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<PurchaseInvoice> PurchaseInvoices { get; set; }
         public DbSet<PurchaseInvoiceItem> PurchaseInvoiceItems { get; set; }
+        public DbSet<Appointment> Appointments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
