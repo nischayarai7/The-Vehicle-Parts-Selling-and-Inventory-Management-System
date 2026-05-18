@@ -4,6 +4,7 @@ import RegisterPage from './pages/RegisterPage'
 import VerifyEmailPage from './pages/VerifyEmailPage'
 import HomePage from './pages/HomePage'
 import ShopPage from './pages/ShopPage'
+import PartDetailPage from './pages/PartDetailPage'
 import CategoriesPage from './pages/CategoriesPage'
 import AboutPage from './pages/AboutPage'
 import ContactPage from './pages/ContactPage'
@@ -50,6 +51,7 @@ function App() {
       <Route element={<StoreLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/shop" element={<ShopPage />} />
+        <Route path="/shop/part/:id" element={<PartDetailPage />} />
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />

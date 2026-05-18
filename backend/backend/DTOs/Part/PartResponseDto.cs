@@ -23,7 +23,18 @@ namespace backend.DTOs.Part
         public int CategoryId { get; set; }
         public string CategoryName { get; set; } = string.Empty;
 
+        // Dynamic lists of compatible vehicles
+        public List<CompatibleVehicleDto> CompatibleVehicles { get; set; } = new();
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+    }
+
+    public class CompatibleVehicleDto
+    {
+        public int Id { get; set; }
+        public string Make { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public int Year { get; set; }
     }
 }

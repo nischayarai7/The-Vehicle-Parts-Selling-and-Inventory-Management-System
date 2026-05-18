@@ -23,11 +23,13 @@ namespace backend.Repositories
         public async Task<Part?> GetByIdAsync(int id) =>
             await _context.Parts
                 .Include(p => p.Category)
+                .Include(p => p.Compatibilities).ThenInclude(pc => pc.Vehicle)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
         public async Task<IEnumerable<Part>> GetAllAsync() =>
             await _context.Parts
                 .Include(p => p.Category)
+                .Include(p => p.Compatibilities).ThenInclude(pc => pc.Vehicle)
                 .OrderBy(p => p.Name)
                 .ToListAsync();
 
@@ -66,11 +68,13 @@ namespace backend.Repositories
         public async Task<Part?> GetByPartNumberAsync(string partNumber) =>
             await _context.Parts
                 .Include(p => p.Category)
+                .Include(p => p.Compatibilities).ThenInclude(pc => pc.Vehicle)
                 .FirstOrDefaultAsync(p => p.PartNumber == partNumber);
 
         public async Task<IEnumerable<Part>> GetByCategoryAsync(int categoryId) =>
             await _context.Parts
                 .Include(p => p.Category)
+                .Include(p => p.Compatibilities).ThenInclude(pc => pc.Vehicle)
                 .Where(p => p.CategoryId == categoryId && p.IsActive)
                 .OrderBy(p => p.Name)
                 .ToListAsync();
@@ -78,6 +82,7 @@ namespace backend.Repositories
         public async Task<IEnumerable<Part>> GetLowStockPartsAsync() =>
             await _context.Parts
                 .Include(p => p.Category)
+                .Include(p => p.Compatibilities).ThenInclude(pc => pc.Vehicle)
                 .Where(p => p.StockQuantity <= p.ReorderLevel && p.IsActive)
                 .OrderBy(p => p.StockQuantity)
                 .ToListAsync();
@@ -87,6 +92,7 @@ namespace backend.Repositories
             var lower = keyword.ToLower();
             return await _context.Parts
                 .Include(p => p.Category)
+                .Include(p => p.Compatibilities).ThenInclude(pc => pc.Vehicle)
                 .Where(p => p.IsActive && (
                     p.Name.ToLower().Contains(lower) ||
                     p.PartNumber.ToLower().Contains(lower) ||
@@ -100,6 +106,7 @@ namespace backend.Repositories
             await _context.PartCompatibilities
                 .Where(pc => pc.VehicleId == vehicleId)
                 .Include(pc => pc.Part).ThenInclude(p => p.Category)
+                .Include(pc => pc.Part).ThenInclude(p => p.Compatibilities).ThenInclude(pc => pc.Vehicle)
                 .Select(pc => pc.Part)
                 .Where(p => p.IsActive)
                 .OrderBy(p => p.Name)

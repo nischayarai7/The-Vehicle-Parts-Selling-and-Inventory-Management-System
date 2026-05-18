@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
 import './ShopPage.css';
@@ -8,6 +8,15 @@ function ShopPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { addToCart, showToast } = useCart();
+
+  const handleBuyNow = (part) => {
+    if (part.stockQuantity <= 0) {
+      showToast('This item is currently out of stock.', 'error');
+      return;
+    }
+    addToCart(part);
+    showToast('Item ready for checkout!', 'success');
+  };
 
   // State arrays
   const [parts, setParts] = useState([]);
@@ -25,18 +34,18 @@ function ShopPage() {
   // Local drop-down values
   const [selectedCategoryId, setSelectedCategoryId] = useState(categoryParam);
   const [sortBy, setSortBy] = useState('featured');
-  const [searchQuery, setSearchQuery] = useState(searchParam);
   const [selectedMake, setSelectedMake] = useState(makeParam);
   const [selectedModel, setSelectedModel] = useState(modelParam);
   const [selectedYear, setSelectedYear] = useState(yearParam);
+  const [liveSearchQuery, setLiveSearchQuery] = useState(searchParam);
 
   useEffect(() => {
     // Sync local dropdown states with search parameter updates
     setSelectedCategoryId(categoryParam);
-    setSearchQuery(searchParam);
     setSelectedMake(makeParam);
     setSelectedModel(modelParam);
     setSelectedYear(yearParam);
+    setLiveSearchQuery(searchParam);
   }, [categoryParam, searchParam, makeParam, modelParam, yearParam]);
 
   useEffect(() => {
@@ -45,7 +54,7 @@ function ShopPage() {
 
   useEffect(() => {
     fetchFilteredParts();
-  }, [makeParam, modelParam, yearParam, categoryParam, searchParam]);
+  }, [makeParam, modelParam, yearParam, vehicles]);
 
   const fetchInitialData = async () => {
     try {
@@ -65,7 +74,7 @@ function ShopPage() {
     try {
       let fetchedParts = [];
 
-      // Priority 1: Vehicle Compatibility Filter (Make, Model, Year)
+      // Fetch compatible parts if vehicle filter is present
       if (makeParam && modelParam && yearParam) {
         const matchingVehicle = vehicles.find(
           v => v.make.toLowerCase() === makeParam.toLowerCase() &&
@@ -76,7 +85,7 @@ function ShopPage() {
         if (matchingVehicle) {
           fetchedParts = await api.getCompatibleParts(matchingVehicle.id);
         } else {
-          // If vehicles list hasn't loaded yet or no exact DB match, query vehicles first or search by model
+          // If vehicles list hasn't loaded yet, fetch directly
           const allVehicles = await api.getVehicles();
           const freshMatch = allVehicles.find(
             v => v.make.toLowerCase() === makeParam.toLowerCase() &&
@@ -86,27 +95,16 @@ function ShopPage() {
           if (freshMatch) {
             fetchedParts = await api.getCompatibleParts(freshMatch.id);
           } else {
-            fetchedParts = []; // No matching vehicle in DB
+            fetchedParts = [];
           }
         }
       } 
-      // Priority 2: Keyword search term
-      else if (searchParam) {
-        fetchedParts = await api.searchParts(searchParam);
-      } 
-      // Priority 3: Fetch all active catalog parts
+      // Otherwise fetch the entire active catalog
       else {
         fetchedParts = await api.getAllParts();
       }
 
-      // Filter by Category locally or backend (fallback logic)
-      if (categoryParam) {
-        fetchedParts = fetchedParts.filter(
-          part => part.categoryId.toString() === categoryParam.toString()
-        );
-      }
-
-      // Ensure we only show Active parts
+      // Filter active parts only
       fetchedParts = fetchedParts.filter(part => part.isActive);
 
       setParts(fetchedParts);
@@ -132,17 +130,7 @@ function ShopPage() {
     setSearchParams(newParams);
   };
 
-  // Keyword Search Refiner
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    const newParams = new URLSearchParams(searchParams);
-    if (searchQuery.trim()) {
-      newParams.set('search', searchQuery.trim());
-    } else {
-      newParams.delete('search');
-    }
-    setSearchParams(newParams);
-  };
+
 
   // Clear Compatibility Filters
   const clearGarageFilter = () => {
@@ -178,18 +166,39 @@ function ShopPage() {
   };
 
   // Sorting Logic
+  // Dynamic live search and sorting
   const getSortedParts = () => {
-    const sorted = [...parts];
+    let result = [...parts];
+
+    // Filter by Category client-side instantly
+    if (selectedCategoryId) {
+      result = result.filter(
+        part => part.categoryId.toString() === selectedCategoryId.toString()
+      );
+    }
+
+    // Instantly filter results client-side for immediate responsive feedback
+    if (liveSearchQuery.trim()) {
+      const q = liveSearchQuery.toLowerCase();
+      result = result.filter(part => 
+        part.name.toLowerCase().includes(q) ||
+        (part.brand && part.brand.toLowerCase().includes(q)) ||
+        (part.categoryName && part.categoryName.toLowerCase().includes(q)) ||
+        (part.description && part.description.toLowerCase().includes(q)) ||
+        part.partNumber.toLowerCase().includes(q)
+      );
+    }
+
     if (sortBy === 'price-low') {
-      return sorted.sort((a, b) => a.price - b.price);
+      return result.sort((a, b) => a.price - b.price);
     }
     if (sortBy === 'price-high') {
-      return sorted.sort((a, b) => b.price - a.price);
+      return result.sort((a, b) => b.price - a.price);
     }
     if (sortBy === 'name-az') {
-      return sorted.sort((a, b) => a.name.localeCompare(b.name));
+      return result.sort((a, b) => a.name.localeCompare(b.name));
     }
-    return sorted; // featured or default
+    return result; // featured or default
   };
 
   const formatCurrency = (amount) => {
@@ -198,6 +207,15 @@ function ShopPage() {
       currency: 'NPR',
       minimumFractionDigits: 2
     }).format(amount).replace('NPR', 'Rs.');
+  };
+
+  const getCompatibilityText = (vehiclesList) => {
+    if (!vehiclesList || vehiclesList.length === 0) return 'Universal';
+    const displayList = vehiclesList.slice(0, 2).map(v => `${v.make} ${v.model}`).join(', ');
+    if (vehiclesList.length > 2) {
+      return `${displayList} (+${vehiclesList.length - 2} more)`;
+    }
+    return displayList;
   };
 
   const sortedPartsList = getSortedParts();
@@ -214,7 +232,7 @@ function ShopPage() {
             </p>
           </div>
           <button 
-            className="btn-secondary" 
+            className="btn-clear-filter" 
             onClick={() => {
               if (makeParam) clearGarageFilter();
               else {
@@ -223,7 +241,6 @@ function ShopPage() {
                 setSearchParams(newParams);
               }
             }}
-            style={{ padding: '8px 16px', fontSize: '0.85rem' }}
           >
             Clear Filter ✕
           </button>
@@ -234,25 +251,43 @@ function ShopPage() {
         <h1>All Vehicle Parts Catalog</h1>
 
         <div className="shop-filters">
-          {/* Inner Search Field */}
-          <form onSubmit={handleSearchSubmit} className="shop-inner-search" style={{ display: 'flex', gap: '8px' }}>
-            <input 
-              type="text" 
-              placeholder="Refine search..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                padding: '10px 15px',
-                border: '1px solid var(--border-color)',
-                borderRadius: '4px',
-                background: 'var(--bg-main)',
-                color: 'var(--text-main)',
-                fontSize: '14px',
-                outline: 'none'
+          {/* Instant Live Search Bar */}
+          <div className="live-search-wrapper">
+            <svg className="live-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              type="text"
+              className="live-search-input"
+              placeholder="Search parts catalog..."
+              value={liveSearchQuery}
+              onChange={(e) => {
+                setLiveSearchQuery(e.target.value);
+                const newParams = new URLSearchParams(searchParams);
+                if (e.target.value) {
+                  newParams.set('search', e.target.value);
+                } else {
+                  newParams.delete('search');
+                }
+                setSearchParams(newParams, { replace: true });
               }}
             />
-            <button type="submit" className="btn-primary" style={{ padding: '10px 15px' }}>Refine</button>
-          </form>
+            {liveSearchQuery && (
+              <button 
+                type="button" 
+                className="live-search-clear"
+                onClick={() => {
+                  setLiveSearchQuery('');
+                  const newParams = new URLSearchParams(searchParams);
+                  newParams.delete('search');
+                  setSearchParams(newParams, { replace: true });
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
 
           {/* Category Dropdown */}
           <select value={selectedCategoryId} onChange={handleCategoryChange}>
@@ -314,15 +349,6 @@ function ShopPage() {
               {years.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
 
-            {(selectedMake || selectedModel || selectedYear) && (
-              <button 
-                onClick={clearGarageFilter}
-                className="btn-secondary"
-                style={{ padding: '6px 12px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(248,81,73,0.1)', borderColor: 'rgba(248,81,73,0.2)', color: '#f85149' }}
-              >
-                Clear Vehicle Filter ✕
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -353,41 +379,64 @@ function ShopPage() {
         <div className="shop-grid">
           {sortedPartsList.map((part) => (
             <div key={part.id} className="product-card">
-              <div className="product-image-wrapper">
-                <img 
-                  src={part.imageUrl || `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b&size=300`} 
-                  alt={part.name} 
-                  className="product-image" 
-                  onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b&size=300` }}
-                />
-                <div className="product-category-tag">{part.categoryName}</div>
-                {part.isLowStock && part.stockQuantity > 0 && (
-                  <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#e3b33b', color: '#000', padding: '4px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
-                    Low Stock
-                  </div>
-                )}
-                {part.stockQuantity <= 0 && (
-                  <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#f85149', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
-                    Out of Stock
-                  </div>
-                )}
-              </div>
+              <Link to={`/shop/part/${part.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                <div className="product-image-wrapper">
+                  <img 
+                    src={part.imageUrl || `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b&size=300`} 
+                    alt={part.name} 
+                    className="product-image" 
+                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b&size=300` }}
+                  />
+                  <div className="product-category-tag">{part.categoryName}</div>
+                  {part.isLowStock && part.stockQuantity > 0 && (
+                    <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#e3b33b', color: '#000', padding: '4px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
+                      Low Stock
+                    </div>
+                  )}
+                  {part.stockQuantity <= 0 && (
+                    <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#f85149', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
+                      Out of Stock
+                    </div>
+                  )}
+                </div>
+              </Link>
               <div className="product-info">
-                <h3 style={{ minHeight: '44px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{part.name}</h3>
-                <p style={{ fontSize: '12px', color: '#666', margin: '-10px 0 15px 0' }}>Part No: {part.partNumber || 'N/A'}</p>
-                <div className="product-price-row">
+                <Link to={`/shop/part/${part.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                  <h3 style={{ minHeight: '44px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', cursor: 'pointer' }}>{part.name}</h3>
+                </Link>
+                <p style={{ fontSize: '12px', color: '#666', margin: '-10px 0 8px 0' }}>Part No: {part.partNumber || 'N/A'}</p>
+                <div style={{ fontSize: '11px', color: '#e33b3b', margin: '-4px 0 14px 0', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16" style={{ flexShrink: 0, marginTop: '-1px' }}>
+                    <path d="M4 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zm8 0a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM0 6h16v1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V6zm1.5-1.5A.5.5 0 0 1 2 4h12a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-1z"/>
+                    <path d="M2.52 3.862c.19-.626.78-1.056 1.436-1.056h8.088c.657 0 1.248.43 1.438 1.056l1.24 4.092c.09.296-.06.602-.34.697a.49.49 0 0 1-.606-.31L12.52 4.195a.498.498 0 0 0-.476-.34H3.956a.498.498 0 0 0-.476.34L2.24 8.286a.491.491 0 0 1-.607.31c-.28-.095-.43-.401-.34-.697l1.24-4.092z"/>
+                  </svg>
+                  <span>Fits: {getCompatibilityText(part.compatibleVehicles)}</span>
+                </div>
+                <div className="product-price-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'stretch', width: '100%' }}>
                   <span className="price">{formatCurrency(part.price)}</span>
                   {part.stockQuantity <= 0 ? (
-                    <button className="btn-secondary add-to-cart-btn" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>
+                    <button className="btn-secondary add-to-cart-btn" disabled style={{ opacity: 0.5, cursor: 'not-allowed', width: '100%' }}>
                       Sold Out
                     </button>
                   ) : (
-                    <button 
-                      className="btn-primary add-to-cart-btn" 
-                      onClick={() => addToCart(part)}
-                    >
-                      Add to Cart
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px', width: '100%', alignItems: 'center' }}>
+                      <button 
+                        className="btn-primary add-to-cart-btn" 
+                        onClick={() => handleBuyNow(part)}
+                        style={{ flex: 1, padding: '0 12px', fontSize: '13px', height: '36px', margin: 0 }}
+                      >
+                        Buy Now
+                      </button>
+                      <button 
+                        className="btn-add-to-cart-icon-small" 
+                        onClick={() => { addToCart(part); showToast(`${part.name} added!`, 'success'); }}
+                        title="Add to cart"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                        </svg>
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

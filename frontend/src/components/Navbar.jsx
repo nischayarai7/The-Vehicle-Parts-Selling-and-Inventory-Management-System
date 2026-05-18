@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
 import { api } from '../services/api';
@@ -8,6 +8,7 @@ import './Navbar.css';
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   
@@ -25,12 +26,20 @@ const Navbar = () => {
     showToast 
   } = useCart();
 
+  const searchParams = new URLSearchParams(location.search);
+  const urlSearchQuery = searchParams.get('search') || '';
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState(urlSearchQuery);
   const [shippingAddress, setShippingAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [successOrder, setSuccessOrder] = useState(null);
+
+  // Keep the top search input synced when URL query changes (e.g. cleared on ShopPage)
+  useEffect(() => {
+    setSearchKeyword(urlSearchQuery);
+  }, [urlSearchQuery]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -117,7 +126,23 @@ const Navbar = () => {
               type="text" 
               placeholder="Search for parts, brands, component names..." 
               value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchKeyword(val);
+                
+                const newParams = new URLSearchParams(location.search);
+                if (val.trim()) {
+                  newParams.set('search', val);
+                } else {
+                  newParams.delete('search');
+                }
+                
+                if (location.pathname !== '/shop') {
+                  navigate(`/shop?${newParams.toString()}`);
+                } else {
+                  navigate(`/shop?${newParams.toString()}`, { replace: true });
+                }
+              }}
             />
             <button type="submit" className="search-btn">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">

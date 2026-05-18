@@ -233,6 +233,11 @@ export const api = {
     return handleResponse(response);
   },
   
+  async getPartById(id) {
+    const response = await fetch(`${API_BASE}/parts/${id}`);
+    return handleResponse(response);
+  },
+  
   uploadPartImage: (file) => {
     const formData = new FormData();
     formData.append('file', file);

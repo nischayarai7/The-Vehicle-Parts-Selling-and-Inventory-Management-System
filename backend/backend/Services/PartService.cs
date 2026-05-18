@@ -195,6 +195,16 @@ namespace backend.Services
             IsActive      = p.IsActive,
             CategoryId    = p.CategoryId,
             CategoryName  = p.Category?.Name ?? string.Empty,
+            CompatibleVehicles = p.Compatibilities?
+                .Where(pc => pc.Vehicle != null)
+                .Select(pc => new CompatibleVehicleDto
+                {
+                    Id = pc.Vehicle.Id,
+                    Make = pc.Vehicle.Make,
+                    Model = pc.Vehicle.Model,
+                    Year = pc.Vehicle.Year
+                })
+                .ToList() ?? new List<CompatibleVehicleDto>(),
             CreatedAt     = p.CreatedAt,
             UpdatedAt     = p.UpdatedAt
         };
