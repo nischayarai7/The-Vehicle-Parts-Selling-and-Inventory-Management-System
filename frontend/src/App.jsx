@@ -65,6 +65,7 @@ function App() {
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<StaffDashboard />} />
         <Route path="pos" element={<PointOfSale />} />
+        <Route path="parts" element={<PartsManager />} />
         <Route path="customers" element={<CustomerDirectory />} />
         <Route path="customers/:id" element={<CustomerDetails />} />
         <Route path="register-customer" element={<RegisterCustomer />} />

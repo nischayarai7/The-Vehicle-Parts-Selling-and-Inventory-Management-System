@@ -4,6 +4,44 @@ import { useSelector } from 'react-redux';
 import { api } from '../../services/api';
 import './StaffDashboard.css';
 
+const DASHBOARD_OPERATIONS = [
+  {
+    icon: <svg style={{ width: '22px', height: '22px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>,
+    title: "Point of Sale",
+    description: "Create, finalize, and process new invoices for direct parts checkout.",
+    to: "/staff/pos",
+    btnText: "Open POS ➔"
+  },
+  {
+    icon: <svg style={{ width: '22px', height: '22px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
+    title: "Parts Inventory",
+    description: "Manage, browse, add, and update vehicle components, pricing, and stock levels.",
+    to: "/staff/parts",
+    btnText: "Manage Parts ➔"
+  },
+  {
+    icon: <svg style={{ width: '22px', height: '22px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="17" y1="11" x2="23" y2="11"/></svg>,
+    title: "Register Customer",
+    description: "Link new vehicle profiles, licenses, VINs, and owner parameters.",
+    to: "/staff/register-customer",
+    btnText: "Add Profile ➔"
+  },
+  {
+    icon: <svg style={{ width: '22px', height: '22px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87m-4-12a4 4 0 0 1 0 7.75"/></svg>,
+    title: "Client Directory",
+    description: "Inspect purchase histories, vehicle logs, and client accounting profiles.",
+    to: "/staff/customers",
+    btnText: "View Directory ➔"
+  },
+  {
+    icon: <svg style={{ width: '22px', height: '22px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 3v18h18M7 16h3v-4H7v4zm5 0h3V9h-3v7zm5 0h3V5h-3v11z"/></svg>,
+    title: "Customer Reports",
+    description: "Analyze buying frequencies, outstanding ledger statements, and debt alerts.",
+    to: "/staff/reports",
+    btnText: "Open Auditing ➔"
+  }
+];
+
 const StaffDashboard = () => {
   const { user } = useSelector((state) => state.auth);
   
@@ -155,41 +193,16 @@ const StaffDashboard = () => {
 
       {/* Grid Menu Navigation */}
       <div className="operation-menu-grid">
-        <div className="operation-nav-card">
-          <div className="card-top-icon">
-            <svg style={{ width: '22px', height: '22px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        {DASHBOARD_OPERATIONS.map((op, idx) => (
+          <div key={idx} className="operation-nav-card">
+            <div className="card-top-icon">
+              {op.icon}
+            </div>
+            <h3>{op.title}</h3>
+            <p>{op.description}</p>
+            <Link to={op.to} className="btn-card-launch">{op.btnText}</Link>
           </div>
-          <h3>Point of Sale</h3>
-          <p>Create, finalize, and process new invoices for direct parts checkout.</p>
-          <Link to="/staff/pos" className="btn-card-launch">Open POS ➔</Link>
-        </div>
-
-        <div className="operation-nav-card">
-          <div className="card-top-icon">
-            <svg style={{ width: '22px', height: '22px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="17" y1="11" x2="23" y2="11"/></svg>
-          </div>
-          <h3>Register Customer</h3>
-          <p>Link new vehicle profiles, licenses, VINs, and owner parameters.</p>
-          <Link to="/staff/register-customer" className="btn-card-launch">Add Profile ➔</Link>
-        </div>
-
-        <div className="operation-nav-card">
-          <div className="card-top-icon">
-            <svg style={{ width: '22px', height: '22px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87m-4-12a4 4 0 0 1 0 7.75"/></svg>
-          </div>
-          <h3>Client Directory</h3>
-          <p>Inspect purchase histories, vehicle logs, and client accounting profiles.</p>
-          <Link to="/staff/customers" className="btn-card-launch">View Directory ➔</Link>
-        </div>
-
-        <div className="operation-nav-card">
-          <div className="card-top-icon">
-            <svg style={{ width: '22px', height: '22px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 3v18h18M7 16h3v-4H7v4zm5 0h3V9h-3v7zm5 0h3V5h-3v11z"/></svg>
-          </div>
-          <h3>Customer Reports</h3>
-          <p>Analyze buying frequencies, outstanding ledger statements, and debt alerts.</p>
-          <Link to="/staff/reports" className="btn-card-launch">Open Auditing ➔</Link>
-        </div>
+        ))}
       </div>
 
       {/* Recent Invoices Section */}
