@@ -40,6 +40,54 @@
 }
 
 /* Search bar styling */
+.directory-field-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.directory-field-selector select {
+  padding: 10px 36px 10px 36px;
+  background: #0d1117;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.directory-field-selector select:focus {
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.03);
+}
+
+.directory-field-selector svg:first-of-type {
+  position: absolute;
+  left: 12px;
+  width: 14px;
+  height: 14px;
+  color: var(--admin-text-muted);
+  pointer-events: none;
+}
+
+.directory-field-selector .select-chevron {
+  position: absolute;
+  right: 12px;
+  width: 12px;
+  height: 12px;
+  color: var(--admin-text-muted);
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.directory-field-selector:hover select {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
 .directory-search-box {
   position: relative;
   width: 100%;
@@ -58,7 +106,7 @@
 
 .directory-search-box input {
   width: 100%;
-  padding: 10px 16px 10px 38px;
+  padding: 10px 36px 10px 38px;
   background: #0d1117;
   border: 1px solid var(--admin-border);
   border-radius: 8px;
@@ -71,6 +119,79 @@
 .directory-search-box input:focus {
   border-color: rgba(255, 255, 255, 0.2);
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.03);
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--admin-text-muted);
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.search-clear-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.search-clear-btn svg {
+  position: static;
+  transform: none;
+  width: 12px;
+  height: 12px;
+}
+
+/* Active filter badge styling */
+.directory-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--admin-border);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--admin-text-muted);
+  align-self: flex-start;
+  animation: dirFadeIn 0.3s ease-out;
+}
+
+.directory-filter-badge svg:first-of-type {
+  width: 12px;
+  height: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.directory-filter-badge button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--admin-text-muted);
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.directory-filter-badge button:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.directory-filter-badge button svg {
+  width: 10px;
+  height: 10px;
 }
 
 /* New Customer Link Button */
@@ -212,4 +333,46 @@
   color: var(--admin-text-muted);
   font-size: 14px;
   gap: 8px;
+}
+
+/* Premium dynamic validation alert styling */
+.directory-validation-error {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(227, 59, 59, 0.08);
+  border: 1px solid rgba(227, 59, 59, 0.3);
+  border-radius: 8px;
+  color: #ff6b6b;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+  z-index: 10;
+  animation: validationSlideDown 0.25s ease-out;
+}
+
+.directory-validation-error svg {
+  position: static !important;
+  transform: none !important;
+  width: 14px;
+  height: 14px;
+  color: #ff6b6b;
+  flex-shrink: 0;
+}
+
+@keyframes validationSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

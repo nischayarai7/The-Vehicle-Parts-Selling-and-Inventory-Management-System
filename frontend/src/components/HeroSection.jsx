@@ -45,8 +45,8 @@ const HeroSection = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (selectedYear) {
-      navigate('/shop');
+    if (selectedMake && selectedModel && selectedYear) {
+      navigate(`/shop?make=${encodeURIComponent(selectedMake)}&model=${encodeURIComponent(selectedModel)}&year=${encodeURIComponent(selectedYear)}`);
     }
   };
 
@@ -93,7 +93,13 @@ const HeroSection = () => {
                     <div key={v.id} className="garage-item" style={{ background: '#fff', padding: '15px', marginBottom: '10px', borderRadius: '4px', color: '#333' }}>
                       <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>{v.displayName}</p>
                       {v.licensePlate && <p style={{ margin: '5px 0 0 0', fontSize: '0.9rem', color: '#666' }}>Plate: {v.licensePlate}</p>}
-                      <button onClick={() => navigate('/shop')} className="btn-primary" style={{ width: '100%', marginTop: '15px', padding: '10px' }}>Shop for this vehicle</button>
+                      <button 
+                        onClick={() => navigate(`/shop?make=${encodeURIComponent(v.make || '')}&model=${encodeURIComponent(v.model || '')}&year=${encodeURIComponent(v.year || '')}`)} 
+                        className="btn-primary" 
+                        style={{ width: '100%', marginTop: '15px', padding: '10px' }}
+                      >
+                        Shop for this vehicle
+                      </button>
                     </div>
                   ))}
                   {myVehicles.length > 2 && <p style={{color: 'white', textAlign: 'center'}}>+ {myVehicles.length - 2} more vehicles</p>}

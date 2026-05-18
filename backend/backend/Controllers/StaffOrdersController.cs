@@ -16,11 +16,13 @@ namespace backend.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration;
 
-        public StaffOrdersController(AppDbContext context, IEmailService emailService)
+        public StaffOrdersController(AppDbContext context, IEmailService emailService, IConfiguration configuration)
         {
             _context = context;
             _emailService = emailService;
+            _configuration = configuration;
         }
 
         private int GetCurrentUserId()
@@ -82,6 +84,8 @@ namespace backend.Controllers
                 CreatedByName = order.CreatedBy != null ? order.CreatedBy.FullName : "Storefront",
                 order.Status,
                 order.TotalAmount,
+                order.OriginalAmount,
+                order.DiscountAmount,
                 order.Notes,
                 order.CreatedAt,
                 Items = order.Items.Select(i => new
@@ -140,6 +144,20 @@ namespace backend.Controllers
                 newOrder.Items.Add(orderItem);
             }
 
+            var originalAmount = newOrder.TotalAmount;
+            var threshold = _configuration.GetValue<decimal>("LoyaltySettings:ThresholdAmount", 5000.00m);
+            var rate = _configuration.GetValue<decimal>("LoyaltySettings:DiscountRate", 0.10m);
+
+            decimal discountAmount = 0m;
+            if (originalAmount > threshold)
+            {
+                discountAmount = originalAmount * rate;
+            }
+
+            newOrder.OriginalAmount = originalAmount;
+            newOrder.DiscountAmount = discountAmount;
+            newOrder.TotalAmount = originalAmount - discountAmount;
+
             await _context.Orders.AddAsync(newOrder);
             await _context.SaveChangesAsync();
 
@@ -184,7 +202,16 @@ namespace backend.Controllers
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan='3' align='right'><strong>Total Amount:</strong></td>
+                                <td colspan='3' align='right'>Subtotal:</td>
+                                <td>${(order.OriginalAmount > 0 ? order.OriginalAmount : order.TotalAmount):F2}</td>
+                            </tr>
+                            {(order.DiscountAmount > 0 ? $@"
+                            <tr>
+                                <td colspan='3' align='right' style='color: #2ea043;'>Loyalty Discount Applied:</td>
+                                <td style='color: #2ea043;'>-${order.DiscountAmount:F2}</td>
+                            </tr>" : "")}
+                            <tr>
+                                <td colspan='3' align='right'><strong>Grand Total:</strong></td>
                                 <td><strong>${order.TotalAmount:F2}</strong></td>
                             </tr>
                         </tfoot>

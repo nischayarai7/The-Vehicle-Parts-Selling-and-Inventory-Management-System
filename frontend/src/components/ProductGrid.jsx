@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { useCart } from '../context/CartContext';
 import './ProductGrid.css';
 
 const ProductGrid = () => {
   const [parts, setParts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchParts = async () => {
@@ -55,7 +57,7 @@ const ProductGrid = () => {
                   ★★★★★ <span className="rating-count">(5)</span>
                 </div>
                 <div className="product-price">Rs. {part.price.toFixed(2)}</div>
-                <button className="add-to-cart-btn">Add to Cart</button>
+                <button className="add-to-cart-btn" onClick={() => addToCart(part)}>Add to Cart</button>
               </div>
             </div>
           ))}

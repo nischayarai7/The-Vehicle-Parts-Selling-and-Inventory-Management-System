@@ -239,6 +239,18 @@ export const api = {
     return handleResponse(response);
   },
 
+  getCompatibleParts(vehicleId) {
+    return fetch(`${API_BASE}/parts/compatible/${vehicleId}`).then(handleResponse);
+  },
+
+  submitContactForm(data) {
+    return fetch(`${API_BASE}/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(handleResponse);
+  },
+
   createPart: (data) => fetch(`${API_BASE}/parts`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -263,7 +275,11 @@ export const api = {
 
   // --- Staff Operations ---
   getStaffCustomers: () => fetch(`${API_BASE}/StaffCustomers`, { headers: getAuthHeaders() }).then(handleResponse),
-  searchStaffCustomers: (query) => fetch(`${API_BASE}/StaffCustomers/search?query=${encodeURIComponent(query)}`, { headers: getAuthHeaders() }).then(handleResponse),
+  searchStaffCustomers: (query, field = null) => {
+    let url = `${API_BASE}/StaffCustomers/search?query=${encodeURIComponent(query)}`;
+    if (field) url += `&field=${encodeURIComponent(field)}`;
+    return fetch(url, { headers: getAuthHeaders() }).then(handleResponse);
+  },
   getStaffCustomerDetails: (id) => fetch(`${API_BASE}/StaffCustomers/${id}`, { headers: getAuthHeaders() }).then(handleResponse),
   getAvailableVehicles: () => fetch(`${API_BASE}/StaffCustomers/vehicles`, { headers: getAuthHeaders() }).then(handleResponse),
   registerStaffCustomer: (data) => fetch(`${API_BASE}/StaffCustomers/register`, {
@@ -340,6 +356,16 @@ export const api = {
     }
     return fetch(url, { headers: getAuthHeaders() }).then(handleResponse);
   },
+
+  // ── Customer Orders (Storefront) ─────────────────────────────────────────
+  getCustomerOrders: () => fetch(`${API_BASE}/orders`, { headers: getAuthHeaders() }).then(handleResponse),
+  getCustomerOrderDetails: (id) => fetch(`${API_BASE}/orders/${id}`, { headers: getAuthHeaders() }).then(handleResponse),
+  createStorefrontOrder: (data) => fetch(`${API_BASE}/orders`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  getLoyaltySettings: () => fetch(`${API_BASE}/orders/loyalty-settings`).then(handleResponse),
 
   getToken() {
     return localStorage.getItem('token');

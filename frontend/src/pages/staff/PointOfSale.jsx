@@ -12,6 +12,7 @@ const PointOfSale = () => {
   const [cart, setCart] = useState([]);
   const [notes, setNotes] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [loyaltySettings, setLoyaltySettings] = useState({ thresholdAmount: 5000, discountRate: 0.10 });
   
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
@@ -24,7 +25,19 @@ const PointOfSale = () => {
   useEffect(() => {
     fetchCustomers();
     fetchParts();
+    fetchLoyaltySettings();
   }, []);
+
+  const fetchLoyaltySettings = async () => {
+    try {
+      const res = await api.getLoyaltySettings();
+      if (res) {
+        setLoyaltySettings(res);
+      }
+    } catch (err) {
+      console.error('Failed to fetch loyalty settings:', err);
+    }
+  };
 
   const fetchCustomers = async () => {
     try {
@@ -106,7 +119,9 @@ const PointOfSale = () => {
     }).format(amount).replace('NPR', 'Rs.');
   };
 
-  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const discount = subtotal > loyaltySettings.thresholdAmount ? (subtotal * loyaltySettings.discountRate) : 0;
+  const total = subtotal - discount;
 
   // Filter parts by search
   const filteredParts = parts.filter(p =>
@@ -298,8 +313,18 @@ const PointOfSale = () => {
           </div>
 
           {/* Footer */}
-          <div className="cart-footer">
-            <div className="cart-total-row">
+          <div className="cart-footer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--admin-text-muted)', opacity: 0.8 }}>
+              <span>Subtotal Amount:</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+            {discount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#2ea043', fontWeight: '500' }}>
+                <span>Loyalty Discount ({Math.round(loyaltySettings.discountRate * 100)}%):</span>
+                <span>-{formatCurrency(discount)}</span>
+              </div>
+            )}
+            <div className="cart-total-row" style={{ marginTop: '4px', paddingTop: '8px', borderTop: '1px solid var(--admin-border)' }}>
               <span className="cart-total-label">Total Amount</span>
               <span className="cart-total-value">{formatCurrency(total)}</span>
             </div>
