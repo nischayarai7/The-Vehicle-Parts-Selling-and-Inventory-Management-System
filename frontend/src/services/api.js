@@ -202,6 +202,22 @@ export const api = {
     headers: getAuthHeaders()
   }).then(handleResponse),
 
+  uploadCategoryImage: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return fetch(`${API_BASE}/categories/upload-image`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+      body: formData
+    }).then(handleResponse);
+  },
+
+  deleteCategoryImage: (imageUrl) => fetch(`${API_BASE}/categories/delete-image`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ imageUrl })
+  }).then(handleResponse),
+
   // --- Parts ---
   async getAllParts() {
     const response = await fetch(`${API_BASE}/parts`);

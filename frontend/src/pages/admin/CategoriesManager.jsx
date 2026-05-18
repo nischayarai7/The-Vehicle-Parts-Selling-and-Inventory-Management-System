@@ -12,9 +12,16 @@ const CategoriesManager = () => {
   const [currentCategory, setCurrentCategory] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [notification, setNotification] = useState(null);
+  
+  // Image Upload States
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    imageUrl: '',
     isActive: true
   });
 
@@ -42,22 +49,96 @@ const CategoriesManager = () => {
     });
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+      setSelectedImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    // 1. If it's a local unsaved blob preview, just clear it locally
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+      setSelectedImageFile(null);
+      setImagePreview('');
+      setFormData({
+        ...formData,
+        imageUrl: ''
+      });
+      return;
+    }
+
+    // 2. If it's an uploaded Cloudinary URL, delete it from Cloudinary instantly
+    if (formData.imageUrl) {
+      setUploadingImage(true);
+      try {
+        await api.deleteCategoryImage(formData.imageUrl);
+        
+        const updatedPayload = {
+          ...formData,
+          imageUrl: ''
+        };
+
+        // If editing an existing category, immediately save to DB so they stay in perfect sync
+        if (currentCategory) {
+          await api.updateCategory(currentCategory.id, updatedPayload);
+          fetchCategories();
+        }
+
+        setFormData(updatedPayload);
+        setImagePreview('');
+      } catch (error) {
+        console.error('Error deleting image:', error);
+        showNotification('Failed to delete image from Cloudinary', 'error');
+      } finally {
+        setUploadingImage(false);
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setUploadingImage(true);
     try {
+      let finalImageUrl = formData.imageUrl;
+
+      // 1. Upload file first if selected
+      if (selectedImageFile) {
+        const uploadResult = await api.uploadCategoryImage(selectedImageFile);
+        finalImageUrl = uploadResult.url;
+      }
+
+      const categoryPayload = {
+        ...formData,
+        imageUrl: finalImageUrl
+      };
+
       if (currentCategory) {
-        await api.updateCategory(currentCategory.id, formData);
+        await api.updateCategory(currentCategory.id, categoryPayload);
         showNotification('Category updated successfully');
       } else {
-        await api.createCategory(formData);
+        await api.createCategory(categoryPayload);
         showNotification('Category created successfully');
       }
+      
+      // Clean up object URL preview
+      if (imagePreview && imagePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreview);
+      }
+      
       setShowModal(false);
       resetForm();
       fetchCategories();
     } catch (error) {
       console.error('Error saving category:', error);
       showNotification(error.message || 'Failed to save category', 'error');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -66,14 +147,26 @@ const CategoriesManager = () => {
     setFormData({
       name: category.name,
       description: category.description || '',
+      imageUrl: category.imageUrl || '',
       isActive: category.isActive
     });
+    setImagePreview(category.imageUrl || '');
+    setSelectedImageFile(null);
     setShowModal(true);
   };
 
   const handleDelete = async (id) => {
     try {
+      const categoryToDelete = categories.find(c => c.id === id);
       await api.deleteCategory(id);
+      
+      // Clean up the image from Cloudinary in the background
+      if (categoryToDelete && categoryToDelete.imageUrl) {
+        api.deleteCategoryImage(categoryToDelete.imageUrl).catch(err => 
+          console.error("Failed to delete category image from Cloudinary:", err)
+        );
+      }
+
       showNotification('Category deleted successfully');
       setDeletingId(null);
       fetchCategories();
@@ -93,9 +186,15 @@ const CategoriesManager = () => {
     setFormData({
       name: '',
       description: '',
+      imageUrl: '',
       isActive: true
     });
     setCurrentCategory(null);
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setImagePreview('');
+    setSelectedImageFile(null);
   };
 
   const filteredCategories = categories.filter(c => {
@@ -132,30 +231,43 @@ const CategoriesManager = () => {
       <div className="categories-grid">
         {filteredCategories.map(category => (
           <div key={category.id} className="category-card">
-            <span className={`category-status ${category.isActive ? 'status-active' : 'status-inactive'}`}>
-              {category.isActive ? 'Active' : 'Inactive'}
-            </span>
-            <div className="category-info">
-              <div className="category-icon-wrapper">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-              </div>
-              <h3>{category.name}</h3>
-              <p className="category-desc">{category.description || 'No description provided.'}</p>
-            </div>
-            <div className="category-actions">
-              <button className="btn-edit-cat" onClick={() => handleEdit(category)}>
-                Edit
-              </button>
-              {deletingId === category.id ? (
-                <div className="delete-confirm">
-                  <button className="btn-confirm-cat" onClick={() => handleDelete(category.id)}>Yes</button>
-                  <button className="btn-cancel-small-cat" onClick={() => setDeletingId(null)}>No</button>
-                </div>
+            <div className="category-card-banner">
+              {category.imageUrl ? (
+                <img 
+                  src={category.imageUrl} 
+                  alt={category.name} 
+                  className="category-banner-img" 
+                />
               ) : (
-                <button className="btn-delete-cat" onClick={() => setDeletingId(category.id)}>
-                  Delete
-                </button>
+                <div className="category-banner-placeholder">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                </div>
               )}
+              <span className={`category-status ${category.isActive ? 'status-active' : 'status-inactive'}`}>
+                {category.isActive ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+
+            <div className="category-card-content">
+              <div className="category-info">
+                <h3>{category.name}</h3>
+                <p className="category-desc">{category.description || 'No description provided.'}</p>
+              </div>
+              <div className="category-actions">
+                <button className="btn-edit-cat" onClick={() => handleEdit(category)}>
+                  Edit
+                </button>
+                {deletingId === category.id ? (
+                  <div className="delete-confirm">
+                    <button className="btn-confirm-cat" onClick={() => handleDelete(category.id)}>Yes</button>
+                    <button className="btn-cancel-small-cat" onClick={() => setDeletingId(null)}>No</button>
+                  </div>
+                ) : (
+                  <button className="btn-delete-cat" onClick={() => setDeletingId(category.id)}>
+                    Delete
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -196,6 +308,37 @@ const CategoriesManager = () => {
                   placeholder="What parts are in this category?"
                 />
               </div>
+              <div className="form-group-cat">
+                <label>Category Image</label>
+                <div className="image-upload-container">
+                  {imagePreview ? (
+                    <div className="image-preview">
+                      <img src={imagePreview} alt="Category preview" />
+                      <button 
+                        type="button" 
+                        className="btn-remove-image" 
+                        onClick={handleRemoveImage}
+                        title="Remove image"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="upload-placeholder">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleFileChange} 
+                        className="file-input-hidden" 
+                        id="category-image-upload"
+                      />
+                      <label htmlFor="category-image-upload" className="btn-upload">
+                        Choose Category Image
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="form-group-cat checkbox-group">
                 <input
                   type="checkbox"
@@ -207,8 +350,10 @@ const CategoriesManager = () => {
                 <label htmlFor="isActive">Show this category in storefront</label>
               </div>
               <div className="modal-actions-cat">
-                <button type="button" className="btn-cancel-cat" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn-submit-cat">{currentCategory ? 'Update' : 'Create'}</button>
+                <button type="button" className="btn-cancel-cat" onClick={() => setShowModal(false)} disabled={uploadingImage}>Cancel</button>
+                <button type="submit" className="btn-submit-cat" disabled={uploadingImage}>
+                  {uploadingImage ? 'Saving...' : currentCategory ? 'Update' : 'Create'}
+                </button>
               </div>
             </form>
           </div>

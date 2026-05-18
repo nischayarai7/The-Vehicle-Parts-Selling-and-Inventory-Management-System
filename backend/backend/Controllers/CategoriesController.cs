@@ -4,6 +4,7 @@ using backend.Services.Interfaces;
 using backend.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using backend.Services;
 
 namespace backend.Controllers
 {
@@ -86,5 +87,43 @@ namespace backend.Controllers
             await _categoryService.DeleteCategoryAsync(id);
             return Ok(ApiResponse.Ok("Category deleted successfully"));
         }
+
+        // ── POST /api/categories/upload-image ─────────────────────────────────────
+        [HttpPost("upload-image")]
+        [HasPermission("categories.manage")]
+        public async Task<IActionResult> UploadImage(IFormFile file, [FromServices] ICloudinaryService cloudinaryService)
+        {
+            try 
+            {
+                var url = await cloudinaryService.UploadImageAsync(file);
+                if (url == null) return BadRequest(ApiResponse.Fail("Upload failed"));
+                
+                return Ok(ApiResponse<object>.Ok(new { url }, "Image uploaded successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.Fail(ex.Message));
+            }
+        }
+
+        // ── POST /api/categories/delete-image ─────────────────────────────────────
+        [HttpPost("delete-image")]
+        [HasPermission("categories.manage")]
+        public async Task<IActionResult> DeleteImage([FromBody] DeleteImageRequest request, [FromServices] ICloudinaryService cloudinaryService)
+        {
+            if (request == null || string.IsNullOrEmpty(request.ImageUrl)) 
+                return BadRequest(ApiResponse.Fail("Image URL cannot be empty"));
+
+            var success = await cloudinaryService.DeleteImageAsync(request.ImageUrl);
+            if (!success) return BadRequest(ApiResponse.Fail("Failed to delete image from Cloudinary"));
+
+            return Ok(ApiResponse.Ok("Image deleted from Cloudinary successfully"));
+        }
+    }
+
+    public class DeleteImageRequest
+    {
+        public string ImageUrl { get; set; } = string.Empty;
     }
 }
+
