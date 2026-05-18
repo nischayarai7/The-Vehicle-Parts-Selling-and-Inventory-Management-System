@@ -89,6 +89,67 @@
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
+.btn-invoice-action.primary-blue {
+  background: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+.btn-invoice-action.primary-blue:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.invoice-actions-right {
+  display: flex;
+  gap: 12px;
+}
+
+/* Toast Alert Style */
+.invoice-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: #22252d;
+  border: 1px solid var(--invoice-border);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  color: var(--invoice-text-main);
+  font-size: 13.5px;
+  font-weight: 500;
+  animation: toastFadeIn 0.3s ease;
+}
+
+.invoice-toast.success {
+  border-left: 4px solid var(--invoice-success);
+}
+
+.invoice-toast.success svg {
+  color: var(--invoice-success);
+}
+
+.invoice-toast.error {
+  border-left: 4px solid #e33b3b;
+}
+
+.invoice-toast.error svg {
+  color: #e33b3b;
+}
+
+@keyframes toastFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Premium Invoice Card - Styled like a real, pristine modern receipt document */
 .invoice-document-card {
   background: #ffffff;

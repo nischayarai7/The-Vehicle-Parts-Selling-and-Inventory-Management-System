@@ -334,3 +334,45 @@
   font-size: 14px;
   gap: 8px;
 }
+
+/* Premium dynamic validation alert styling */
+.directory-validation-error {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(227, 59, 59, 0.08);
+  border: 1px solid rgba(227, 59, 59, 0.3);
+  border-radius: 8px;
+  color: #ff6b6b;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+  z-index: 10;
+  animation: validationSlideDown 0.25s ease-out;
+}
+
+.directory-validation-error svg {
+  position: static !important;
+  transform: none !important;
+  width: 14px;
+  height: 14px;
+  color: #ff6b6b;
+  flex-shrink: 0;
+}
+
+@keyframes validationSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

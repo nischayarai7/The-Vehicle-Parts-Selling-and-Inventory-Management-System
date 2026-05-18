@@ -8,6 +8,9 @@ const StaffInvoice = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailStatus, setEmailStatus] = useState(null); // { type: 'success'|'error', message: string }
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -25,6 +28,27 @@ const StaffInvoice = () => {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleSendEmail = async () => {
+    setSendingEmail(true);
+    setEmailStatus(null);
+    try {
+      await api.sendStaffOrderInvoice(id);
+      setEmailStatus({ 
+        type: 'success', 
+        message: `Invoice successfully dispatched to ${order.customerEmail || 'the registered email'}.` 
+      });
+      // Auto-clear message
+      setTimeout(() => setEmailStatus(null), 5000);
+    } catch (err) {
+      setEmailStatus({ 
+        type: 'error', 
+        message: err.message || 'Failed to dispatch email invoice.' 
+      });
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   const formatCurrency = (amount) => {
@@ -72,6 +96,20 @@ const StaffInvoice = () => {
 
   return (
     <div className="invoice-page-container">
+      {/* Toast Alert */}
+      {emailStatus && (
+        <div className={`invoice-toast ${emailStatus.type} no-print`}>
+          <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            {emailStatus.type === 'success' ? (
+              <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>
+            ) : (
+              <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>
+            )}
+          </svg>
+          <span>{emailStatus.message}</span>
+        </div>
+      )}
+
       {/* Top Action controls header */}
       <div className="invoice-controls-header no-print">
         <div className="invoice-actions-left">
@@ -84,10 +122,36 @@ const StaffInvoice = () => {
             New Transaction
           </Link>
         </div>
-        <button onClick={handlePrint} className="btn-invoice-action success-green">
-          <svg style={{ width: '14px', height: '14px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          Print Invoice
-        </button>
+        
+        <div className="invoice-actions-right">
+          <button 
+            onClick={handleSendEmail} 
+            disabled={sendingEmail}
+            className="btn-invoice-action primary-blue"
+          >
+            {sendingEmail ? (
+              <>
+                <svg className="refresh-icon-svg spinning" style={{ width: '14px', height: '14px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+                Sending Email...
+              </>
+            ) : (
+              <>
+                <svg style={{ width: '14px', height: '14px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                Email Invoice
+              </>
+            )}
+          </button>
+
+          <button onClick={handlePrint} className="btn-invoice-action success-green">
+            <svg style={{ width: '14px', height: '14px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print Invoice
+          </button>
+        </div>
       </div>
 
       {/* Invoice Document Card */}
