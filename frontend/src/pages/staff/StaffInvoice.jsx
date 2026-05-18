@@ -223,6 +223,16 @@ const StaffInvoice = () => {
                 {order.status}
               </span>
             </div>
+            <div className="totals-row">
+              <span>Subtotal Amount</span>
+              <span>{formatCurrency(order.originalAmount > 0 ? order.originalAmount : order.totalAmount)}</span>
+            </div>
+            {order.discountAmount > 0 && (
+              <div className="totals-row" style={{ color: '#2ea043', fontWeight: '600' }}>
+                <span>Loyalty Discount Applied</span>
+                <strong>-{formatCurrency(order.discountAmount)}</strong>
+              </div>
+            )}
             <div className="totals-row grand-total">
               <span>Grand Total</span>
               <strong>{formatCurrency(order.totalAmount)}</strong>

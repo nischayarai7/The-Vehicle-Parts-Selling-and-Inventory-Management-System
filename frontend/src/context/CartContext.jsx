@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { api } from '../services/api';
 
 const CartContext = createContext(null);
 
@@ -13,10 +14,21 @@ export const CartProvider = ({ children }) => {
   });
 
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [loyaltySettings, setLoyaltySettings] = useState({ thresholdAmount: 5000, discountRate: 0.10 });
 
   useEffect(() => {
     localStorage.setItem('storefront_cart', JSON.stringify(cart));
   }, [cart]);
+
+  useEffect(() => {
+    api.getLoyaltySettings()
+      .then(settings => {
+        if (settings) {
+          setLoyaltySettings(settings);
+        }
+      })
+      .catch(err => console.error('Failed to load loyalty settings:', err));
+  }, []);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -97,11 +109,18 @@ export const CartProvider = ({ children }) => {
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
+  const discountApplied = cartSubtotal > loyaltySettings.thresholdAmount ? (cartSubtotal * loyaltySettings.discountRate) : 0;
+  const cartTotal = cartSubtotal - discountApplied;
+
   return (
     <CartContext.Provider value={{
       cart,
       cartCount,
       cartSubtotal,
+      discountApplied,
+      cartTotal,
+      loyaltyThreshold: loyaltySettings.thresholdAmount,
+      loyaltyRate: loyaltySettings.discountRate,
       addToCart,
       removeFromCart,
       updateQuantity,

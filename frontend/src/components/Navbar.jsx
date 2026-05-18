@@ -15,6 +15,10 @@ const Navbar = () => {
     cart, 
     cartCount, 
     cartSubtotal, 
+    discountApplied,
+    cartTotal,
+    loyaltyThreshold,
+    loyaltyRate,
     removeFromCart, 
     updateQuantity, 
     clearCart, 
@@ -71,7 +75,9 @@ const Navbar = () => {
       const result = await api.createStorefrontOrder(payload);
       setSuccessOrder({
         orderNumber: result.orderNumber || result.OrderNumber,
-        total: cartSubtotal,
+        originalAmount: cartSubtotal,
+        discountAmount: discountApplied,
+        total: cartTotal,
         address: shippingAddress.trim()
       });
 
@@ -229,9 +235,21 @@ const Navbar = () => {
 
             {cart.length > 0 && (
               <div className="drawer-footer">
-                <div className="subtotal-row">
-                  <span>Subtotal Amount:</span>
-                  <strong>{formatCurrency(cartSubtotal)}</strong>
+                <div className="subtotal-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                    <span style={{ fontSize: '14px', opacity: 0.8, color: 'rgba(255,255,255,0.7)' }}>Cart Subtotal:</span>
+                    <span style={{ fontSize: '14px', fontWeight: '500', color: '#fff' }}>{formatCurrency(cartSubtotal)}</span>
+                  </div>
+                  {discountApplied > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', color: '#3fb950' }}>
+                      <span style={{ fontSize: '14px', fontWeight: '500' }}>Loyalty Discount ({Math.round(loyaltyRate * 100)}%):</span>
+                      <span style={{ fontSize: '14px', fontWeight: '600' }}>-{formatCurrency(discountApplied)}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginTop: '4px' }}>
+                    <span style={{ fontSize: '16px', fontWeight: '600', color: '#fff' }}>Total Amount:</span>
+                    <strong style={{ fontSize: '18px', color: '#ff3e3e', fontWeight: '700' }}>{formatCurrency(cartTotal)}</strong>
+                  </div>
                 </div>
 
                 <form className="drawer-checkout-form" onSubmit={handleCheckout}>
@@ -296,6 +314,16 @@ const Navbar = () => {
                 <span>Shipping Address:</span>
                 <span className="address-preview">{successOrder.address}</span>
               </div>
+              <div className="receipt-line">
+                <span>Item Subtotal:</span>
+                <strong>{formatCurrency(successOrder.originalAmount)}</strong>
+              </div>
+              {successOrder.discountAmount > 0 && (
+                <div className="receipt-line" style={{ color: '#2ea043' }}>
+                  <span>Loyalty Discount Applied:</span>
+                  <strong>-{formatCurrency(successOrder.discountAmount)}</strong>
+                </div>
+              )}
               <hr />
               <div className="receipt-line total">
                 <span>Grand Total:</span>

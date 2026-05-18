@@ -243,6 +243,14 @@ export const api = {
     return fetch(`${API_BASE}/parts/compatible/${vehicleId}`).then(handleResponse);
   },
 
+  submitContactForm(data) {
+    return fetch(`${API_BASE}/contact`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(handleResponse);
+  },
+
   createPart: (data) => fetch(`${API_BASE}/parts`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -357,6 +365,7 @@ export const api = {
     headers: getAuthHeaders(),
     body: JSON.stringify(data)
   }).then(handleResponse),
+  getLoyaltySettings: () => fetch(`${API_BASE}/orders/loyalty-settings`).then(handleResponse),
 
   getToken() {
     return localStorage.getItem('token');

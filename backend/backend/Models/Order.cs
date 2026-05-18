@@ -16,6 +16,8 @@ namespace backend.Models
         public string Status { get; set; } = "Pending";
 
         public decimal TotalAmount { get; set; }
+        public decimal OriginalAmount { get; set; }
+        public decimal DiscountAmount { get; set; }
         public string? ShippingAddress { get; set; }
         public string? Notes { get; set; }
 

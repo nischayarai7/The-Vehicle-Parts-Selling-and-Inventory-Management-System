@@ -18,10 +18,12 @@ namespace backend.Controllers
     public class OrdersController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public OrdersController(AppDbContext context)
+        public OrdersController(AppDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         private int GetCurrentUserId()
@@ -29,6 +31,30 @@ namespace backend.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null) throw new UnauthorizedAccessException("User identity not found in token context.");
             return int.Parse(userIdClaim.Value);
+        }
+
+        [HttpGet("loyalty-settings")]
+        [AllowAnonymous]
+        public ActionResult GetLoyaltySettings()
+        {
+            try
+            {
+                var threshold = _configuration.GetValue<decimal>("LoyaltySettings:ThresholdAmount", 5000.00m);
+                var rate = _configuration.GetValue<decimal>("LoyaltySettings:DiscountRate", 0.10m);
+                return Ok(new 
+                { 
+                    success = true, 
+                    data = new 
+                    { 
+                        thresholdAmount = threshold, 
+                        discountRate = rate 
+                    } 
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpGet]
@@ -81,6 +107,8 @@ namespace backend.Controllers
                     order.OrderNumber,
                     order.Status,
                     order.TotalAmount,
+                    order.OriginalAmount,
+                    order.DiscountAmount,
                     order.ShippingAddress,
                     order.Notes,
                     order.CreatedAt,
@@ -149,6 +177,20 @@ namespace backend.Controllers
                     newOrder.TotalAmount += (orderItem.Quantity * orderItem.UnitPrice);
                     newOrder.Items.Add(orderItem);
                 }
+
+                var originalAmount = newOrder.TotalAmount;
+                var threshold = _configuration.GetValue<decimal>("LoyaltySettings:ThresholdAmount", 5000.00m);
+                var rate = _configuration.GetValue<decimal>("LoyaltySettings:DiscountRate", 0.10m);
+
+                decimal discountAmount = 0m;
+                if (originalAmount > threshold)
+                {
+                    discountAmount = originalAmount * rate;
+                }
+
+                newOrder.OriginalAmount = originalAmount;
+                newOrder.DiscountAmount = discountAmount;
+                newOrder.TotalAmount = originalAmount - discountAmount;
 
                 await _context.Orders.AddAsync(newOrder);
                 await _context.SaveChangesAsync();

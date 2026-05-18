@@ -446,15 +446,27 @@ const ProfileSettings = () => {
                           </div>
                         )}
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#888', fontSize: '0.9rem' }}>Payment Method: <strong style={{ color: '#fff' }}>Cash on Delivery</strong></span>
-                        <strong style={{ color: 'var(--primary)', fontSize: '1.15rem' }}>
-                          {new Intl.NumberFormat('en-US', {
-                            style: 'currency',
-                            currency: 'NPR',
-                            minimumFractionDigits: 2
-                          }).format(order.totalAmount).replace('NPR', 'Rs.')}
-                        </strong>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', color: '#888' }}>
+                          <span>Payment Method: <strong style={{ color: '#fff' }}>Cash on Delivery</strong></span>
+                          <span>Subtotal: Rs. {(order.originalAmount > 0 ? order.originalAmount : order.totalAmount).toFixed(2)}</span>
+                        </div>
+                        {order.discountAmount > 0 && (
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', fontSize: '0.9rem', color: '#3fb950' }}>
+                            <span>Loyalty Discount Applied:</span>
+                            <strong>-Rs. {order.discountAmount.toFixed(2)}</strong>
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', alignItems: 'center', borderTop: '1px solid #222', paddingTop: '8px', marginTop: '4px' }}>
+                          <span style={{ color: '#fff', fontSize: '0.95rem', fontWeight: '500' }}>Grand Total Paid:</span>
+                          <strong style={{ color: 'var(--primary)', fontSize: '1.2rem', fontWeight: '700' }}>
+                            {new Intl.NumberFormat('en-US', {
+                              style: 'currency',
+                              currency: 'NPR',
+                              minimumFractionDigits: 2
+                            }).format(order.totalAmount).replace('NPR', 'Rs.')}
+                          </strong>
+                        </div>
                       </div>
                     </div>
                   ))}
