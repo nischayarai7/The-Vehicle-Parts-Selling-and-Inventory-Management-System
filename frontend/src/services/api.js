@@ -130,6 +130,15 @@ export const api = {
 
   // --- Vehicles ---
   getVehicles: () => fetch(`${API_BASE}/vehicles`).then(handleResponse),
+  addVehicle: (data) => fetch(`${API_BASE}/vehicles`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  deleteVehicle: (id) => fetch(`${API_BASE}/vehicles/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
   getMyVehicles: () => fetch(`${API_BASE}/profile/vehicles`, { headers: getAuthHeaders() }).then(handleResponse),
   addMyVehicle: (data) => fetch(`${API_BASE}/profile/vehicles`, {
     method: 'POST',

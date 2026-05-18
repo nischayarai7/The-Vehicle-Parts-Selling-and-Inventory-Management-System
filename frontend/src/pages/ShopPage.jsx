@@ -26,6 +26,9 @@ function ShopPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState(categoryParam);
   const [sortBy, setSortBy] = useState('featured');
   const [searchQuery, setSearchQuery] = useState(searchParam);
+  const [selectedMake, setSelectedMake] = useState(makeParam);
+  const [selectedModel, setSelectedModel] = useState(modelParam);
+  const [selectedYear, setSelectedYear] = useState(yearParam);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,7 +38,10 @@ function ShopPage() {
     // Sync local dropdown states with search parameter updates
     setSelectedCategoryId(categoryParam);
     setSearchQuery(searchParam);
-  }, [categoryParam, searchParam]);
+    setSelectedMake(makeParam);
+    setSelectedModel(modelParam);
+    setSelectedYear(yearParam);
+  }, [categoryParam, searchParam, makeParam, modelParam, yearParam]);
 
   // Reset page on any filter or sort change
   useEffect(() => {
@@ -149,10 +155,34 @@ function ShopPage() {
 
   // Clear Compatibility Filters
   const clearGarageFilter = () => {
+    setSelectedMake('');
+    setSelectedModel('');
+    setSelectedYear('');
     const newParams = new URLSearchParams(searchParams);
     newParams.delete('make');
     newParams.delete('model');
     newParams.delete('year');
+    setSearchParams(newParams);
+  };
+
+  // Calculate unique Makes, Models, and Years for dropdown selectors
+  const makes = [...new Set(vehicles.map(v => v.make))].sort();
+  const models = [...new Set(vehicles.filter(v => v.make === selectedMake).map(v => v.model))].sort();
+  const years = [...new Set(vehicles.filter(v => v.make === selectedMake && v.model === selectedModel).map(v => v.year))].sort((a, b) => b - a);
+
+  // Apply Vehicle Compatibility Filter
+  const handleApplyVehicleFilter = (make, model, year) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (make && model && year) {
+      newParams.set('make', make);
+      newParams.set('model', model);
+      newParams.set('year', year);
+      newParams.delete('search'); // Clear textual search to keep catalog focus
+    } else {
+      newParams.delete('make');
+      newParams.delete('model');
+      newParams.delete('year');
+    }
     setSearchParams(newParams);
   };
 
@@ -277,6 +307,61 @@ function ShopPage() {
             <option value="price-high">Price: High to Low</option>
             <option value="name-az">Name: A to Z</option>
           </select>
+        </div>
+
+        {/* Vehicle Compatibility Filter Bar */}
+        <div className="shop-vehicle-filter-bar" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--admin-border, #2f363d)', borderRadius: '8px', padding: '12px 16px', marginTop: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontSize: '13.5px', fontWeight: '600' }}>
+            <svg style={{ width: '16px', height: '16px', color: 'var(--primary, #e33b3b)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="7" cy="21" r="2"/><circle cx="17" cy="21" r="2"/><path d="M19 11v-4a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v4"/><path d="M14 5v-2"/></svg>
+            <span>Compatible Vehicle Filter:</span>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', flex: 1 }}>
+            <select 
+              value={selectedMake} 
+              onChange={e => { setSelectedMake(e.target.value); setSelectedModel(''); setSelectedYear(''); }}
+              style={{ padding: '8px 12px', background: '#0d1117', border: '1px solid var(--admin-border, #2f363d)', borderRadius: '6px', color: '#fff', fontSize: '13px', minWidth: '130px', outline: 'none' }}
+            >
+              <option value="">-- Choose Make --</option>
+              {makes.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+
+            <select 
+              value={selectedModel} 
+              onChange={e => { setSelectedModel(e.target.value); setSelectedYear(''); }}
+              disabled={!selectedMake}
+              style={{ padding: '8px 12px', background: '#0d1117', border: '1px solid var(--admin-border, #2f363d)', borderRadius: '6px', color: '#fff', fontSize: '13px', minWidth: '130px', outline: 'none', opacity: selectedMake ? 1 : 0.5 }}
+            >
+              <option value="">-- Choose Model --</option>
+              {models.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+
+            <select 
+              value={selectedYear} 
+              onChange={e => {
+                const year = e.target.value;
+                setSelectedYear(year);
+                if (year) {
+                  handleApplyVehicleFilter(selectedMake, selectedModel, year);
+                }
+              }}
+              disabled={!selectedModel}
+              style={{ padding: '8px 12px', background: '#0d1117', border: '1px solid var(--admin-border, #2f363d)', borderRadius: '6px', color: '#fff', fontSize: '13px', minWidth: '110px', outline: 'none', opacity: selectedModel ? 1 : 0.5 }}
+            >
+              <option value="">-- Choose Year --</option>
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+
+            {(selectedMake || selectedModel || selectedYear) && (
+              <button 
+                onClick={clearGarageFilter}
+                className="btn-secondary"
+                style={{ padding: '6px 12px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(248,81,73,0.1)', borderColor: 'rgba(248,81,73,0.2)', color: '#f85149' }}
+              >
+                Clear Vehicle Filter ✕
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

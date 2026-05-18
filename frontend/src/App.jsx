@@ -20,6 +20,7 @@ import VendorsManager from './pages/admin/VendorsManager'
 import PurchaseInvoiceManager from './pages/admin/PurchaseInvoiceManager'
 import FinancialReports from './pages/admin/FinancialReports'
 import OrderManager from './pages/admin/OrderManager'
+import VehiclesManager from './pages/admin/VehiclesManager'
 import ProfileSettings from './pages/ProfileSettings'
 import AppointmentsPage from './pages/AppointmentsPage'
 import { api } from './services/api'
@@ -88,6 +89,7 @@ function App() {
         <Route path="reports" element={<FinancialReports />} />
         <Route path="settings" element={<ProfileSettings />} />
         <Route path="orders" element={<OrderManager />} />
+        <Route path="vehicles" element={<VehiclesManager />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />
