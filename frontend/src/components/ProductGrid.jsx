@@ -33,7 +33,6 @@ const ProductGrid = () => {
     fetchParts();
   }, []);
 
-<<<<<<< HEAD
   const getCompatibilityText = (vehiclesList) => {
     if (!vehiclesList || vehiclesList.length === 0) return 'Universal';
     const displayList = vehiclesList.slice(0, 2).map(v => `${v.make} ${v.model}`).join(', ');
@@ -41,7 +40,7 @@ const ProductGrid = () => {
       return `${displayList} (+${vehiclesList.length - 2} more)`;
     }
     return displayList;
-=======
+  };
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -57,7 +56,6 @@ const ProductGrid = () => {
     if (section) {
       section.scrollIntoView({ behavior: 'smooth' });
     }
->>>>>>> 73c7192f1d2e17f0f8961318d418a0b984929601
   };
 
   if (loading) return <div className="container"><p>Loading products...</p></div>;

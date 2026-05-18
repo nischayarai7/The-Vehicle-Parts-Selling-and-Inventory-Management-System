@@ -69,3 +69,51 @@
 .select-btn:hover {
   background-color: #000000;
 }
+
+.btn-garage-dark {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background-color: #222222;
+  color: white;
+  padding: 15px;
+  font-size: 16px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-garage-dark:hover {
+  background-color: #000000;
+  color: white;
+}
+
+.btn-garage-dark:disabled {
+  background-color: #555555;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-garage-outline {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background-color: transparent;
+  color: white;
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 5px;
+}
+
+.btn-garage-outline:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: white;
+}

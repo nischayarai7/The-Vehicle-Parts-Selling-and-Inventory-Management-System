@@ -289,44 +289,6 @@ function ShopPage() {
         <h1>All Vehicle Parts Catalog</h1>
 
         <div className="shop-filters">
-          {/* Instant Live Search Bar */}
-          <div className="live-search-wrapper">
-            <svg className="live-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input
-              type="text"
-              className="live-search-input"
-              placeholder="Search parts catalog..."
-              value={liveSearchQuery}
-              onChange={(e) => {
-                setLiveSearchQuery(e.target.value);
-                const newParams = new URLSearchParams(searchParams);
-                if (e.target.value) {
-                  newParams.set('search', e.target.value);
-                } else {
-                  newParams.delete('search');
-                }
-                setSearchParams(newParams, { replace: true });
-              }}
-            />
-            {liveSearchQuery && (
-              <button 
-                type="button" 
-                className="live-search-clear"
-                onClick={() => {
-                  setLiveSearchQuery('');
-                  const newParams = new URLSearchParams(searchParams);
-                  newParams.delete('search');
-                  setSearchParams(newParams, { replace: true });
-                }}
-              >
-                ✕
-              </button>
-            )}
-          </div>
-
           {/* Category Dropdown */}
           <select value={selectedCategoryId} onChange={handleCategoryChange}>
             <option value="">All Categories</option>
@@ -414,12 +376,6 @@ function ShopPage() {
           </button>
         </div>
       ) : (
-<<<<<<< HEAD
-        <div className="shop-grid">
-          {sortedPartsList.map((part) => (
-            <div key={part.id} className="product-card">
-              <Link to={`/shop/part/${part.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-=======
         <>
           <div className="shop-results-info">
             Showing <strong>{indexOfFirst + 1}</strong>–<strong>{Math.min(indexOfLast, sortedPartsList.length)}</strong> of <strong>{sortedPartsList.length}</strong> parts
@@ -428,8 +384,8 @@ function ShopPage() {
           <div className="shop-grid">
             {currentPageParts.map((part) => (
               <div key={part.id} className="product-card">
->>>>>>> 73c7192f1d2e17f0f8961318d418a0b984929601
-                <div className="product-image-wrapper">
+                <Link to={`/shop/part/${part.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+                  <div className="product-image-wrapper">
                   <img 
                     src={part.imageUrl || `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b&size=300`} 
                     alt={part.name} 
@@ -446,7 +402,6 @@ function ShopPage() {
                     <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#f85149', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
                       Out of Stock
                     </div>
-<<<<<<< HEAD
                   )}
                 </div>
               </Link>
@@ -487,32 +442,12 @@ function ShopPage() {
                         </svg>
                       </button>
                     </div>
-=======
->>>>>>> 73c7192f1d2e17f0f8961318d418a0b984929601
                   )}
                 </div>
-                <div className="product-info">
-                  <h3 style={{ minHeight: '44px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{part.name}</h3>
-                  <p style={{ fontSize: '12px', color: '#666', margin: '-10px 0 15px 0' }}>Part No: {part.partNumber || 'N/A'}</p>
-                  <div className="product-price-row">
-                    <span className="price">{formatCurrency(part.price)}</span>
-                    {part.stockQuantity <= 0 ? (
-                      <button className="btn-secondary add-to-cart-btn" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>
-                        Sold Out
-                      </button>
-                    ) : (
-                      <button 
-                        className="btn-primary add-to-cart-btn" 
-                        onClick={() => addToCart(part)}
-                      >
-                        Add to Cart
-                      </button>
-                    )}
-                  </div>
-                </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
 
           {/* Shop Pagination Controls */}
           {totalPages > 1 && (

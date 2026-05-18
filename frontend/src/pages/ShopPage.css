@@ -219,7 +219,6 @@
   }
 }
 
-<<<<<<< HEAD
 .btn-add-to-cart-icon-small {
   width: 36px;
   height: 36px;
@@ -246,7 +245,7 @@
 .btn-add-to-cart-icon-small:active {
   transform: translateY(0) scale(0.95);
 }
-=======
+
 /* Shop Pagination */
 .shop-results-info {
   font-size: 0.9rem;
@@ -316,5 +315,3 @@
   font-weight: 600;
   font-size: 14px;
 }
-
->>>>>>> 73c7192f1d2e17f0f8961318d418a0b984929601
