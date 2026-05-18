@@ -50,7 +50,7 @@ namespace backend.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<StaffCustomerListDto>>> SearchCustomers([FromQuery] string query)
+        public async Task<ActionResult<IEnumerable<StaffCustomerListDto>>> SearchCustomers([FromQuery] string query, [FromQuery] string? field = null)
         {
             if (string.IsNullOrWhiteSpace(query))
             {
@@ -60,14 +60,38 @@ namespace backend.Controllers
             var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Customer");
             if (customerRole == null) return Ok(new { success = true, data = new List<StaffCustomerListDto>() });
 
-            // Search by Name, Phone, ID, or Vehicle License Plate
-            var customersQuery = _context.Users
-                .Where(u => u.UserRoles.Any(ur => ur.RoleId == customerRole.Id))
-                .Where(u => u.FullName.Contains(query) || 
-                            u.Email.Contains(query) || 
-                            u.PhoneNumber != null && u.PhoneNumber.Contains(query) ||
-                            u.Id.ToString() == query ||
-                            u.CustomerVehicles.Any(cv => cv.LicensePlate != null && cv.LicensePlate.Contains(query)));
+            var baseQuery = _context.Users
+                .Where(u => u.UserRoles.Any(ur => ur.RoleId == customerRole.Id));
+
+            // Apply field-specific (namespaced) or broad search
+            IQueryable<User> customersQuery;
+            switch (field?.ToLower())
+            {
+                case "id":
+                    customersQuery = baseQuery.Where(u => u.Id.ToString() == query.Trim());
+                    break;
+                case "phone":
+                    customersQuery = baseQuery.Where(u => u.PhoneNumber != null && u.PhoneNumber.Contains(query));
+                    break;
+                case "vehicle":
+                    customersQuery = baseQuery.Where(u => u.CustomerVehicles.Any(cv => cv.LicensePlate != null && cv.LicensePlate.Contains(query)));
+                    break;
+                case "name":
+                    customersQuery = baseQuery.Where(u => u.FullName.Contains(query));
+                    break;
+                case "email":
+                    customersQuery = baseQuery.Where(u => u.Email.Contains(query));
+                    break;
+                default:
+                    // Broad search: match across all fields
+                    customersQuery = baseQuery.Where(u =>
+                        u.FullName.Contains(query) ||
+                        u.Email.Contains(query) ||
+                        (u.PhoneNumber != null && u.PhoneNumber.Contains(query)) ||
+                        u.Id.ToString() == query ||
+                        u.CustomerVehicles.Any(cv => cv.LicensePlate != null && cv.LicensePlate.Contains(query)));
+                    break;
+            }
 
             var results = await customersQuery
                 .Select(u => new StaffCustomerListDto
