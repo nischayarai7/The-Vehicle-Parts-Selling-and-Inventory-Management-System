@@ -46,6 +46,8 @@ import CustomerDashboard from './pages/CustomerDashboard';
 import PartRequestsPage from './pages/PartRequestsPage';
 import ReviewsPage from './pages/ReviewsPage';
 import CustomerAppointmentsPage from './pages/CustomerAppointmentsPage';
+import CustomerOrdersPage from './pages/CustomerOrdersPage';
+import CustomerServiceHistoryPage from './pages/CustomerServiceHistoryPage';
 
 function App() {
   return (
@@ -79,6 +81,8 @@ function App() {
         <Route path="reviews" element={<ReviewsPage />} />
         <Route path="appointments" element={<CustomerAppointmentsPage />} />
         <Route path="settings" element={<ProfileSettings />} />
+        <Route path="orders" element={<CustomerOrdersPage />} />
+        <Route path="service-history" element={<CustomerServiceHistoryPage />} />
       </Route>
       
       {/* Staff Routes */}

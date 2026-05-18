@@ -2,19 +2,59 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import './ShopPage.css'; // Reusing shop page styles for consistency
 
+// Business hours config (8 AM = 8, 6 PM = 18)
+const BUSINESS_START = 8;
+const BUSINESS_END = 18;
+const DAYS_AHEAD = 5;
+const MIN_HOURS_ADVANCE = 24;
+
+const generateSlots = () => {
+  const slots = [];
+  const now = new Date();
+  const earliest = new Date(now.getTime() + MIN_HOURS_ADVANCE * 60 * 60 * 1000);
+
+  for (let day = 0; day < DAYS_AHEAD; day++) {
+    const base = new Date(earliest);
+    base.setDate(base.getDate() + day);
+    base.setHours(0, 0, 0, 0);
+
+    for (let hour = BUSINESS_START; hour < BUSINESS_END; hour++) {
+      const slotTime = new Date(base);
+      slotTime.setHours(hour, 0, 0, 0);
+
+      if (slotTime < earliest) continue;
+
+      const pad = (n) => String(n).padStart(2, '0');
+      const dateStr = `${slotTime.getFullYear()}-${pad(slotTime.getMonth() + 1)}-${pad(slotTime.getDate())}`;
+      const hourStr = hour < 12 ? `${hour}:00 AM` : hour === 12 ? `12:00 PM` : `${hour - 12}:00 PM`;
+      const dayName = slotTime.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
+      slots.push({
+        dateTime: slotTime.toISOString(),
+        display: `${dayName}  •  ${hourStr}`,
+        available: 5 // Default capacity
+      });
+    }
+  }
+  return slots;
+};
+
 const CustomerAppointmentsPage = () => {
   const [appointments, setAppointments] = useState([]);
   const [myVehicles, setMyVehicles] = useState([]);
-  const [slots, setSlots] = useState([]);
+  const [slots, setSlots] = useState(() => generateSlots());
+  const [selectedDay, setSelectedDay] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     vehicleId: '',
-    serviceType: '',
     appointmentDate: '',
     notes: ''
   });
+  const [selectedServices, setSelectedServices] = useState([]);
+  const [hasActiveBooking, setHasActiveBooking] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const [message, setMessage] = useState({ text: '', type: '' });
 
@@ -24,12 +64,21 @@ const CustomerAppointmentsPage = () => {
     fetchSlots();
   }, []);
 
+  useEffect(() => {
+    if (slots.length > 0 && !selectedDay) {
+      const firstDay = slots[0].display.split('  •  ')[0];
+      setSelectedDay(firstDay);
+    }
+  }, [slots]);
+
   const fetchSlots = async () => {
     try {
       const data = await api.getAvailableSlots();
-      setSlots(data);
+      if (data && data.length > 0) {
+        setSlots(data);
+      }
     } catch (err) {
-      console.error('Failed to load slots:', err);
+      console.log('Using local slots fallback (backend might need restart)');
     }
   };
 
@@ -40,6 +89,10 @@ const CustomerAppointmentsPage = () => {
       // Handle both object and array responses
       const data = res.data || (Array.isArray(res) ? res : []);
       setAppointments(data);
+      
+      // Check for active booking
+      const hasActive = data.some(a => a.status === 'Pending' || a.status === 'Confirmed');
+      setHasActiveBooking(hasActive);
     } catch (err) {
       console.error('Failed to load appointments:', err);
     } finally {
@@ -63,10 +116,22 @@ const CustomerAppointmentsPage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleRemoveAppointment = async (id) => {
+    if (!window.confirm('Are you sure you want to remove this appointment?')) return;
+    try {
+      await api.deleteAppointment(id);
+      setMessage({ text: 'Appointment removed successfully!', type: 'success' });
+      fetchAppointments(); // Refresh list
+    } catch (err) {
+      console.error('Failed to remove appointment:', err);
+      setMessage({ text: 'Failed to remove appointment.', type: 'error' });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.serviceType || !formData.appointmentDate) {
-      setMessage({ text: 'Service Type and Date are required.', type: 'error' });
+    if (selectedServices.length === 0 || !formData.appointmentDate) {
+      setMessage({ text: 'Please select at least one service and a date/time.', type: 'error' });
       return;
     }
 
@@ -74,13 +139,20 @@ const CustomerAppointmentsPage = () => {
       setSubmitting(true);
       await api.bookAppointment({
         vehicleId: formData.vehicleId ? parseInt(formData.vehicleId) : null,
-        serviceType: formData.serviceType,
+        serviceType: selectedServices.join(', '),
         appointmentDate: new Date(formData.appointmentDate).toISOString(),
         notes: formData.notes
       });
-      setMessage({ text: 'Appointment booked successfully!', type: 'success' });
-      setFormData({ vehicleId: '', serviceType: '', appointmentDate: '', notes: '' });
+       setFormData({ vehicleId: '', appointmentDate: '', notes: '' });
+      setSelectedServices([]);
       fetchAppointments(); // Refresh list
+      fetchSlots(); // Refresh slots to update ticket count
+      setShowModal(true); // Show success modal
+      
+      // Auto close after 5 seconds
+      setTimeout(() => {
+        setShowModal(false);
+      }, 5000);
     } catch (err) {
       console.error('Failed to book appointment:', err);
       setMessage({ text: err.message || 'Failed to book appointment. Please try again.', type: 'error' });
@@ -108,8 +180,55 @@ const CustomerAppointmentsPage = () => {
     );
   }
 
+  const activeAppt = appointments.find(a => a.status === 'Pending' || a.status === 'Confirmed');
+  const activeDate = activeAppt ? activeAppt.appointmentDate : null;
+
   return (
     <div>
+      {/* Success Modal */}
+      {showModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          backdropFilter: 'blur(5px)'
+        }}>
+          <div style={{
+            background: '#0d1117',
+            border: '1px solid #52c41a',
+            borderRadius: '12px',
+            padding: '30px',
+            maxWidth: '400px',
+            textAlign: 'center',
+            boxShadow: '0 0 20px rgba(82, 196, 26, 0.3)'
+          }}>
+            <div style={{ fontSize: '50px', marginBottom: '15px' }}>🎉</div>
+            <h2 style={{ color: '#52c41a', marginBottom: '10px' }}>Thank You!</h2>
+            <p style={{ color: '#fff', marginBottom: '20px' }}>Your appointment has been booked successfully. We look forward to serving you!</p>
+            <button 
+              onClick={() => setShowModal(false)}
+              style={{
+                padding: '10px 20px',
+                background: '#52c41a',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = '#73d13d'}
+              onMouseLeave={(e) => e.currentTarget.style.background = '#52c41a'}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
       <h1>My Service Appointments</h1>
       <p style={{ color: '#888', marginBottom: '24px' }}>Schedule a service or repair appointment with our expert mechanics.</p>
 
@@ -131,57 +250,258 @@ const CustomerAppointmentsPage = () => {
             </div>
           )}
 
+          {hasActiveBooking && (
+            <div style={{ 
+              padding: '12px', 
+              borderRadius: '6px', 
+              marginBottom: '20px',
+              background: 'rgba(250, 173, 20, 0.15)',
+              color: '#faad14',
+              border: '1px solid #faad14'
+            }}>
+              ⚠️ You already have an active booking. Please complete or remove it before booking again.
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', color: '#888' }}>Service Type *</label>
-              <select 
-                name="serviceType"
-                required
-                value={formData.serviceType} 
-                onChange={handleInputChange}
-                style={{ width: '100%', padding: '10px', background: '#0d1117', border: '1px solid #2f363d', borderRadius: '6px', color: '#fff' }}
-              >
-                <option value="">Select a service</option>
-                <option value="General Inspection">General Inspection</option>
-                <option value="Oil Change">Oil Change</option>
-                <option value="Brake Service">Brake Service</option>
-                <option value="Tire Rotation/Alignment">Tire Rotation/Alignment</option>
-                <option value="Part Installation">Part Installation</option>
-                <option value="Other">Other</option>
-              </select>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '10px', color: '#888' }}>Service Type *</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>
+                {[
+                  "General Inspection",
+                  "Oil Change",
+                  "Brake Service",
+                  "Tire Rotation/Alignment",
+                  "Part Installation",
+                  "Other"
+                ].map(service => {
+                  const isSelected = selectedServices.includes(service);
+                  return (
+                    <button
+                      key={service}
+                      type="button"
+                      onClick={() => {
+                        setSelectedServices(prev => 
+                          prev.includes(service) 
+                            ? prev.filter(s => s !== service) 
+                            : [...prev, service]
+                        );
+                      }}
+                      style={{
+                        padding: '12px',
+                        background: isSelected ? 'rgba(82, 196, 26, 0.15)' : '#0d1117',
+                        color: isSelected ? '#52c41a' : '#fff',
+                        border: `1px solid ${isSelected ? '#52c41a' : '#2f363d'}`,
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        fontSize: '13px',
+                        transition: 'all 0.2s ease',
+                        boxShadow: isSelected ? '0 0 10px rgba(82, 196, 26, 0.2)' : 'none'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = '#1890ff';
+                          e.currentTarget.style.background = 'rgba(24, 144, 255, 0.05)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = '#2f363d';
+                          e.currentTarget.style.background = '#0d1117';
+                        }
+                      }}
+                    >
+                      {service}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', color: '#888' }}>Select Vehicle (Optional)</label>
-              <select 
-                name="vehicleId"
-                value={formData.vehicleId} 
-                onChange={handleInputChange}
-                style={{ width: '100%', padding: '10px', background: '#0d1117', border: '1px solid #2f363d', borderRadius: '6px', color: '#fff' }}
-              >
-                <option value="">-- No specific vehicle --</option>
-                {myVehicles.map(v => (
-                  <option key={v.id} value={v.id}>{v.displayName || `${v.make} ${v.model}`}</option>
-                ))}
-              </select>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '10px', color: '#888' }}>Select Vehicle (Optional)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, vehicleId: '' }))}
+                  style={{
+                    padding: '12px',
+                    background: formData.vehicleId === '' ? 'rgba(24, 144, 255, 0.15)' : '#0d1117',
+                    color: formData.vehicleId === '' ? '#1890ff' : '#fff',
+                    border: `1px solid ${formData.vehicleId === '' ? '#1890ff' : '#2f363d'}`,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                    fontSize: '13px',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (formData.vehicleId !== '') {
+                      e.currentTarget.style.borderColor = '#1890ff';
+                      e.currentTarget.style.background = 'rgba(24, 144, 255, 0.05)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (formData.vehicleId !== '') {
+                      e.currentTarget.style.borderColor = '#2f363d';
+                      e.currentTarget.style.background = '#0d1117';
+                    }
+                  }}
+                >
+                  -- No specific vehicle --
+                </button>
+                {myVehicles.map(v => {
+                  const isSelected = formData.vehicleId === String(v.id);
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, vehicleId: String(v.id) }))}
+                      style={{
+                        padding: '12px',
+                        background: isSelected ? 'rgba(82, 196, 26, 0.15)' : '#0d1117',
+                        color: isSelected ? '#52c41a' : '#fff',
+                        border: `1px solid ${isSelected ? '#52c41a' : '#2f363d'}`,
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        fontSize: '13px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = '#1890ff';
+                          e.currentTarget.style.background = 'rgba(24, 144, 255, 0.05)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = '#2f363d';
+                          e.currentTarget.style.background = '#0d1117';
+                        }
+                      }}
+                    >
+                      {v.displayName || `${v.make} ${v.model}`}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', color: '#888' }}>Available Time Slots *</label>
-              <select 
-                name="appointmentDate"
-                required
-                value={formData.appointmentDate} 
-                onChange={handleInputChange}
-                style={{ width: '100%', padding: '10px', background: '#0d1117', border: '1px solid #2f363d', borderRadius: '6px', color: '#fff' }}
-              >
-                <option value="">Select a slot</option>
-                {slots.map(slot => (
-                  <option key={slot.dateTime} value={slot.dateTime}>
-                    {slot.display} ({slot.available} left)
-                  </option>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '10px', color: '#888' }}>Select a Date & Time *</label>
+              
+              {/* Day Tabs */}
+              <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '15px', paddingBottom: '5px' }}>
+                {Object.keys(slots.reduce((acc, slot) => {
+                  const day = slot.display.includes('  •  ') 
+                    ? slot.display.split('  •  ')[0]
+                    : new Date(slot.dateTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                  if (!acc[day]) acc[day] = [];
+                  acc[day].push(slot);
+                  return acc;
+                }, {})).map(day => (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => setSelectedDay(day)}
+                    style={{
+                      padding: '8px 16px',
+                      background: selectedDay === day ? '#52c41a' : '#0d1117',
+                      color: '#fff',
+                      border: `1px solid ${selectedDay === day ? '#52c41a' : '#2f363d'}`,
+                      borderRadius: '20px',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      fontWeight: selectedDay === day ? 'bold' : 'normal',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedDay !== day) {
+                        e.currentTarget.style.borderColor = '#1890ff';
+                        e.currentTarget.style.background = 'rgba(24, 144, 255, 0.05)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedDay !== day) {
+                        e.currentTarget.style.borderColor = '#2f363d';
+                        e.currentTarget.style.background = '#0d1117';
+                      }
+                    }}
+                  >
+                    {day}
+                  </button>
                 ))}
-              </select>
+              </div>
+
+              {/* Time Pills Grid */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', 
+                gap: '10px'
+              }}>
+                {slots
+                  .filter(slot => {
+                    const day = slot.display.includes('  •  ') 
+                      ? slot.display.split('  •  ')[0]
+                      : new Date(slot.dateTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    return day === selectedDay;
+                  })
+                  .map(slot => {
+                    const timeStr = slot.display.includes('  •  ')
+                      ? slot.display.split('  •  ')[1]
+                      : new Date(slot.dateTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                    const isSelected = formData.appointmentDate === slot.dateTime;
+                    const isBooked = activeDate === slot.dateTime;
+                    const isFull = slot.available <= 0;
+
+                    return (
+                      <button
+                        key={slot.dateTime}
+                        type="button"
+                        onClick={() => {
+                          if (hasActiveBooking) return;
+                          if (!isFull) setFormData(prev => ({ ...prev, appointmentDate: slot.dateTime }));
+                        }}
+                        style={{
+                          padding: '10px',
+                          background: isSelected || isBooked ? 'rgba(82, 196, 26, 0.15)' : '#0d1117',
+                          color: isFull ? '#444' : (isSelected || isBooked) ? '#52c41a' : '#fff',
+                          border: `1px solid ${(isSelected || isBooked) ? '#52c41a' : '#2f363d'}`,
+                          borderRadius: '6px',
+                          cursor: isFull ? 'not-allowed' : hasActiveBooking ? 'not-allowed' : 'pointer',
+                          textAlign: 'center',
+                          fontSize: '13px',
+                          transition: 'all 0.2s',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px',
+                          alignItems: 'center',
+                          filter: (hasActiveBooking && !isBooked) ? 'blur(1px)' : 'none',
+                          opacity: (hasActiveBooking && !isBooked) ? 0.6 : 1
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected && !isFull) {
+                            e.currentTarget.style.borderColor = '#1890ff';
+                            e.currentTarget.style.background = 'rgba(24, 144, 255, 0.05)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected && !isFull) {
+                            e.currentTarget.style.borderColor = '#2f363d';
+                            e.currentTarget.style.background = '#0d1117';
+                          }
+                        }}
+                      >
+                        <span style={{ fontWeight: isSelected ? 'bold' : 'normal' }}>{timeStr}</span>
+                        <span style={{ fontSize: '11px', color: isFull ? '#ff4d4f' : isSelected ? '#1890ff' : '#888' }}>
+                          {isFull ? 'Full' : `${slot.available} left`}
+                        </span>
+                      </button>
+                    );
+                  })}
+              </div>
             </div>
 
             <div style={{ marginBottom: '15px' }}>
@@ -199,7 +519,7 @@ const CustomerAppointmentsPage = () => {
               type="submit" 
               className="btn-primary" 
               style={{ width: '100%' }}
-              disabled={submitting}
+              disabled={submitting || hasActiveBooking}
             >
               {submitting ? 'Booking...' : 'Confirm Booking'}
             </button>
@@ -217,12 +537,13 @@ const CustomerAppointmentsPage = () => {
                   <th style={{ textAlign: 'left', padding: '10px', color: '#888' }}>Service</th>
                   <th style={{ textAlign: 'left', padding: '10px', color: '#888' }}>Date</th>
                   <th style={{ textAlign: 'left', padding: '10px', color: '#888' }}>Status</th>
+                  <th style={{ textAlign: 'left', padding: '10px', color: '#888' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {appointments.length === 0 ? (
                   <tr>
-                    <td colSpan="3" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                    <td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
                       No appointments found.
                     </td>
                   </tr>
@@ -247,6 +568,28 @@ const CustomerAppointmentsPage = () => {
                         }}>
                           {a.status}
                         </span>
+                      </td>
+                      <td style={{ padding: '10px' }}>
+                        {a.status !== 'Completed' && (
+                          <button
+                            onClick={() => handleRemoveAppointment(a.id)}
+                            style={{
+                              padding: '5px 10px',
+                              background: '#ff4d4f',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: 'bold',
+                              transition: 'background 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#ff7875'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = '#ff4d4f'}
+                          >
+                            Remove
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))

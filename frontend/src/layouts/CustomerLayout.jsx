@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
 import './AdminLayout.css'; // Reusing admin layout styles for consistency
@@ -43,6 +43,26 @@ const OPERATIONS_NAV = [
     icon: (
       <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      </svg>
+    )
+  },
+  {
+    to: "/customer/orders",
+    label: "Order History",
+    icon: (
+      <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 0 1-8 0"/>
+      </svg>
+    )
+  },
+  {
+    to: "/customer/service-history",
+    label: "Service History",
+    icon: (
+      <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
       </svg>
     )
   }
@@ -131,10 +151,42 @@ const CustomerLayout = () => {
       <div className="admin-main">
         <header className="admin-top-bar">
           <div className="top-bar-left">
-            <button className="mobile-nav-toggle">☰</button>
             <h2>Customer Dashboard</h2>
           </div>
-          <div className="top-bar-right">
+          <div className="top-bar-right" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <Link 
+              to="/" 
+              style={{ 
+                color: '#fff', 
+                textDecoration: 'none', 
+                fontWeight: 'bold', 
+                fontSize: '14px', 
+                background: '#0d1117', 
+                padding: '6px 12px', 
+                borderRadius: '4px', 
+                border: '1px solid #2f363d',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#1890ff';
+                e.currentTarget.style.background = 'rgba(24, 144, 255, 0.1)';
+                e.currentTarget.style.color = '#1890ff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#2f363d';
+                e.currentTarget.style.background = '#0d1117';
+                e.currentTarget.style.color = '#fff';
+              }}
+            >
+              <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <span>6ix7even</span>
+            </Link>
             <div className="notification-bell">
               <svg style={{ width: '20px', height: '20px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
               <span className="notif-badge">0</span>

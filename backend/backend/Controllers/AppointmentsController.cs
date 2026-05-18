@@ -53,8 +53,8 @@ namespace backend.Controllers
                 {
                     var currentDate = startDate.AddDays(day).Date;
                     
-                    // Business hours: 9 AM to 5 PM
-                    for (int hour = 9; hour < 17; hour++)
+                    // Business hours: 8 AM to 6 PM
+                    for (int hour = 8; hour < 18; hour++)
                     {
                         var slotTime = currentDate.AddHours(hour);
                         
@@ -98,7 +98,7 @@ namespace backend.Controllers
                 
                 if (hasActiveBooking)
                 {
-                    return BadRequest(new { success = false, message = "You already have an active booking." });
+                    return BadRequest(new { success = false, message = "You already have an active booking. Please complete or cancel it before booking again." });
                 }
 
                 // Rule: Booking should be done 24hrs earlier
@@ -108,7 +108,7 @@ namespace backend.Controllers
                 }
 
                 // Rule: Upto 5 times of each slot
-                var slotStart = new DateTime(dto.AppointmentDate.Year, dto.AppointmentDate.Month, dto.AppointmentDate.Day, dto.AppointmentDate.Hour, 0, 0);
+                var slotStart = new DateTime(dto.AppointmentDate.Year, dto.AppointmentDate.Month, dto.AppointmentDate.Day, dto.AppointmentDate.Hour, 0, 0, DateTimeKind.Utc);
                 var slotEnd = slotStart.AddHours(1);
                 
                 var bookingCount = await _context.Appointments
@@ -171,6 +171,42 @@ namespace backend.Controllers
                     .ToListAsync();
 
                 return Ok(new { success = true, data = appointments });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        // DELETE: api/appointments/{id} (Customer removes their appointment)
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteAppointment(int id)
+        {
+            try
+            {
+                var userId = GetCurrentUserId();
+                var appointment = await _context.Appointments.FindAsync(id);
+
+                if (appointment == null)
+                {
+                    return NotFound(new { success = false, message = "Appointment not found" });
+                }
+
+                if (appointment.UserId != userId)
+                {
+                    return Forbid();
+                }
+
+                if (appointment.Status == "Completed")
+                {
+                    return BadRequest(new { success = false, message = "Cannot remove a completed appointment." });
+                }
+
+                _context.Appointments.Remove(appointment);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { success = true, message = "Appointment removed successfully" });
             }
             catch (Exception ex)
             {

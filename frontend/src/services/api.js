@@ -205,6 +205,14 @@ export const api = {
     return handleResponse(response);
   },
 
+  async deleteAppointment(id) {
+    const response = await fetch(`${API_BASE}/appointments/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+  },
+
   // --- Categories ---
   async getCategories() {
     const response = await fetch(`${API_BASE}/categories`);
