@@ -246,11 +246,15 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .btn-action-view:hover {
   background: var(--admin-border, #313540);
   border-color: var(--admin-border-hover, #414756);
+  transform: translateY(-1px);
 }
 
 .btn-action-email {
@@ -267,6 +271,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
 }
 
 .btn-action-email:hover:not(:disabled) {
@@ -274,6 +279,7 @@
   color: white;
   border-color: var(--admin-primary, #e04f5f);
   box-shadow: 0 2px 6px rgba(224, 79, 95, 0.3);
+  transform: translateY(-1px);
 }
 
 .btn-action-email:disabled {
@@ -582,45 +588,53 @@
 }
 
 .btn-modal-action {
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
+  border: 1px solid transparent;
+  padding: 8px 18px;
+  border-radius: 8px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 34px;
+  min-height: 36px;
+  letter-spacing: 0.2px;
 }
 
 .btn-modal-action.email {
-  background: #007bff;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+  border-color: #007bff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
 }
 
 .btn-modal-action.email:hover:not(:disabled) {
-  background: #0056b3;
-  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.35);
+  background: linear-gradient(135deg, #3395ff 0%, #004494 100%);
+  border-color: #3395ff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 123, 255, 0.45);
 }
 
 .btn-modal-action.print {
-  background: var(--success, #28a745);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+  border-color: #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
 }
 
-.btn-modal-action.print:hover {
-  background: #218838;
-  box-shadow: 0 6px 16px rgba(40, 167, 69, 0.35);
+.btn-modal-action.print:hover:not(:disabled) {
+  background: linear-gradient(135deg, #34d399 0%, #047857 100%);
+  border-color: #34d399;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
 }
 
 .btn-modal-action:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   box-shadow: none;
+  transform: none;
 }
 
 /* Global Print Decorators - hidden on dashboard */
@@ -693,42 +707,29 @@
 
 /* PRINT MEDIA OVERRIDE styles */
 @media print {
+  /* Hide all layout elements on the page */
   body * {
-    visibility: hidden;
+    visibility: hidden !important;
   }
   
-  .order-modal-backdrop, 
-  .order-modal-content, 
+  /* Force only the invoice print frame and its descendants to be visible */
   .invoice-print-frame, 
   .invoice-print-frame * {
-    visibility: visible;
+    visibility: visible !important;
   }
   
-  .order-modal-backdrop {
-    position: absolute;
-    left: 0;
-    top: 0;
-    background: white;
-    width: 100%;
-    height: auto;
-    padding: 0;
-    backdrop-filter: none;
-    box-shadow: none;
-  }
-  
-  .order-modal-content {
-    background: white !important;
-    color: black !important;
-    border: none;
-    box-shadow: none;
-    max-height: none;
-    overflow: visible;
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
+  /* Position the invoice at the absolute top of the print canvas */
+  .invoice-print-frame {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
   }
   
   .no-print {

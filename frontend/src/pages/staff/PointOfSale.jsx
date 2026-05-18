@@ -266,14 +266,37 @@ const PointOfSale = () => {
                         <div className="cart-item-price-row">
                           <span>{formatCurrency(item.price)}</span>
                           <span>×</span>
-                          <input 
-                            type="number" 
-                            value={item.quantity} 
-                            onChange={(e) => updateQuantity(item.partId, parseInt(e.target.value))}
-                            className="cart-qty-input"
-                            min="1"
-                            max={item.max}
-                          />
+                          <div className="cart-qty-selector">
+                            <button 
+                              type="button"
+                              onClick={() => updateQuantity(item.partId, item.quantity - 1)}
+                              disabled={item.quantity <= 1}
+                              className="qty-change-btn minus"
+                              title="Decrease Quantity"
+                            >
+                              -
+                            </button>
+                            <input 
+                              type="number" 
+                              value={item.quantity} 
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                updateQuantity(item.partId, isNaN(val) ? 1 : val);
+                              }}
+                              className="cart-qty-input"
+                              min="1"
+                              max={item.max}
+                            />
+                            <button 
+                              type="button"
+                              onClick={() => updateQuantity(item.partId, item.quantity + 1)}
+                              disabled={item.quantity >= item.max}
+                              className="qty-change-btn plus"
+                              title="Increase Quantity"
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
                       </div>
                       <div className="cart-item-right">
