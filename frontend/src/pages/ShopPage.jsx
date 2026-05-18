@@ -27,11 +27,20 @@ function ShopPage() {
   const [sortBy, setSortBy] = useState('featured');
   const [searchQuery, setSearchQuery] = useState(searchParam);
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
+
   useEffect(() => {
     // Sync local dropdown states with search parameter updates
     setSelectedCategoryId(categoryParam);
     setSearchQuery(searchParam);
   }, [categoryParam, searchParam]);
+
+  // Reset page on any filter or sort change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [makeParam, modelParam, yearParam, categoryParam, searchParam, sortBy]);
 
   useEffect(() => {
     fetchInitialData();
@@ -172,6 +181,35 @@ function ShopPage() {
 
   const sortedPartsList = getSortedParts();
 
+  // Pagination calculations
+  const totalPages = Math.ceil(sortedPartsList.length / ITEMS_PER_PAGE);
+  const indexOfFirst = (currentPage - 1) * ITEMS_PER_PAGE;
+  const indexOfLast = indexOfFirst + ITEMS_PER_PAGE;
+  const currentPageParts = sortedPartsList.slice(indexOfFirst, indexOfLast);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      let start = Math.max(2, currentPage - 2);
+      let end = Math.min(totalPages - 1, currentPage + 2);
+      if (currentPage <= 3) end = 5;
+      else if (currentPage >= totalPages - 2) start = totalPages - 4;
+      if (start > 2) pages.push('...');
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (end < totalPages - 1) pages.push('...');
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
   return (
     <div className="container shop-page">
       {/* Top Breadcrumb or Search Description Banner */}
@@ -265,50 +303,93 @@ function ShopPage() {
           </button>
         </div>
       ) : (
-        <div className="shop-grid">
-          {sortedPartsList.map((part) => (
-            <div key={part.id} className="product-card">
-              <div className="product-image-wrapper">
-                <img 
-                  src={part.imageUrl || `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b&size=300`} 
-                  alt={part.name} 
-                  className="product-image" 
-                  onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b&size=300` }}
-                />
-                <div className="product-category-tag">{part.categoryName}</div>
-                {part.isLowStock && part.stockQuantity > 0 && (
-                  <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#e3b33b', color: '#000', padding: '4px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
-                    Low Stock
-                  </div>
-                )}
-                {part.stockQuantity <= 0 && (
-                  <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#f85149', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
-                    Out of Stock
-                  </div>
-                )}
-              </div>
-              <div className="product-info">
-                <h3 style={{ minHeight: '44px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{part.name}</h3>
-                <p style={{ fontSize: '12px', color: '#666', margin: '-10px 0 15px 0' }}>Part No: {part.partNumber || 'N/A'}</p>
-                <div className="product-price-row">
-                  <span className="price">{formatCurrency(part.price)}</span>
-                  {part.stockQuantity <= 0 ? (
-                    <button className="btn-secondary add-to-cart-btn" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>
-                      Sold Out
-                    </button>
-                  ) : (
-                    <button 
-                      className="btn-primary add-to-cart-btn" 
-                      onClick={() => addToCart(part)}
-                    >
-                      Add to Cart
-                    </button>
+        <>
+          <div className="shop-results-info">
+            Showing <strong>{indexOfFirst + 1}</strong>–<strong>{Math.min(indexOfLast, sortedPartsList.length)}</strong> of <strong>{sortedPartsList.length}</strong> parts
+          </div>
+
+          <div className="shop-grid">
+            {currentPageParts.map((part) => (
+              <div key={part.id} className="product-card">
+                <div className="product-image-wrapper">
+                  <img 
+                    src={part.imageUrl || `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b&size=300`} 
+                    alt={part.name} 
+                    className="product-image" 
+                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b&size=300` }}
+                  />
+                  <div className="product-category-tag">{part.categoryName}</div>
+                  {part.isLowStock && part.stockQuantity > 0 && (
+                    <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#e3b33b', color: '#000', padding: '4px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
+                      Low Stock
+                    </div>
+                  )}
+                  {part.stockQuantity <= 0 && (
+                    <div style={{ position: 'absolute', top: '15px', right: '15px', background: '#f85149', color: '#fff', padding: '4px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>
+                      Out of Stock
+                    </div>
                   )}
                 </div>
+                <div className="product-info">
+                  <h3 style={{ minHeight: '44px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{part.name}</h3>
+                  <p style={{ fontSize: '12px', color: '#666', margin: '-10px 0 15px 0' }}>Part No: {part.partNumber || 'N/A'}</p>
+                  <div className="product-price-row">
+                    <span className="price">{formatCurrency(part.price)}</span>
+                    {part.stockQuantity <= 0 ? (
+                      <button className="btn-secondary add-to-cart-btn" disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>
+                        Sold Out
+                      </button>
+                    ) : (
+                      <button 
+                        className="btn-primary add-to-cart-btn" 
+                        onClick={() => addToCart(part)}
+                      >
+                        Add to Cart
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
+            ))}
+          </div>
+
+          {/* Shop Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="shop-pagination-container">
+              <button
+                className="btn-shop-pagination btn-shop-pagination-nav"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                Prev
+              </button>
+
+              {getPageNumbers().map((page, idx) =>
+                page === '...' ? (
+                  <span key={`ellipsis-${idx}`} className="shop-pagination-ellipsis">...</span>
+                ) : (
+                  <button
+                    key={`shop-page-${page}`}
+                    className={`btn-shop-pagination ${currentPage === page ? 'active' : ''}`}
+                    onClick={() => handlePageChange(page)}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+
+              <button
+                className="btn-shop-pagination btn-shop-pagination-nav"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );
