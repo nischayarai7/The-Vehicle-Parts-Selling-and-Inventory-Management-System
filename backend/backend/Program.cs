@@ -117,10 +117,13 @@ using (var scope = app.Services.CreateScope())
             END $$;
         ");
         logger.LogInformation("Database verified: 'created_by_id' column and constraints are active.");
+
+        // Dynamic CSV Catalog Seed
+        await CatalogSeeder.SeedCatalogFromCsv(db, logger);
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Failed to apply dynamic database updates for staff-orders column.");
+        logger.LogError(ex, "Failed to apply dynamic database updates or catalog CSV seed.");
     }
 }
 
