@@ -136,3 +136,53 @@
   color: white;
   border-color: var(--primary);
 }
+
+/* Home Page Pagination Styling */
+.home-pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 40px;
+  gap: 8px;
+}
+
+.btn-home-pagination {
+  background: white;
+  border: 1px solid var(--border-color, #e2e8f0);
+  color: var(--text-main, #1e293b);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.btn-home-pagination:hover:not(:disabled) {
+  background-color: var(--primary, #e33b3b);
+  border-color: var(--primary, #e33b3b);
+  color: white;
+}
+
+.btn-home-pagination.active {
+  background-color: var(--primary, #e33b3b);
+  border-color: var(--primary, #e33b3b);
+  color: white;
+  box-shadow: 0 4px 10px rgba(227, 59, 59, 0.15);
+}
+
+.btn-home-pagination:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-home-pagination-nav {
+  padding: 0 16px;
+  width: auto;
+  border-radius: 20px;
+  gap: 5px;
+}

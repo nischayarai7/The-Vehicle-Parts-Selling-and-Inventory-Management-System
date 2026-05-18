@@ -33,6 +33,7 @@ const ProductGrid = () => {
     fetchParts();
   }, []);
 
+<<<<<<< HEAD
   const getCompatibilityText = (vehiclesList) => {
     if (!vehiclesList || vehiclesList.length === 0) return 'Universal';
     const displayList = vehiclesList.slice(0, 2).map(v => `${v.make} ${v.model}`).join(', ');
@@ -40,6 +41,23 @@ const ProductGrid = () => {
       return `${displayList} (+${vehiclesList.length - 2} more)`;
     }
     return displayList;
+=======
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  const newArrivalParts = parts.slice(0, 20);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentParts = newArrivalParts.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(newArrivalParts.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    const section = document.querySelector('.product-section');
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth' });
+    }
+>>>>>>> 73c7192f1d2e17f0f8961318d418a0b984929601
   };
 
   if (loading) return <div className="container"><p>Loading products...</p></div>;
@@ -58,7 +76,7 @@ const ProductGrid = () => {
         </div>
 
         <div className="product-grid">
-          {parts.map((part) => (
+          {currentParts.map((part) => (
             <div key={part.id} className="product-card">
               {part.isLowStock && <div className="badge low-stock">Low Stock</div>}
               <Link to={`/shop/part/${part.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
@@ -83,7 +101,6 @@ const ProductGrid = () => {
                   <span>Fits: {getCompatibilityText(part.compatibleVehicles)}</span>
                 </div>
                 <div className="product-rating">
-                  {/* Placeholder rating */}
                   ★★★★★ <span className="rating-count">(5)</span>
                 </div>
                 <div className="product-price">Rs. {part.price.toFixed(2)}</div>
@@ -128,6 +145,39 @@ const ProductGrid = () => {
             </div>
           ))}
         </div>
+
+        {/* Home Page Pagination Controls */}
+        {newArrivalParts.length > 0 && totalPages > 1 && (
+          <div className="home-pagination-container">
+            <button 
+              className="btn-home-pagination btn-home-pagination-nav" 
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              Prev
+            </button>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button 
+                key={`home-page-${page}`} 
+                className={`btn-home-pagination ${currentPage === page ? 'active' : ''}`}
+                onClick={() => handlePageChange(page)}
+              >
+                {page}
+              </button>
+            ))}
+            
+            <button 
+              className="btn-home-pagination btn-home-pagination-nav" 
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

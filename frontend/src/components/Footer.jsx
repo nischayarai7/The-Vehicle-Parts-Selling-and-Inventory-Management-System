@@ -53,7 +53,6 @@ const Footer = () => {
           <p>&copy; {new Date().getFullYear()} 6ix7even Auto Parts. All Rights Reserved.</p>
           <div className="payment-methods">
             {/* Payment icons placeholder */}
-            <span>💳</span> <span>🏦</span> <span>💵</span>
           </div>
         </div>
       </div>
