@@ -264,23 +264,35 @@ const PointOfSale = () => {
                         <div className="cart-item-price-row">
                           <span>{formatCurrency(item.price)}</span>
                           <span>×</span>
-                          <div className="cart-qty-control">
+                          <div className="cart-qty-selector">
                             <button 
+                              type="button"
                               onClick={() => updateQuantity(item.partId, item.quantity - 1)}
                               disabled={item.quantity <= 1}
-                              className="qty-btn minus"
+                              className="qty-change-btn minus"
                               title="Decrease Quantity"
                             >
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ width: '8px', height: '8px' }}><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                              -
                             </button>
-                            <span className="qty-number">{item.quantity}</span>
+                            <input 
+                              type="number" 
+                              value={item.quantity} 
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value);
+                                updateQuantity(item.partId, isNaN(val) ? 1 : val);
+                              }}
+                              className="cart-qty-input"
+                              min="1"
+                              max={item.max}
+                            />
                             <button 
+                              type="button"
                               onClick={() => updateQuantity(item.partId, item.quantity + 1)}
                               disabled={item.quantity >= item.max}
-                              className="qty-btn plus"
+                              className="qty-change-btn plus"
                               title="Increase Quantity"
                             >
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ width: '8px', height: '8px' }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                              +
                             </button>
                           </div>
                         </div>
