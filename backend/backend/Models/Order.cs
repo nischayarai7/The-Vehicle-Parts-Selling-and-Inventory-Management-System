@@ -20,6 +20,7 @@ namespace backend.Models
         public decimal DiscountAmount { get; set; }
         public string? ShippingAddress { get; set; }
         public string? Notes { get; set; }
+        public string PaymentMethod { get; set; } = "Paid";
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

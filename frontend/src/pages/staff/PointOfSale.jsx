@@ -11,6 +11,7 @@ const PointOfSale = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [cart, setCart] = useState([]);
   const [notes, setNotes] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Paid');
   const [searchTerm, setSearchTerm] = useState('');
   const [loyaltySettings, setLoyaltySettings] = useState({ thresholdAmount: 5000, discountRate: 0.10 });
   
@@ -97,6 +98,7 @@ const PointOfSale = () => {
       const payload = {
         customerId: parseInt(selectedCustomerId),
         notes,
+        paymentMethod,
         items: cart.map(i => ({ partId: i.partId, quantity: i.quantity }))
       };
       
@@ -288,6 +290,55 @@ const PointOfSale = () => {
             </div>
 
             <hr className="cart-divider" />
+
+            {/* Payment Selection */}
+            <div className="cart-field-group">
+              <label>Checkout Settlement Option</label>
+              <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('Paid')}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: paymentMethod === 'Paid' ? '2px solid var(--primary)' : '1px solid #333',
+                    background: paymentMethod === 'Paid' ? 'rgba(56, 139, 253, 0.15)' : '#1a1a1a',
+                    color: paymentMethod === 'Paid' ? 'var(--primary)' : '#888',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  🟢 Paid Settlement
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('Credit')}
+                  style={{
+                    flex: 1,
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: paymentMethod === 'Credit' ? '2px solid #e3b33b' : '1px solid #333',
+                    background: paymentMethod === 'Credit' ? 'rgba(227, 179, 59, 0.15)' : '#1a1a1a',
+                    color: paymentMethod === 'Credit' ? '#e3b33b' : '#888',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  🟡 Credit Deferred
+                </button>
+              </div>
+            </div>
 
             {/* Notes */}
             <div className="cart-field-group">

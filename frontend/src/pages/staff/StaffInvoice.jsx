@@ -223,6 +223,14 @@ const StaffInvoice = () => {
                 {order.status}
               </span>
             </div>
+            {order.paymentMethod && (
+              <div className="totals-row">
+                <span>Payment Settlement</span>
+                <strong style={{ color: order.paymentMethod.toLowerCase() === 'credit' ? '#e3b33b' : '#0f172a' }}>
+                  {order.paymentMethod}
+                </strong>
+              </div>
+            )}
             <div className="totals-row">
               <span>Subtotal Amount</span>
               <span>{formatCurrency(order.originalAmount > 0 ? order.originalAmount : order.totalAmount)}</span>

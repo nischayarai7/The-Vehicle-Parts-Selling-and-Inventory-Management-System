@@ -448,7 +448,7 @@ const ProfileSettings = () => {
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', color: '#888' }}>
-                          <span>Payment Method: <strong style={{ color: '#fff' }}>Cash on Delivery</strong></span>
+                          <span>Payment Method: <strong style={{ color: '#fff' }}>{order.paymentMethod || 'Cash on Delivery'}</strong></span>
                           <span>Subtotal: Rs. {(order.originalAmount > 0 ? order.originalAmount : order.totalAmount).toFixed(2)}</span>
                         </div>
                         {order.discountAmount > 0 && (

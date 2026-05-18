@@ -86,6 +86,7 @@ namespace backend.Controllers
                 order.TotalAmount,
                 order.OriginalAmount,
                 order.DiscountAmount,
+                order.PaymentMethod,
                 order.Notes,
                 order.CreatedAt,
                 Items = order.Items.Select(i => new
@@ -112,7 +113,8 @@ namespace backend.Controllers
                 OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4).ToUpper()}",
                 UserId = dto.CustomerId,
                 CreatedById = currentUserId,
-                Status = "Completed", // Staff POS orders are usually completed immediately
+                Status = (dto.PaymentMethod == "Credit" || dto.PaymentMethod == "credit") ? "Credit" : "Completed",
+                PaymentMethod = dto.PaymentMethod ?? "Paid",
                 Notes = dto.Notes,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
@@ -216,7 +218,7 @@ namespace backend.Controllers
                             </tr>
                         </tfoot>
                     </table>
-                    <p>Status: {order.Status}</p>
+                    <p><strong>Payment Status/Method:</strong> {order.PaymentMethod} ({order.Status})</p>
                     <p>Date: {order.CreatedAt:yyyy-MM-dd HH:mm}</p>
                     <p>Best regards,<br/>6ix7even Auto Parts Team</p>";
 

@@ -352,6 +352,11 @@
   color: #b45309;
 }
 
+.status-badge-invoice.credit {
+  background: #fffbeb;
+  color: #b45309;
+}
+
 /* Notes */
 .invoice-notes-block {
   background: #f8fafc;

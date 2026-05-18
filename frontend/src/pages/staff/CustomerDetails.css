@@ -90,49 +90,98 @@
 
 /* Personal Information Card */
 .personal-card {
+  background: linear-gradient(135deg, #1e222b 0%, #15181f 100%) !important;
+  border: 1px solid var(--admin-border, #313540) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   display: flex;
-  gap: 30px;
+  gap: 35px;
+  align-items: center;
+  padding: 30px;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.personal-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--admin-primary, #e04f5f);
 }
 
 .profile-placeholder {
-  width: 150px;
-  height: 150px;
-  border-radius: 8px;
-  background: var(--admin-sidebar);
-  border: 1px solid var(--admin-border);
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224, 79, 95, 0.15) 0%, rgba(224, 79, 95, 0.02) 100%);
+  border: 2px dashed rgba(224, 79, 95, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 0 15px rgba(224, 79, 95, 0.1);
+  transition: all 0.3s ease;
 }
 
-.profile-placeholder svg {
-  width: 60px;
-  height: 60px;
+.profile-placeholder:hover {
+  border-style: solid;
+  border-color: rgba(224, 79, 95, 0.6);
+  box-shadow: 0 0 25px rgba(224, 79, 95, 0.25);
+  transform: scale(1.02);
+}
+
+.profile-initials {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--admin-primary, #e04f5f);
+  letter-spacing: -1px;
+  text-shadow: 0 0 10px rgba(224, 79, 95, 0.3);
+  font-family: 'Inter', sans-serif;
 }
 
 .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px 30px;
+  gap: 20px 24px;
   flex: 1;
 }
 
 .info-item {
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  padding: 12px 18px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.info-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
 }
 
 .info-label {
-  font-size: 12px;
-  color: var(--admin-text-muted);
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--admin-text-muted, #9ea4b0);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .info-value {
-  font-size: 14px;
-  color: var(--admin-text);
-  font-weight: 500;
+  font-size: 15px !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-family: 'Inter', sans-serif !important;
 }
 
 /* Vehicles List Card */

@@ -229,6 +229,7 @@ const OrderManager = () => {
             <option value="All">All Statuses</option>
             <option value="Completed">Completed</option>
             <option value="Pending">Pending</option>
+            <option value="Credit">Credit</option>
             <option value="Cancelled">Cancelled</option>
           </select>
         </div>
@@ -388,6 +389,17 @@ const OrderManager = () => {
                           <label>Date Registered:</label>
                           <span>{new Date(selectedOrder.createdAt).toLocaleString()}</span>
                         </div>
+                        {selectedOrder.paymentMethod && (
+                          <div className="spec-item">
+                            <label>Settlement Option:</label>
+                            <span style={{ 
+                              color: selectedOrder.paymentMethod.toLowerCase() === 'credit' ? '#e3b33b' : '#3fb950',
+                              fontWeight: '600'
+                            }}>
+                              {selectedOrder.paymentMethod}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="specs-section no-print">
@@ -402,6 +414,7 @@ const OrderManager = () => {
                           >
                             <option value="Completed">Completed</option>
                             <option value="Pending">Pending</option>
+                            <option value="Credit">Credit</option>
                             <option value="Cancelled">Cancelled</option>
                           </select>
                         </div>

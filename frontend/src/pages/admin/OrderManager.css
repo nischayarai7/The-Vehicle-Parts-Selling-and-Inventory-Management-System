@@ -224,6 +224,11 @@
   color: #e04f5f;
 }
 
+.status-badge.credit {
+  background: rgba(243, 156, 18, 0.15);
+  color: #f39c12;
+}
+
 /* Actions Row styles */
 .order-actions-row {
   display: inline-flex;
