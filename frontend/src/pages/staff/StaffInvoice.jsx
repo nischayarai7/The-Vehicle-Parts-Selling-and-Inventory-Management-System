@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../services/api';
+import './StaffInvoice.css';
 
 const StaffInvoice = () => {
   const { id } = useParams();
@@ -9,7 +10,6 @@ const StaffInvoice = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Fetch order details when the component mounts
     const fetchOrder = async () => {
       try {
         const data = await api.getStaffOrderDetails(id);
@@ -23,119 +23,161 @@ const StaffInvoice = () => {
     fetchOrder();
   }, [id]);
 
-  // Triggers the browser's print dialog
   const handlePrint = () => {
     window.print();
   };
 
-  if (loading) return <div style={{ color: 'var(--admin-text-muted)' }}>Loading invoice...</div>;
-  if (error) return <div style={{ color: 'var(--danger)' }}>{error}</div>;
-  if (!order) return <div style={{ color: 'var(--admin-text-muted)' }}>Invoice not found.</div>;
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'NPR',
+      minimumFractionDigits: 2
+    }).format(amount).replace('NPR', 'Rs.');
+  };
+
+  if (loading) {
+    return (
+      <div className="invoice-page-container">
+        <div style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: '50px' }}>
+          <svg className="refresh-icon-svg spinning" style={{ width: '24px', height: '24px', marginBottom: '12px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <p>Auditing transaction ledger...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="invoice-page-container">
+        <div style={{ color: '#e04f5f', textAlign: 'center', padding: '50px', background: '#22252d', borderRadius: '8px' }}>
+          <h3>⚠️ Retrieval Failed</h3>
+          <p>{error}</p>
+          <Link to="/staff/pos" className="btn-invoice-action outline-slate" style={{ marginTop: '15px' }}>Back to POS</Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div className="invoice-page-container">
+        <div style={{ color: 'var(--admin-text-muted)', textAlign: 'center', padding: '50px' }}>
+          <h3>Invoice Not Found</h3>
+          <p>The requested order reference could not be fetched.</p>
+          <Link to="/staff/pos" className="btn-invoice-action outline-slate" style={{ marginTop: '15px' }}>Back to POS</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      {/* Header controls - Hidden during printing via CSS classes (if applicable) or simple inline styles */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }} className="no-print">
-        <Link to="/staff/pos" className="btn-primary" style={{ background: '#30363d', color: 'white' }}>&larr; Back to POS</Link>
-        <button onClick={handlePrint} className="btn-primary" style={{ background: 'var(--success)' }}>🖨️ Print Invoice</button>
+    <div className="invoice-page-container">
+      {/* Top Action controls header */}
+      <div className="invoice-controls-header no-print">
+        <div className="invoice-actions-left">
+          <Link to="/staff/dashboard" className="btn-invoice-action outline-slate">
+            <svg style={{ width: '14px', height: '14px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            Done & Exit
+          </Link>
+          <Link to="/staff/pos" className="btn-invoice-action primary-red">
+            <svg style={{ width: '14px', height: '14px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Transaction
+          </Link>
+        </div>
+        <button onClick={handlePrint} className="btn-invoice-action success-green">
+          <svg style={{ width: '14px', height: '14px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print Invoice
+        </button>
       </div>
 
-      {/* Invoice Document Area */}
-      <div className="large-card" style={{ background: '#ffffff', color: '#000000', padding: '40px', borderRadius: '8px', maxWidth: '800px', margin: '0 auto' }}>
+      {/* Invoice Document Card */}
+      <div className="invoice-document-card">
         
-        {/* Invoice Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #eaeaea', paddingBottom: '20px', marginBottom: '20px' }}>
-          <div>
-            <h1 style={{ margin: 0, color: 'var(--primary)', fontSize: '28px' }}>6IX7EVEN</h1>
-            <p style={{ margin: '5px 0 0 0', color: '#666' }}>Auto Parts & Accessories</p>
-            <p style={{ margin: 0, color: '#666' }}>123 Garage Street, Auto City</p>
+        {/* Invoice Top Brand Header */}
+        <div className="invoice-brand-row">
+          <div className="invoice-logo-block">
+            <h1>6IX7EVEN<span>.</span></h1>
+            <p>Auto Parts & Accessories</p>
+            <p>123 Garage Street, Auto City</p>
+            <p>Phone: +977 980-123456</p>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <h2 style={{ margin: 0, fontSize: '24px', color: '#333' }}>INVOICE</h2>
-            <p style={{ margin: '5px 0 0 0', fontWeight: 'bold' }}>#{order.orderNumber}</p>
-            <p style={{ margin: 0, color: '#666' }}>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
+          <div className="invoice-meta-block">
+            <h2>INVOICE</h2>
+            <p className="invoice-order-number">#{order.orderNumber}</p>
+            <p className="invoice-date">Date: {new Date(order.createdAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}</p>
           </div>
         </div>
 
-        {/* Customer Information */}
-        <div style={{ marginBottom: '30px' }}>
-          <h4 style={{ color: '#333', borderBottom: '1px solid #eaeaea', paddingBottom: '5px', marginBottom: '10px' }}>Billed To:</h4>
-          <p style={{ margin: 0, fontWeight: 'bold' }}>{order.customerName}</p>
-          <p style={{ margin: 0, color: '#666' }}>{order.customerEmail}</p>
+        {/* Customer & Staff Billing Info */}
+        <div className="invoice-billing-grid">
+          <div>
+            <h4 className="billing-section-title">Billed To:</h4>
+            <p className="billing-name">{order.customerName}</p>
+            <p className="billing-detail">{order.customerEmail}</p>
+            <p className="billing-detail">Client Account Record</p>
+          </div>
+          <div>
+            <h4 className="billing-section-title">Billed By (Staff):</h4>
+            <p className="billing-name">{order.createdByName || 'Storefront'}</p>
+            <p className="billing-detail">6ix7even Authorized Representative</p>
+            <p className="billing-detail">Staff ID: #{order.createdByName ? 'Verified' : 'System'}</p>
+          </div>
         </div>
 
         {/* Order Items Table */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '30px' }}>
+        <table className="invoice-items-table">
           <thead>
-            <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #eaeaea' }}>
-              <th style={{ padding: '12px', textAlign: 'left', color: '#333' }}>Description</th>
-              <th style={{ padding: '12px', textAlign: 'center', color: '#333' }}>Qty</th>
-              <th style={{ padding: '12px', textAlign: 'right', color: '#333' }}>Unit Price</th>
-              <th style={{ padding: '12px', textAlign: 'right', color: '#333' }}>Amount</th>
+            <tr>
+              <th style={{ textAlign: 'left' }}>Description</th>
+              <th style={{ textAlign: 'center', width: '80px' }}>Qty</th>
+              <th style={{ textAlign: 'right', width: '120px' }}>Unit Price</th>
+              <th style={{ textAlign: 'right', width: '140px' }}>Subtotal</th>
             </tr>
           </thead>
           <tbody>
             {order.items.map(item => (
-              <tr key={item.id} style={{ borderBottom: '1px solid #eaeaea' }}>
-                <td style={{ padding: '12px', color: '#444' }}>{item.partName}</td>
-                <td style={{ padding: '12px', textAlign: 'center', color: '#444' }}>{item.quantity}</td>
-                <td style={{ padding: '12px', textAlign: 'right', color: '#444' }}>${item.unitPrice.toFixed(2)}</td>
-                <td style={{ padding: '12px', textAlign: 'right', color: '#444' }}>${item.subtotal.toFixed(2)}</td>
+              <tr key={item.id}>
+                <td style={{ fontWeight: '600', color: '#0f172a' }}>{item.partName}</td>
+                <td style={{ textAlign: 'center', fontWeight: '500' }}>{item.quantity}</td>
+                <td style={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: '500' }}>{formatCurrency(item.unitPrice)}</td>
+                <td style={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: '700', color: '#0f172a' }}>{formatCurrency(item.subtotal)}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
         {/* Invoice Totals */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ width: '300px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '2px solid #eaeaea' }}>
-              <strong style={{ fontSize: '18px', color: '#333' }}>Total:</strong>
-              <strong style={{ fontSize: '18px', color: 'var(--success)' }}>${order.totalAmount.toFixed(2)}</strong>
+        <div className="invoice-totals-wrapper">
+          <div className="invoice-totals-box">
+            <div className="totals-row">
+              <span>Payment Status</span>
+              <span className={`status-badge-invoice ${order.status.toLowerCase()}`}>
+                {order.status}
+              </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
-              <span style={{ color: '#666' }}>Status:</span>
-              <span style={{ fontWeight: 'bold', color: order.status === 'Completed' ? 'var(--success)' : '#f39c12' }}>{order.status}</span>
+            <div className="totals-row grand-total">
+              <span>Grand Total</span>
+              <strong>{formatCurrency(order.totalAmount)}</strong>
             </div>
           </div>
         </div>
 
         {/* Notes Section */}
         {order.notes && (
-          <div style={{ marginTop: '40px', padding: '15px', background: '#f8f9fa', borderRadius: '4px' }}>
-            <strong style={{ color: '#333' }}>Notes:</strong>
-            <p style={{ margin: '5px 0 0 0', color: '#666' }}>{order.notes}</p>
+          <div className="invoice-notes-block">
+            <strong>Order Notes / Instructions:</strong>
+            <p>{order.notes}</p>
           </div>
         )}
 
-        <div style={{ marginTop: '50px', textAlign: 'center', color: '#888', fontSize: '12px' }}>
-          Thank you for your business!
+        <div className="invoice-footer-thankyou">
+          Thank you for choosing 6ix7even Auto Parts. Your trusted automotive partner!
         </div>
       </div>
-
-      {/* CSS to handle print formatting (hides everything outside the invoice card) */}
-      <style>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          .large-card, .large-card * {
-            visibility: visible;
-          }
-          .large-card {
-            position: absolute;
-            left: 0;
-            top: 0;
-            margin: 0;
-            padding: 0;
-            box-shadow: none;
-            width: 100%;
-          }
-          .no-print {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 };

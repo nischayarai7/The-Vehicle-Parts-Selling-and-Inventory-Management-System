@@ -5,6 +5,7 @@ using backend.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace backend.Controllers
 {
@@ -22,10 +23,28 @@ namespace backend.Controllers
             _emailService = emailService;
         }
 
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) throw new UnauthorizedAccessException("User not found in token");
+            return int.Parse(userIdClaim.Value);
+        }
+
         [HttpGet]
         public async Task<ActionResult> GetAllOrders()
         {
-            var orders = await _context.Orders
+            var userId = GetCurrentUserId();
+            var isAdmin = User.IsInRole("Admin");
+
+            var query = _context.Orders.AsQueryable();
+
+            if (!isAdmin)
+            {
+                // Each individual staff should see its own sales record
+                query = query.Where(o => o.CreatedById == userId);
+            }
+
+            var orders = await query
                 .Include(o => o.User)
                 .OrderByDescending(o => o.CreatedAt)
                 .Select(o => new
@@ -47,6 +66,7 @@ namespace backend.Controllers
         {
             var order = await _context.Orders
                 .Include(o => o.User)
+                .Include(o => o.CreatedBy)
                 .Include(o => o.Items)
                     .ThenInclude(i => i.Part)
                 .FirstOrDefaultAsync(o => o.Id == id);
@@ -59,6 +79,7 @@ namespace backend.Controllers
                 order.OrderNumber,
                 CustomerName = order.User.FullName,
                 CustomerEmail = order.User.Email,
+                CreatedByName = order.CreatedBy != null ? order.CreatedBy.FullName : "Storefront",
                 order.Status,
                 order.TotalAmount,
                 order.Notes,
@@ -80,10 +101,13 @@ namespace backend.Controllers
             var customer = await _context.Users.FindAsync(dto.CustomerId);
             if (customer == null) return NotFound(new { success = false, message = "Customer not found." });
 
+            var currentUserId = GetCurrentUserId();
+
             var newOrder = new Order
             {
                 OrderNumber = $"ORD-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 4).ToUpper()}",
                 UserId = dto.CustomerId,
+                CreatedById = currentUserId,
                 Status = "Completed", // Staff POS orders are usually completed immediately
                 Notes = dto.Notes,
                 CreatedAt = DateTime.UtcNow,

@@ -71,6 +71,7 @@ function App() {
         <Route path="invoice/:id" element={<StaffInvoice />} />
         <Route path="reports" element={<CustomerReports />} />
         <Route path="appointments" element={<AppointmentsManager />} />
+        <Route path="settings" element={<ProfileSettings />} />
       </Route>
 
       {/* Admin Routes - Protected by AdminRoute */}

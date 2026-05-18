@@ -1,59 +1,72 @@
+/* Account Settings Styling - Dark Carbon Theme matching Admin & Staff Panels */
 .settings-container {
   display: flex;
   justify-content: center;
   padding: 40px 20px;
-  background: var(--admin-bg, var(--bg-light));
+  background: var(--admin-bg, #0d1117);
   min-height: calc(100vh - 80px);
 }
 
 .settings-card {
   width: 100%;
-  max-width: 700px;
-  background: var(--admin-card, white);
-  border: 1px solid var(--admin-border, transparent);
+  max-width: 720px;
+  background: var(--admin-card, #161b22);
+  border: 1px solid var(--admin-border, #30363d);
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  color: var(--admin-text, inherit);
+  color: #fff;
 }
 
 .settings-header {
-  padding: 40px 40px 30px;
-  border-bottom: 1px solid var(--admin-border, var(--border-color));
+  padding: 32px 40px 24px;
+  border-bottom: 1px solid var(--admin-border, #30363d);
 }
 
 .settings-header h2 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  margin-bottom: 8px;
+  color: #fff;
+  margin: 0 0 6px 0;
 }
 
 .settings-header p {
-  color: var(--text-muted);
-  font-size: 14px;
+  color: var(--admin-text-muted, #8b949e);
+  font-size: 13.5px;
+  margin: 0;
 }
 
 .settings-tabs {
   display: flex;
-  background: var(--admin-sidebar, #f8f9fa);
-  padding: 0 40px;
-  border-bottom: 1px solid var(--admin-border, var(--border-color));
+  background: rgba(0, 0, 0, 0.15);
+  padding: 0 32px;
+  border-bottom: 1px solid var(--admin-border, #30363d);
+  gap: 4px;
 }
 
 .tab-btn {
-  padding: 15px 25px;
+  padding: 16px 20px;
   border: none;
   background: none;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: var(--admin-text-muted, var(--text-muted));
+  color: var(--admin-text-muted, #8b949e);
   cursor: pointer;
   position: relative;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .tab-btn.active {
-  color: var(--primary);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .tab-btn.active::after {
@@ -62,8 +75,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: var(--primary);
+  height: 2px;
+  background: #fff;
 }
 
 .settings-content {
@@ -73,40 +86,71 @@
 .settings-form {
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: 24px;
 }
 
-.settings-form input {
-  background: var(--admin-bg, #fff);
-  border: 1px solid var(--admin-border, var(--border-color));
-  color: var(--admin-text, inherit);
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--admin-text-muted, #8b949e);
+}
+
+.settings-form input,
+.settings-form select {
+  background: #0d1117;
+  border: 1px solid var(--admin-border, #30363d);
+  color: #fff;
   padding: 10px 14px;
   border-radius: 8px;
   outline: none;
+  font-size: 13.5px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.settings-form input:focus {
-  border-color: var(--primary);
+.settings-form input:focus,
+.settings-form select:focus {
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.03);
 }
 
+.settings-form input:disabled {
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--admin-text-muted, #8b949e);
+  cursor: not-allowed;
+}
+
+/* Avatar Layout */
 .avatar-section {
   display: flex;
   align-items: center;
-  gap: 30px;
-  margin-bottom: 10px;
+  gap: 24px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--admin-border, #30363d);
 }
 
 .avatar-preview {
-  width: 100px;
-  height: 100px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   overflow: hidden;
-  background: #f0f2f5;
+  background: rgba(255, 255, 255, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  border: 2px solid var(--border-color);
+  border: 1px solid var(--admin-border, #30363d);
+  flex-shrink: 0;
 }
 
 .avatar-preview img {
@@ -116,59 +160,202 @@
 }
 
 .avatar-placeholder {
-  font-size: 40px;
+  font-size: 32px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: #fff;
+}
+
+.avatar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .avatar-actions p {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 8px;
+  font-size: 11px;
+  color: var(--admin-text-muted, #8b949e);
+  margin: 0;
 }
 
-.btn-secondary {
+/* Button overrides for clean settings experience (removes red background) */
+.settings-container .btn-primary {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--admin-border, #30363d);
+  color: #fff;
+  padding: 10px 20px;
+  font-weight: 600;
+  border-radius: 8px;
+  font-size: 13.5px;
+  transition: all 0.2s ease;
+  box-shadow: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-container .btn-primary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.settings-container .btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.settings-container .btn-secondary {
   padding: 8px 16px;
-  background: var(--admin-bg, white);
-  border: 1px solid var(--admin-border, var(--border-color));
-  color: var(--admin-text, #333);
-  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--admin-border, #30363d);
+  color: var(--admin-text-muted, #8b949e);
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  display: inline-block;
-  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
-.btn-secondary:hover {
-  background: var(--admin-card, #f8f9fa);
-  border-color: var(--primary);
+.settings-container .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
 }
 
 .settings-message {
   margin: 20px 40px 0;
   padding: 12px 20px;
   border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
 }
 
 .settings-message.success {
-  background: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #c8e6c9;
+  background: rgba(46, 160, 67, 0.1);
+  color: #3fb950;
+  border: 1px solid rgba(46, 160, 67, 0.2);
 }
 
 .settings-message.error {
-  background: #ffebee;
-  color: #c62828;
-  border: 1px solid #ffcdd2;
+  background: rgba(248, 81, 73, 0.1);
+  color: #f85149;
+  border: 1px solid rgba(248, 81, 73, 0.2);
 }
 
 .input-hint {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--admin-text-muted, #8b949e);
   margin-top: 4px;
+}
+
+/* Garage Section Styles (removes inline styles) */
+.garage-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.garage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.garage-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.add-vehicle-form {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--admin-border, #30363d);
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.add-vehicle-form h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 4px 0;
+}
+
+.vehicles-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.vehicle-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--admin-border, #30363d);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.vehicle-item-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.vehicle-item-details h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 6px 0;
+}
+
+.vehicle-item-meta {
+  font-size: 12.5px;
+  color: var(--admin-text-muted, #8b949e);
+  display: flex;
+  gap: 16px;
+}
+
+.vehicle-item-meta strong {
+  color: #fff;
+  font-weight: 500;
+}
+
+.btn-remove-vehicle {
+  background: none;
+  border: none;
+  color: var(--admin-text-muted, #8b949e);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-remove-vehicle:hover {
+  color: #f85149;
+}
+
+.garage-empty {
+  color: var(--admin-text-muted, #8b949e);
+  text-align: center;
+  padding: 32px 0;
+  font-size: 13.5px;
 }
 
 @media (max-width: 600px) {

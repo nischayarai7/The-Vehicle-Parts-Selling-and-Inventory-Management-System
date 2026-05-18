@@ -4,6 +4,7 @@ using backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace backend.Controllers
 {
@@ -17,6 +18,13 @@ namespace backend.Controllers
         public StaffCustomersController(AppDbContext context)
         {
             _context = context;
+        }
+
+        private int GetCurrentUserId()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) throw new UnauthorizedAccessException("User not found in token");
+            return int.Parse(userIdClaim.Value);
         }
 
         [HttpGet]
@@ -225,6 +233,9 @@ namespace backend.Controllers
             var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Customer");
             if (customerRole == null) return Ok(new { success = true, data = new CustomerReportDto() });
 
+            var userId = GetCurrentUserId();
+            var isAdmin = User.IsInRole("Admin");
+
             // Base query for customers
             var customersQuery = _context.Users
                 .Where(u => u.UserRoles.Any(ur => ur.RoleId == customerRole.Id))
@@ -233,8 +244,8 @@ namespace backend.Controllers
                     Id = u.Id,
                     FullName = u.FullName,
                     Email = u.Email,
-                    OrderCount = u.Orders.Count(o => o.Status == "Delivered" || o.Status == "Shipped" || o.Status == "Completed" || o.Status == "Pending" || o.Status == "Processing"), // Excluding Cancelled if needed, but let's count all non-cancelled for now. Actually let's just count all for regulars.
-                    TotalSpent = u.Orders.Where(o => o.Status != "Cancelled").Sum(o => o.TotalAmount)
+                    OrderCount = u.Orders.Count(o => (isAdmin || o.CreatedById == userId) && (o.Status == "Delivered" || o.Status == "Shipped" || o.Status == "Completed" || o.Status == "Pending" || o.Status == "Processing")), 
+                    TotalSpent = u.Orders.Where(o => (isAdmin || o.CreatedById == userId) && o.Status != "Cancelled").Sum(o => o.TotalAmount)
                 });
 
             // 1. Regulars: Top 10 by Order Count

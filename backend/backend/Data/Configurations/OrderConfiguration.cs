@@ -58,6 +58,14 @@ namespace backend.Data.Configurations
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Property(o => o.CreatedById)
+                .HasColumnName("created_by_id");
+
+            builder.HasOne(o => o.CreatedBy)
+                .WithMany()
+                .HasForeignKey(o => o.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

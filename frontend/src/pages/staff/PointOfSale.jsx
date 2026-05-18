@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
+import './PointOfSale.css';
 
 const PointOfSale = () => {
   const navigate = useNavigate();
@@ -10,20 +11,15 @@ const PointOfSale = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [cart, setCart] = useState([]);
   const [notes, setNotes] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    let timer;
-    if (message) {
-      timer = setTimeout(() => {
-        setMessage('');
-      }, 5000);
-    }
-    return () => clearTimeout(timer);
-  }, [message]);
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   useEffect(() => {
     fetchCustomers();
@@ -74,17 +70,15 @@ const PointOfSale = () => {
 
   const handleCheckout = async () => {
     if (!selectedCustomerId) {
-      setError('Please select a customer.');
+      showToast('Please select a customer before checkout.', 'error');
       return;
     }
     if (cart.length === 0) {
-      setError('Cart is empty.');
+      showToast('Cart is empty. Add items to proceed.', 'error');
       return;
     }
 
     setLoading(true);
-    setMessage('');
-    setError('');
 
     try {
       const payload = {
@@ -93,122 +87,229 @@ const PointOfSale = () => {
         items: cart.map(i => ({ partId: i.partId, quantity: i.quantity }))
       };
       
-      // Send the order to the backend
       const res = await api.createStaffOrder(payload);
-      
-      // Get the correct ID property (ASP.NET Core typically camelCases it to 'orderId')
       const orderId = res.orderId || res.OrderId;
-      
-      // Generate and display the invoice right after order confirmation
       navigate(`/staff/invoice/${orderId}`);
       
     } catch (err) {
-      setError(err.response?.data || 'Failed to complete sale');
+      showToast(err.response?.data || 'Failed to complete sale', 'error');
     } finally {
       setLoading(false);
     }
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'NPR',
+      minimumFractionDigits: 2
+    }).format(amount).replace('NPR', 'Rs.');
+  };
+
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
+  // Filter parts by search
+  const filteredParts = parts.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.partNumber && p.partNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   return (
-    <div>
-      <h2 style={{ marginBottom: '20px' }}>Point of Sale</h2>
-      
-      {message && (
-        <div style={{ 
-          background: 'rgba(46, 204, 113, 0.1)', 
-          color: '#2ecc71', 
-          padding: '10px 15px', 
-          borderRadius: '4px', 
-          marginBottom: '15px',
-          border: '1px solid rgba(46, 204, 113, 0.3)'
-        }}>
-          {message}
+    <div className="pos-container">
+      {/* Toast */}
+      {toast && (
+        <div className={`pos-toast ${toast.type}`}>
+          <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            {toast.type === 'success' ? (
+              <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>
+            ) : (
+              <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>
+            )}
+          </svg>
+          <span>{toast.message}</span>
         </div>
       )}
-      {error && <div style={{ color: 'var(--danger)', marginBottom: '15px' }}>{error}</div>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
-        {/* Left Side: Product Selection */}
-        <div className="large-card">
-          <h3 style={{ marginBottom: '20px' }}>Available Parts</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-            {parts.map(p => (
-              <div key={p.id} style={{ border: '1px solid var(--admin-border)', padding: '15px', borderRadius: '8px', background: 'var(--admin-bg)' }}>
-                <strong>{p.name}</strong><br/>
-                <span style={{ color: 'var(--success)' }}>${p.price.toFixed(2)}</span> | Stock: {p.stockQuantity}<br/>
-                <button onClick={() => addToCart(p)} className="dashboard-btn" style={{ marginTop: '10px', marginLeft: 0 }}>Add to Cart</button>
-              </div>
-            ))}
+      {/* Header */}
+      <div className="pos-page-header">
+        <div>
+          <h2>Point of Sale</h2>
+          <p>Browse available inventory, build a cart, and finalize customer checkout.</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--admin-text-muted)', fontSize: '13px' }}>
+          <svg style={{ width: '14px', height: '14px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span>{cart.length} item{cart.length !== 1 ? 's' : ''} in cart</span>
+        </div>
+      </div>
+
+      {/* Main Grid */}
+      <div className="pos-grid">
+        {/* Left: Product Catalog */}
+        <div className="pos-catalog-panel">
+          <div className="catalog-toolbar">
+            <h3>Inventory Catalog ({filteredParts.length})</h3>
+            <div className="catalog-search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input 
+                type="text" 
+                placeholder="Search parts, brand, SKU..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="catalog-items-grid">
+            {filteredParts.length === 0 ? (
+              <div className="catalog-empty">No parts match your search criteria.</div>
+            ) : (
+              filteredParts.map(p => (
+                <div key={p.id} className="product-item-card">
+                  {/* Product Image */}
+                  <div className="product-img-box">
+                    {p.imageUrl ? (
+                      <img src={p.imageUrl} alt={p.name} />
+                    ) : (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 8l-9-4-9 4v8l9 4 9-4V8zM12 4v16m-9-12l9 4 9-4"/></svg>
+                    )}
+                  </div>
+
+                  {/* Product Info */}
+                  <div className="product-info-block">
+                    <div className="product-name-row">
+                      <strong>{p.name}</strong>
+                      {p.partNumber && <span className="product-part-number">{p.partNumber}</span>}
+                    </div>
+                    <div className="product-meta-row">
+                      {p.brand && <span>{p.brand}</span>}
+                      {p.brand && p.condition && <span className="product-meta-divider"></span>}
+                      {p.condition && <span>{p.condition}</span>}
+                      {(p.brand || p.condition) && p.categoryName && <span className="product-meta-divider"></span>}
+                      {p.categoryName && <span>{p.categoryName}</span>}
+                    </div>
+                  </div>
+
+                  {/* Price & Stock */}
+                  <div className="product-price-col">
+                    <div className="product-price-val">{formatCurrency(p.price)}</div>
+                    <div className={`product-stock-tag ${p.stockQuantity <= (p.reorderLevel || 5) ? 'low' : ''}`}>
+                      {p.stockQuantity} in stock
+                    </div>
+                  </div>
+
+                  {/* Add Button */}
+                  <button className="btn-add-cart" onClick={() => addToCart(p)}>
+                    <svg style={{ width: '12px', height: '12px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
-        {/* Right Side: Cart and Checkout */}
-        <div className="large-card" style={{ height: 'fit-content' }}>
-          <h3 style={{ marginBottom: '20px' }}>Current Sale</h3>
-          
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-muted)' }}>Select Customer</label>
-            <select 
-              value={selectedCustomerId} 
-              onChange={(e) => setSelectedCustomerId(e.target.value)}
-              style={{ width: '100%', padding: '10px', background: '#1c2128', border: '1px solid var(--admin-border)', color: 'white', borderRadius: '4px' }}
+        {/* Right: Cart Panel */}
+        <div className="pos-cart-panel">
+          <div className="cart-header">
+            <h3>Current Sale</h3>
+          </div>
+
+          <div className="cart-body">
+            {/* Customer Select */}
+            <div className="cart-field-group">
+              <label>Customer Account</label>
+              <select 
+                value={selectedCustomerId} 
+                onChange={(e) => setSelectedCustomerId(e.target.value)}
+                className="cart-select"
+              >
+                <option value="">-- Select Customer --</option>
+                {customers.map(c => (
+                  <option key={c.id} value={c.id}>{c.fullName} ({c.email})</option>
+                ))}
+              </select>
+            </div>
+
+            <hr className="cart-divider" />
+
+            {/* Cart Items */}
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--admin-text-muted)' }}>
+                Cart Items ({cart.length})
+              </label>
+              {cart.length === 0 ? (
+                <p className="cart-empty-text">No items added yet.</p>
+              ) : (
+                <ul className="cart-items-list">
+                  {cart.map(item => (
+                    <li key={item.partId} className="cart-line-item">
+                      <div className="cart-item-info">
+                        <strong>{item.name}</strong>
+                        <div className="cart-item-price-row">
+                          <span>{formatCurrency(item.price)}</span>
+                          <span>×</span>
+                          <input 
+                            type="number" 
+                            value={item.quantity} 
+                            onChange={(e) => updateQuantity(item.partId, parseInt(e.target.value))}
+                            className="cart-qty-input"
+                            min="1"
+                            max={item.max}
+                          />
+                        </div>
+                      </div>
+                      <div className="cart-item-right">
+                        <span className="cart-item-subtotal">{formatCurrency(item.price * item.quantity)}</span>
+                        <button onClick={() => removeFromCart(item.partId)} className="btn-remove-item">
+                          <svg style={{ width: '10px', height: '10px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          Remove
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <hr className="cart-divider" />
+
+            {/* Notes */}
+            <div className="cart-field-group">
+              <label>Sale Notes</label>
+              <textarea 
+                value={notes} 
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Optional transaction notes..."
+                className="cart-textarea"
+              ></textarea>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="cart-footer">
+            <div className="cart-total-row">
+              <span className="cart-total-label">Total Amount</span>
+              <span className="cart-total-value">{formatCurrency(total)}</span>
+            </div>
+            <button 
+              className="btn-checkout"
+              onClick={handleCheckout}
+              disabled={loading || cart.length === 0 || !selectedCustomerId}
             >
-              <option value="">-- Choose Customer --</option>
-              {customers.map(c => (
-                <option key={c.id} value={c.id}>{c.fullName} ({c.email})</option>
-              ))}
-            </select>
+              {loading ? (
+                <>
+                  <svg className="refresh-icon-svg spinning" style={{ width: '14px', height: '14px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                  Processing Sale...
+                </>
+              ) : (
+                <>
+                  <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  Complete Checkout
+                </>
+              )}
+            </button>
           </div>
-
-          <hr style={{ borderColor: 'var(--admin-border)', margin: '20px 0' }}/>
-          <h4 style={{ marginBottom: '10px' }}>Cart Items</h4>
-          {cart.length === 0 ? <p style={{ color: 'var(--admin-text-muted)' }}>Cart is empty</p> : (
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              {cart.map(item => (
-                <li key={item.partId} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px solid var(--admin-border)' }}>
-                  <div>
-                    <strong>{item.name}</strong><br/>
-                    ${item.price.toFixed(2)} x 
-                    <input 
-                      type="number" 
-                      value={item.quantity} 
-                      onChange={(e) => updateQuantity(item.partId, parseInt(e.target.value))}
-                      style={{ width: '50px', marginLeft: '5px', background: '#1c2128', color: 'white', border: '1px solid var(--admin-border)', padding: '2px 5px', borderRadius: '4px' }}
-                      min="1"
-                      max={item.max}
-                    />
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    ${(item.price * item.quantity).toFixed(2)}<br/>
-                    <button onClick={() => removeFromCart(item.partId)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', marginTop: '5px', fontSize: '12px' }}>Remove</button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <hr style={{ borderColor: 'var(--admin-border)', margin: '20px 0' }}/>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-muted)' }}>Sale Notes</label>
-            <textarea 
-              value={notes} 
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Optional notes..."
-              style={{ width: '100%', padding: '10px', background: '#1c2128', border: '1px solid var(--admin-border)', color: 'white', borderRadius: '4px', resize: 'vertical' }}
-            ></textarea>
-          </div>
-
-          <h3 style={{ textAlign: 'right', marginBottom: '20px' }}>Total: ${total.toFixed(2)}</h3>
-          <button 
-            className="btn-primary" 
-            style={{ width: '100%', background: 'var(--success)' }}
-            onClick={handleCheckout}
-            disabled={loading || cart.length === 0 || !selectedCustomerId}
-          >
-            {loading ? 'Processing...' : 'Complete Sale'}
-          </button>
         </div>
       </div>
     </div>

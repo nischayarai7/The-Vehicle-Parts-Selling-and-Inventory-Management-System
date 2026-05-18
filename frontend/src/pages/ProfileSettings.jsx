@@ -182,7 +182,7 @@ const ProfileSettings = () => {
             className={`tab-btn ${activeTab === 'vehicles' ? 'active' : ''}`}
             onClick={() => setActiveTab('vehicles')}
           >
-            🚗 My Vehicles
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/></svg> My Vehicles
           </button>
         </div>
 
@@ -300,18 +300,18 @@ const ProfileSettings = () => {
               </button>
             </form>
           ) : (
-            <div className="settings-form">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ margin: 0 }}>My Garage</h3>
+            <div className="garage-container">
+              <div className="garage-header">
+                <h3>My Garage</h3>
                 {!showAddForm && (
-                  <button onClick={() => setShowAddForm(true)} className="btn-primary" style={{ padding: '8px 15px', fontSize: '14px' }}>
+                  <button onClick={() => setShowAddForm(true)} className="btn-primary">
                     + Add Vehicle
                   </button>
                 )}
               </div>
 
               {showAddForm && (
-                <form onSubmit={handleAddVehicle} style={{ background: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '20px' }}>
+                <form onSubmit={handleAddVehicle} className="add-vehicle-form">
                   <h4>Add New Vehicle</h4>
                   <div className="form-group">
                     <label>Select Vehicle Model</label>
@@ -319,7 +319,6 @@ const ProfileSettings = () => {
                       value={newVehicle.vehicleId} 
                       onChange={e => setNewVehicle({...newVehicle, vehicleId: e.target.value})}
                       required
-                      style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
                     >
                       <option value="">-- Choose a vehicle --</option>
                       {availableVehicles.map(v => (
@@ -357,27 +356,28 @@ const ProfileSettings = () => {
               )}
 
               {myVehicles.length > 0 ? (
-                <div style={{ display: 'grid', gap: '15px' }}>
+                <div className="vehicles-grid">
                   {myVehicles.map(v => (
-                    <div key={v.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', border: '1px solid #eee', borderRadius: '8px' }}>
-                      <div>
-                        <h4 style={{ margin: '0 0 5px 0' }}>{v.displayName}</h4>
-                        <div style={{ fontSize: '14px', color: '#666', display: 'flex', gap: '15px' }}>
+                    <div key={v.id} className="vehicle-item-row">
+                      <div className="vehicle-item-details">
+                        <h4>{v.displayName}</h4>
+                        <div className="vehicle-item-meta">
                           {v.licensePlate && <span><strong>Plate:</strong> {v.licensePlate}</span>}
                           {v.color && <span><strong>Color:</strong> {v.color}</span>}
                         </div>
                       </div>
                       <button 
                         onClick={() => handleDeleteVehicle(v.id)}
-                        style={{ background: 'none', border: 'none', color: '#ff4d4f', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' }}
+                        className="btn-remove-vehicle"
                       >
+                        <svg style={{ width: '12px', height: '12px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         Remove
                       </button>
                     </div>
                   ))}
                 </div>
               ) : (
-                !showAddForm && <p style={{ color: '#666', textAlign: 'center', padding: '20px 0' }}>No vehicles in your garage yet.</p>
+                !showAddForm && <p className="garage-empty">No vehicles in your garage yet.</p>
               )}
             </div>
           )}

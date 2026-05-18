@@ -37,6 +37,31 @@
   margin: 0;
 }
 
+.flex-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.refresh-icon-svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.flex-btn:hover:not(:disabled) .refresh-icon-svg {
+  transform: rotate(180deg);
+}
+
+.refresh-icon-svg.spinning {
+  animation: refreshSpin 1s linear infinite;
+}
+
+@keyframes refreshSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* KPI Cards Grid */
 .orders-kpi-grid {
   display: grid;

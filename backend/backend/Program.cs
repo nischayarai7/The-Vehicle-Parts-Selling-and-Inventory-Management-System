@@ -91,6 +91,37 @@ using (var scope = app.Services.CreateScope())
     
     // Database migrations run on startup
     db.Database.Migrate();
+
+    try
+    {
+        db.Database.ExecuteSqlRaw(@"
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 
+                    FROM information_schema.columns 
+                    WHERE table_name='orders' AND column_name='created_by_id'
+                ) THEN
+                    ALTER TABLE orders ADD COLUMN created_by_id INTEGER NULL;
+                END IF;
+
+                IF NOT EXISTS (
+                    SELECT 1 
+                    FROM information_schema.table_constraints 
+                    WHERE constraint_name='fk_orders_users_created_by_id'
+                ) THEN
+                    ALTER TABLE orders 
+                    ADD CONSTRAINT fk_orders_users_created_by_id 
+                    FOREIGN KEY (created_by_id) REFERENCES users(id) ON DELETE RESTRICT;
+                END IF;
+            END $$;
+        ");
+        logger.LogInformation("Database verified: 'created_by_id' column and constraints are active.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to apply dynamic database updates for staff-orders column.");
+    }
 }
 
 // ── 8. Middleware Pipeline (ORDER MATTERS) ────────────────────────────────────

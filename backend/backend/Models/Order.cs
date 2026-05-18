@@ -24,6 +24,8 @@ namespace backend.Models
 
         // Navigation
         public User User { get; set; } = null!;
+        public int? CreatedById { get; set; }
+        public User? CreatedBy { get; set; }
         public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
     }
 }

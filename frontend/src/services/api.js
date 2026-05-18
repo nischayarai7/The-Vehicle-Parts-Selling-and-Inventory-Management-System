@@ -295,6 +295,17 @@ export const api = {
     body: JSON.stringify({ status })
   }).then(handleResponse),
 
+  // ── Pending Credits & Debt Alerts ─────────────────────────────────────────
+  getPendingCredits: () => fetch(`${API_BASE}/PendingCredits`, { headers: getAuthHeaders() }).then(handleResponse),
+  sendOverdueCreditReminder: (id) => fetch(`${API_BASE}/PendingCredits/${id}/send-reminder`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+  sendAllOverdueCreditReminders: () => fetch(`${API_BASE}/PendingCredits/send-all-overdue-reminders`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
   // ── Vendors ───────────────────────────────────────────────────────────────
   getVendors: () => fetch(`${API_BASE}/vendors`, { headers: getAuthHeaders() }).then(handleResponse),
   createVendor: (data) => fetch(`${API_BASE}/vendors`, {
