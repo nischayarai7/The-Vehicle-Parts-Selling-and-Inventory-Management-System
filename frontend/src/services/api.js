@@ -65,6 +65,28 @@ export const api = {
     return handleResponse(response);
   },
 
+  // --- Customer Features ---
+  getMyAppointments: () => fetch(`${API_BASE}/appointments/my`, { headers: getAuthHeaders() }).then(handleResponse),
+  getAvailableSlots: () => fetch(`${API_BASE}/appointments/slots`, { headers: getAuthHeaders() }).then(handleResponse),
+  bookAppointment: (data) => fetch(`${API_BASE}/appointments`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  getMyPartRequests: () => fetch(`${API_BASE}/partrequests/my`, { headers: getAuthHeaders() }).then(handleResponse),
+  createPartRequest: (data) => fetch(`${API_BASE}/partrequests`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  getServiceReviews: () => fetch(`${API_BASE}/servicereviews`, { headers: getAuthHeaders() }).then(handleResponse),
+  createServiceReview: (data) => fetch(`${API_BASE}/servicereviews`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  getMyOrders: () => fetch(`${API_BASE}/orders/my`, { headers: getAuthHeaders() }).then(handleResponse),
+
   // ── Roles & Permissions ───────────────────────────────────────────────────
   getRoles: () => fetch(`${API_BASE}/roles`, { headers: getAuthHeaders() }).then(handleResponse),
   getPermissions: () => fetch(`${API_BASE}/roles/permissions`, { headers: getAuthHeaders() }).then(handleResponse),
