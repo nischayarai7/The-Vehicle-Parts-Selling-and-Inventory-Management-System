@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import './CategoryGrid.css';
 
@@ -42,7 +43,7 @@ const CategoryGrid = () => {
               <div className="category-info">
                 <h3>{category.name}</h3>
                 <p>{category.description || 'Explore parts'}</p>
-                <a href={`/category/${category.id}`} className="shop-link">Shop Now</a>
+                <Link to={`/shop?category=${category.id}`} className="shop-link">Shop Now</Link>
               </div>
             </div>
           ))}

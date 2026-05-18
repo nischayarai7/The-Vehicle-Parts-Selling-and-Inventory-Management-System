@@ -18,11 +18,11 @@ const ProfileSettings = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  // Vehicle states
   const [myVehicles, setMyVehicles] = useState([]);
   const [availableVehicles, setAvailableVehicles] = useState([]);
   const [newVehicle, setNewVehicle] = useState({ vehicleId: '', licensePlate: '', vin: '', color: '' });
   const [showAddForm, setShowAddForm] = useState(false);
+  const [myOrders, setMyOrders] = useState([]);
 
   useEffect(() => {
     if (user) {
@@ -37,8 +37,22 @@ const ProfileSettings = () => {
     if (activeTab === 'vehicles') {
       fetchMyVehicles();
       fetchAvailableVehicles();
+    } else if (activeTab === 'orders') {
+      fetchMyOrders();
     }
   }, [activeTab]);
+
+  const fetchMyOrders = async () => {
+    setLoading(true);
+    try {
+      const data = await api.getCustomerOrders();
+      setMyOrders(data);
+    } catch (err) {
+      showMessage('error', 'Failed to load your purchase orders');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchMyVehicles = async () => {
     try {
@@ -182,7 +196,13 @@ const ProfileSettings = () => {
             className={`tab-btn ${activeTab === 'vehicles' ? 'active' : ''}`}
             onClick={() => setActiveTab('vehicles')}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/></svg> My Vehicles
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/></svg> My Garage
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
+            onClick={() => setActiveTab('orders')}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> My Purchase Orders
           </button>
         </div>
 
@@ -299,7 +319,7 @@ const ProfileSettings = () => {
                 {loading ? 'Updating...' : 'Update Password'}
               </button>
             </form>
-          ) : (
+          ) : activeTab === 'vehicles' ? (
             <div className="garage-container">
               <div className="garage-header">
                 <h3>My Garage</h3>
@@ -378,6 +398,69 @@ const ProfileSettings = () => {
                 </div>
               ) : (
                 !showAddForm && <p className="garage-empty">No vehicles in your garage yet.</p>
+              )}
+            </div>
+          ) : (
+            <div className="orders-container">
+              <div className="garage-header" style={{ marginBottom: '20px' }}>
+                <h3>My Purchase Orders ({myOrders.length})</h3>
+              </div>
+
+              {loading ? (
+                <p style={{ color: '#888' }}>Refreshing orders log...</p>
+              ) : myOrders.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {myOrders.map(order => (
+                    <div key={order.id} style={{ background: '#181818', border: '1px solid #222', borderRadius: '8px', padding: '20px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '15px', marginBottom: '15px' }}>
+                        <div>
+                          <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', display: 'block', letterSpacing: '0.5px' }}>Order Reference</span>
+                          <strong style={{ color: '#fff', fontSize: '1.05rem' }}>{order.orderNumber}</strong>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', display: 'block', letterSpacing: '0.5px' }}>Ordered On</span>
+                          <span style={{ color: '#aaa', fontSize: '0.9rem' }}>{new Date(order.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', display: 'block', letterSpacing: '0.5px' }}>Delivery Status</span>
+                          <span style={{ 
+                            padding: '4px 10px', 
+                            borderRadius: '4px', 
+                            fontSize: '11px', 
+                            fontWeight: 'bold',
+                            background: order.status === 'Completed' ? 'rgba(46,160,67,0.1)' : 'rgba(227,179,59,0.1)',
+                            color: order.status === 'Completed' ? '#3fb950' : '#e3b33b',
+                            border: order.status === 'Completed' ? '1px solid #2ea043' : '1px solid #d4a727'
+                          }}>
+                            {order.status}
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ borderTop: '1px dashed #282828', borderBottom: '1px dashed #282828', padding: '12px 0', margin: '12px 0' }}>
+                        <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', display: 'block', marginBottom: '6px', letterSpacing: '0.5px' }}>Delivery Address</span>
+                        <p style={{ margin: 0, color: '#aaa', fontSize: '0.9rem' }}>{order.shippingAddress}</p>
+                        {order.notes && (
+                          <div style={{ marginTop: '10px' }}>
+                            <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', display: 'block', marginBottom: '4px', letterSpacing: '0.5px' }}>Special Instructions</span>
+                            <p style={{ margin: 0, color: '#888', fontSize: '0.85rem', fontStyle: 'italic' }}>{order.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: '#888', fontSize: '0.9rem' }}>Payment Method: <strong style={{ color: '#fff' }}>Cash on Delivery</strong></span>
+                        <strong style={{ color: 'var(--primary)', fontSize: '1.15rem' }}>
+                          {new Intl.NumberFormat('en-US', {
+                            style: 'currency',
+                            currency: 'NPR',
+                            minimumFractionDigits: 2
+                          }).format(order.totalAmount).replace('NPR', 'Rs.')}
+                        </strong>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ color: '#888' }}>You haven't placed any storefront orders yet.</p>
               )}
             </div>
           )}

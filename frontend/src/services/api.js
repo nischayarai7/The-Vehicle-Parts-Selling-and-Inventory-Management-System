@@ -239,6 +239,10 @@ export const api = {
     return handleResponse(response);
   },
 
+  getCompatibleParts(vehicleId) {
+    return fetch(`${API_BASE}/parts/compatible/${vehicleId}`).then(handleResponse);
+  },
+
   createPart: (data) => fetch(`${API_BASE}/parts`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -344,6 +348,15 @@ export const api = {
     }
     return fetch(url, { headers: getAuthHeaders() }).then(handleResponse);
   },
+
+  // ── Customer Orders (Storefront) ─────────────────────────────────────────
+  getCustomerOrders: () => fetch(`${API_BASE}/orders`, { headers: getAuthHeaders() }).then(handleResponse),
+  getCustomerOrderDetails: (id) => fetch(`${API_BASE}/orders/${id}`, { headers: getAuthHeaders() }).then(handleResponse),
+  createStorefrontOrder: (data) => fetch(`${API_BASE}/orders`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
 
   getToken() {
     return localStorage.getItem('token');
