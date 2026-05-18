@@ -8,6 +8,8 @@ namespace backend.DTOs.Staff
         public int CustomerId { get; set; }
 
         public string? Notes { get; set; }
+        
+        public string PaymentMethod { get; set; } = "Paid";
 
         [Required]
         [MinLength(1)]

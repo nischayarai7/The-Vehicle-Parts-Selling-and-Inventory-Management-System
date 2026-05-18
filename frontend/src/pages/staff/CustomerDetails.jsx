@@ -54,6 +54,11 @@ const CustomerDetails = () => {
   if (loading) return <div className="admin-dashboard"><p>Loading details...</p></div>;
   if (!customer) return <div className="admin-dashboard"><p>Customer not found.</p></div>;
 
+  const initials = customer.fullName ? customer.fullName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'C';
+  const totalVehicles = customer.vehicles?.length || 0;
+  const lifetimeOrders = customer.recentOrders?.length || 0;
+  const totalSpent = customer.recentOrders ? customer.recentOrders.reduce((sum, o) => sum + o.totalAmount, 0) : 0;
+
   return (
     <div className="customer-details-container">
       <Link to="/staff/customers" className="back-link">&larr; Back to Directory</Link>
@@ -64,7 +69,7 @@ const CustomerDetails = () => {
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
-          <h2>Customer Details</h2>
+          <h2>Customer Account Card</h2>
         </div>
         <button className="edit-btn" onClick={() => setIsEditing(true)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -76,30 +81,101 @@ const CustomerDetails = () => {
       </div>
 
       <div className="details-section">
-        <h3 className="section-title">Personal Information</h3>
-        <div className="details-card personal-card">
-          <div className="profile-placeholder">
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--admin-text-muted)" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
+        <h3 className="section-title">Personal Information Overview</h3>
+        <div className="premium-profile-wrapper">
+          {/* Left profile banner segment */}
+          <div className="premium-avatar-block">
+            <div className="premium-initials-glowing">
+              {initials}
+            </div>
+            <div className="premium-customer-meta">
+              <h4>{customer.fullName}</h4>
+              <span className="premium-account-id">Account Ref: #{customer.id || 'N/A'}</span>
+              <span className="premium-verified-badge">✓ Active client</span>
+            </div>
           </div>
-          <div className="info-grid">
-            <div className="info-item">
-              <span className="info-label">Full Name</span>
-              <span className="info-value">{customer.fullName}</span>
+
+          {/* Right profile info grid segment */}
+          <div className="premium-info-ledger">
+            <div className="premium-ledger-grid">
+              <div className="premium-ledger-item email-ledger">
+                <span className="premium-ledger-icon">
+                  <svg className="premium-ledger-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                  </svg>
+                </span>
+                <div className="premium-ledger-text">
+                  <span className="premium-label">Email Address</span>
+                  <span className="premium-value">{customer.email}</span>
+                </div>
+              </div>
+              
+              <div className="premium-ledger-item phone-ledger">
+                <span className="premium-ledger-icon">
+                  <svg className="premium-ledger-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                </span>
+                <div className="premium-ledger-text">
+                  <span className="premium-label">Phone Connection</span>
+                  <span className="premium-value">{customer.phoneNumber || 'Not Linked'}</span>
+                </div>
+              </div>
+
+              <div className="premium-ledger-item date-ledger">
+                <span className="premium-ledger-icon">
+                  <svg className="premium-ledger-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </span>
+                <div className="premium-ledger-text">
+                  <span className="premium-label">Member Since</span>
+                  <span className="premium-value">
+                    {new Date(customer.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </span>
+                </div>
+              </div>
+
+              <div className="premium-ledger-item vehicle-ledger">
+                <span className="premium-ledger-icon">
+                  <svg className="premium-ledger-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
+                    <circle cx="7" cy="17" r="2"></circle>
+                    <circle cx="17" cy="17" r="2"></circle>
+                    <path d="M7 17h10"></path>
+                  </svg>
+                </span>
+                <div className="premium-ledger-text">
+                  <span className="premium-label">Linked Vehicles</span>
+                  <span className="premium-value">{totalVehicles} {totalVehicles === 1 ? 'Active Unit' : 'Active Units'}</span>
+                </div>
+              </div>
             </div>
-            <div className="info-item">
-              <span className="info-label">Email Address</span>
-              <span className="info-value">{customer.email}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Phone Number</span>
-              <span className="info-value">{customer.phoneNumber || 'N/A'}</span>
-            </div>
-            <div className="info-item">
-              <span className="info-label">Joined Date</span>
-              <span className="info-value">{new Date(customer.createdAt).toLocaleDateString()}</span>
+
+            {/* Quick Metrics shelf */}
+            <div className="premium-metrics-shelf">
+              <div className="premium-metric-card">
+                <span className="metric-header">Total Lifetime Orders</span>
+                <strong className="metric-val">{lifetimeOrders}</strong>
+              </div>
+              <div className="premium-metric-card highlight-metric">
+                <span className="metric-header">Gross Transaction Value</span>
+                <strong className="metric-val">
+                  {new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'NPR',
+                    minimumFractionDigits: 2
+                  }).format(totalSpent).replace('NPR', 'Rs.')}
+                </strong>
+              </div>
             </div>
           </div>
         </div>
@@ -107,26 +183,41 @@ const CustomerDetails = () => {
 
       <div className="details-section">
         <h3 className="section-title">Linked Vehicles</h3>
-        <div className="details-card list-card">
+        <div className="details-card list-card" style={{ background: 'transparent', border: 'none', padding: 0 }}>
           {customer.vehicles && customer.vehicles.length > 0 ? (
             <div className="vehicles-grid">
               {customer.vehicles.map(v => (
                 <div key={v.id} className="vehicle-item">
-                  <div className="vehicle-info">
-                    <span className="info-label">Vehicle Name</span>
-                    <span className="info-value">{v.vehicleName}</span>
+                  <div className="vehicle-header">
+                    <svg className="vehicle-header-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path>
+                      <circle cx="7" cy="17" r="2"></circle>
+                      <circle cx="17" cy="17" r="2"></circle>
+                      <path d="M7 17h10"></path>
+                    </svg>
+                    <span className="vehicle-header-title">{v.vehicleName}</span>
                   </div>
                   <div className="vehicle-info">
                     <span className="info-label">License Plate</span>
                     <span className="info-value">{v.licensePlate || 'N/A'}</span>
                   </div>
                   <div className="vehicle-info">
-                    <span className="info-label">Color</span>
-                    <span className="info-value">{v.color || 'N/A'}</span>
+                    <span className="info-label">Color Badge</span>
+                    <span className="info-value">
+                      <span className="vehicle-badge-color" style={{
+                        background: 'rgba(255, 255, 255, 0.04)',
+                        border: `1px solid rgba(255, 255, 255, 0.08)`,
+                        color: v.color || '#fff'
+                      }}>
+                        {v.color || 'N/A'}
+                      </span>
+                    </span>
                   </div>
                   <div className="vehicle-info">
-                    <span className="info-label">VIN</span>
-                    <span className="info-value">{v.vin || 'N/A'}</span>
+                    <span className="info-label">VIN Reference</span>
+                    <span className="info-value" style={{ fontFamily: 'monospace', fontSize: '12px', letterSpacing: '0.5px' }}>
+                      {v.vin || 'N/A'}
+                    </span>
                   </div>
                 </div>
               ))}
