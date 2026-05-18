@@ -65,6 +65,28 @@ export const api = {
     return handleResponse(response);
   },
 
+  // --- Customer Features ---
+  getMyAppointments: () => fetch(`${API_BASE}/appointments/my`, { headers: getAuthHeaders() }).then(handleResponse),
+  getAvailableSlots: () => fetch(`${API_BASE}/appointments/slots`, { headers: getAuthHeaders() }).then(handleResponse),
+  bookAppointment: (data) => fetch(`${API_BASE}/appointments`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  getMyPartRequests: () => fetch(`${API_BASE}/partrequests/my`, { headers: getAuthHeaders() }).then(handleResponse),
+  createPartRequest: (data) => fetch(`${API_BASE}/partrequests`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  getServiceReviews: () => fetch(`${API_BASE}/servicereviews`, { headers: getAuthHeaders() }).then(handleResponse),
+  createServiceReview: (data) => fetch(`${API_BASE}/servicereviews`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  getMyOrders: () => fetch(`${API_BASE}/orders/my`, { headers: getAuthHeaders() }).then(handleResponse),
+
   // ── Roles & Permissions ───────────────────────────────────────────────────
   getRoles: () => fetch(`${API_BASE}/roles`, { headers: getAuthHeaders() }).then(handleResponse),
   getPermissions: () => fetch(`${API_BASE}/roles/permissions`, { headers: getAuthHeaders() }).then(handleResponse),
@@ -179,6 +201,14 @@ export const api = {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({ status }),
+    });
+    return handleResponse(response);
+  },
+
+  async deleteAppointment(id) {
+    const response = await fetch(`${API_BASE}/appointments/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
     });
     return handleResponse(response);
   },

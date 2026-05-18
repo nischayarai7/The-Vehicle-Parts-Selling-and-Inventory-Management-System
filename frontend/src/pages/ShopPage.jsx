@@ -444,6 +444,7 @@ function ShopPage() {
                     </div>
                   )}
                 </div>
+
               </div>
             </div>
           ))}

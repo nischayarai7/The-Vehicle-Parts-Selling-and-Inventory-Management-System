@@ -39,6 +39,16 @@ import StaffInvoice from './pages/staff/StaffInvoice';
 import CustomerReports from './pages/staff/CustomerReports';
 import AppointmentsManager from './pages/staff/AppointmentsManager';
 
+// Customer Pages
+import CustomerLayout from './layouts/CustomerLayout';
+import CustomerRoute from './components/CustomerRoute';
+import CustomerDashboard from './pages/CustomerDashboard';
+import PartRequestsPage from './pages/PartRequestsPage';
+import ReviewsPage from './pages/ReviewsPage';
+import CustomerAppointmentsPage from './pages/CustomerAppointmentsPage';
+import CustomerOrdersPage from './pages/CustomerOrdersPage';
+import CustomerServiceHistoryPage from './pages/CustomerServiceHistoryPage';
+
 function App() {
   return (
     <Routes>
@@ -57,6 +67,22 @@ function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/settings" element={<ProfileSettings />} />
         <Route path="/appointments" element={<AppointmentsPage />} />
+      </Route>
+      
+      {/* Customer Routes */}
+      <Route path="/customer" element={
+        <CustomerRoute>
+          <CustomerLayout />
+        </CustomerRoute>
+      }>
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<CustomerDashboard />} />
+        <Route path="part-requests" element={<PartRequestsPage />} />
+        <Route path="reviews" element={<ReviewsPage />} />
+        <Route path="appointments" element={<CustomerAppointmentsPage />} />
+        <Route path="settings" element={<ProfileSettings />} />
+        <Route path="orders" element={<CustomerOrdersPage />} />
+        <Route path="service-history" element={<CustomerServiceHistoryPage />} />
       </Route>
       
       {/* Staff Routes */}
