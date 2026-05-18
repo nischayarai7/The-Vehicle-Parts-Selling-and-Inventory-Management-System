@@ -285,6 +285,15 @@ export const api = {
     headers: getAuthHeaders(),
     body: JSON.stringify(data)
   }).then(handleResponse),
+  sendStaffOrderInvoice: (id) => fetch(`${API_BASE}/StaffOrders/${id}/send-invoice`, {
+    method: 'POST',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+  updateOrderStatus: (id, status) => fetch(`${API_BASE}/StaffOrders/${id}/status`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ status })
+  }).then(handleResponse),
 
   // ── Vendors ───────────────────────────────────────────────────────────────
   getVendors: () => fetch(`${API_BASE}/vendors`, { headers: getAuthHeaders() }).then(handleResponse),
@@ -311,6 +320,15 @@ export const api = {
     headers: getAuthHeaders(),
     body: JSON.stringify(data)
   }).then(handleResponse),
+
+  // ── Financial Reports ────────────────────────────────────────────────────
+  getFinancialReport: (range = 'monthly', date = null) => {
+    let url = `${API_BASE}/reports/financial?range=${range}`;
+    if (date) {
+      url += `&date=${encodeURIComponent(date)}`;
+    }
+    return fetch(url, { headers: getAuthHeaders() }).then(handleResponse);
+  },
 
   getToken() {
     return localStorage.getItem('token');

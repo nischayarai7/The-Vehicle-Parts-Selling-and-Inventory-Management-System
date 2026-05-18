@@ -30,6 +30,7 @@ builder.Services.AddScoped<IPartService, PartService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 // ── 4. CORS ──────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
@@ -88,10 +89,8 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     
+    // Database migrations run on startup
     db.Database.Migrate();
-
-    // Seed the database with initial data
-    await DbSeeder.SeedAsync(db, logger);
 }
 
 // ── 8. Middleware Pipeline (ORDER MATTERS) ────────────────────────────────────

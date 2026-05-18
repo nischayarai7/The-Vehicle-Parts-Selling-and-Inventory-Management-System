@@ -178,5 +178,30 @@ namespace backend.Controllers
                 return StatusCode(500, new { success = false, message = $"Failed to send email: {ex.Message}" });
             }
         }
+
+        [HttpPut("{id}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Status))
+            {
+                return BadRequest(new { success = false, message = "Status cannot be empty." });
+            }
+
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null) return NotFound(new { success = false, message = "Order not found." });
+
+            order.Status = dto.Status;
+            order.UpdatedAt = DateTime.UtcNow;
+            _context.Orders.Update(order);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, message = "Order status updated successfully." });
+        }
+    }
+
+    public class UpdateOrderStatusDto
+    {
+        public string Status { get; set; }
     }
 }

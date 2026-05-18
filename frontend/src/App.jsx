@@ -18,6 +18,8 @@ import PermissionManager from './pages/admin/PermissionManager'
 import UserManager from './pages/admin/UserManager'
 import VendorsManager from './pages/admin/VendorsManager'
 import PurchaseInvoiceManager from './pages/admin/PurchaseInvoiceManager'
+import FinancialReports from './pages/admin/FinancialReports'
+import OrderManager from './pages/admin/OrderManager'
 import ProfileSettings from './pages/ProfileSettings'
 import AppointmentsPage from './pages/AppointmentsPage'
 import { api } from './services/api'
@@ -81,8 +83,9 @@ function App() {
         <Route path="users" element={<UserManager />} />
         <Route path="vendors" element={<VendorsManager />} />
         <Route path="purchase-invoices" element={<PurchaseInvoiceManager />} />
+        <Route path="reports" element={<FinancialReports />} />
         <Route path="settings" element={<ProfileSettings />} />
-        <Route path="orders" element={<div>Order Management Coming Soon</div>} />
+        <Route path="orders" element={<OrderManager />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />
