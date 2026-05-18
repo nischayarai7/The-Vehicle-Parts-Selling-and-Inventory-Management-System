@@ -289,7 +289,8 @@ const OrderManager = () => {
                             onClick={() => handleViewDetails(o.id)}
                             title="View Order Details"
                           >
-                            👁️ View
+                            <svg className="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: '13px', height: '13px' }}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <span>View</span>
                           </button>
                           
                           <button 
@@ -301,7 +302,10 @@ const OrderManager = () => {
                             {sendingInvoiceId === o.id ? (
                               <span className="mini-spinner"></span>
                             ) : (
-                              '✉️ Email'
+                              <>
+                                <svg className="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: '13px', height: '13px' }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                                <span>Email</span>
+                              </>
                             )}
                           </button>
                         </div>
@@ -324,8 +328,10 @@ const OrderManager = () => {
                   className="page-nav-btn" 
                   disabled={currentPage === 1}
                   onClick={() => handlePageChange(currentPage - 1)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 >
-                  ◀ Previous
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ width: '10px', height: '10px' }}><polyline points="15 18 9 12 15 6"/></svg>
+                  <span>Previous</span>
                 </button>
                 <span className="page-indicator">
                   Page {currentPage} of {totalPages}
@@ -334,8 +340,10 @@ const OrderManager = () => {
                   className="page-nav-btn" 
                   disabled={currentPage === totalPages}
                   onClick={() => handlePageChange(currentPage + 1)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 >
-                  Next ▶
+                  <span>Next</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ width: '10px', height: '10px' }}><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
               </div>
             </div>
@@ -457,15 +465,24 @@ const OrderManager = () => {
                       onClick={() => handleSendInvoice(selectedOrder.id)} 
                       className="btn-modal-action email"
                       disabled={sendingInvoiceId === selectedOrder.id}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     >
                       {sendingInvoiceId === selectedOrder.id ? (
                         <span className="mini-spinner"></span>
                       ) : (
-                        '✉️ Send Email Invoice'
+                        <>
+                          <svg className="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: '14px', height: '14px' }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                          <span>Send Email Invoice</span>
+                        </>
                       )}
                     </button>
-                    <button onClick={handlePrint} className="btn-modal-action print">
-                      🖨️ Print Invoice
+                    <button 
+                      onClick={handlePrint} 
+                      className="btn-modal-action print"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <svg className="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: '14px', height: '14px' }}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                      <span>Print Invoice</span>
                     </button>
                   </div>
                   <button className="admin-btn-outline" onClick={() => setSelectedOrder(null)}>
