@@ -173,6 +173,64 @@ const PartsManager = () => {
     );
   });
 
+  // Pagination Logic
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentParts = filteredParts.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredParts.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    const container = document.querySelector('.parts-manager');
+    if (container) {
+      container.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+      
+      let start = Math.max(2, currentPage - 1);
+      let end = Math.min(totalPages - 1, currentPage + 1);
+      
+      if (currentPage <= 2) {
+        end = 4;
+      } else if (currentPage >= totalPages - 1) {
+        start = totalPages - 3;
+      }
+      
+      if (start > 2) {
+        pages.push('...');
+      }
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+      
+      if (end < totalPages - 1) {
+        pages.push('...');
+      }
+      
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
   if (loading) {
     return <div className="parts-manager">Loading inventory...</div>;
   }
@@ -197,7 +255,7 @@ const PartsManager = () => {
       </div>
 
       <div className="parts-grid">
-        {filteredParts.map(part => (
+        {currentParts.map(part => (
           <div key={part.id} className="part-card">
             <div className="part-card-image">
               {part.imageUrl ? (
@@ -256,6 +314,48 @@ const PartsManager = () => {
           </div>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {filteredParts.length > 0 && totalPages > 1 && (
+        <div className="pagination-container">
+          <div className="pagination-info">
+            Showing <span>{indexOfFirstItem + 1}</span> to <span>{Math.min(indexOfLastItem, filteredParts.length)}</span> of <span>{filteredParts.length}</span> parts
+          </div>
+          <div className="pagination-controls">
+            <button 
+              className="btn-pagination btn-pagination-nav" 
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              Prev
+            </button>
+            
+            {getPageNumbers().map((page, idx) => (
+              page === '...' ? (
+                <span key={`ellipse-${idx}`} className="pagination-ellipse" style={{ color: 'var(--admin-text-muted, #9ea4b0)', padding: '0 0.25rem' }}>...</span>
+              ) : (
+                <button 
+                  key={`page-${page}`} 
+                  className={`btn-pagination ${currentPage === page ? 'active' : ''}`}
+                  onClick={() => handlePageChange(page)}
+                >
+                  {page}
+                </button>
+              )
+            ))}
+            
+            <button 
+              className="btn-pagination btn-pagination-nav" 
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="modal-overlay">
