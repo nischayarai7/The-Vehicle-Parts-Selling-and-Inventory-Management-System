@@ -144,7 +144,8 @@ const UserManager = () => {
                     </button>
                     {user.email !== currentUser?.email && user.email !== 'admin@6ix7even.com' && (
                       <button 
-                        style={{ padding: '5px 10px', fontSize: '12px', background: 'transparent', border: '1px solid var(--admin-border)', color: 'var(--primary)', borderRadius: '4px', cursor: 'pointer' }}
+                        className="admin-btn-danger-outline"
+                        style={{ padding: '5px 10px', fontSize: '12px', borderRadius: '4px' }}
                         onClick={() => openDeleteConfirm(user)}
                       >
                         Delete
@@ -199,7 +200,7 @@ const UserManager = () => {
 
             <div style={{ display: 'flex', gap: '10px' }}>
               <button className="btn-primary" style={{ flex: 1 }} onClick={handleSaveRoles}>Save Changes</button>
-              <button style={{ flex: 1, background: 'transparent', border: '1px solid var(--admin-border)', color: 'white', borderRadius: '8px' }} onClick={() => setEditingUser(null)}>Cancel</button>
+              <button className="admin-btn-outline" style={{ flex: 1, borderRadius: '8px' }} onClick={() => setEditingUser(null)}>Cancel</button>
             </div>
           </div>
         </div>

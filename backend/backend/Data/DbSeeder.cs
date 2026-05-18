@@ -12,56 +12,9 @@ namespace backend.Data
             {
                 logger.LogInformation("Checking database seeding status...");
 
-                // ── 0. Seed Permissions ──────────────────────────────────────────────
-                if (!await context.Permissions.AnyAsync())
-                {
-                    var permissions = new List<Permission>
-                    {
-                        new() { Name = "parts.view", Description = "Can view parts", Group = "Parts" },
-                        new() { Name = "parts.create", Description = "Can create parts", Group = "Parts" },
-                        new() { Name = "parts.edit", Description = "Can edit parts", Group = "Parts" },
-                        new() { Name = "parts.delete", Description = "Can delete parts", Group = "Parts" },
-                        new() { Name = "categories.manage", Description = "Can manage categories", Group = "Categories" },
-                        new() { Name = "users.view", Description = "Can view users", Group = "Users" },
-                        new() { Name = "users.manage", Description = "Can manage user roles", Group = "Users" },
-                        new() { Name = "roles.manage", Description = "Can manage roles and permissions", Group = "Roles" },
-                        new() { Name = "vendors.view", Description = "Can view vendors", Group = "Vendors" },
-                        new() { Name = "vendors.manage", Description = "Can manage vendors", Group = "Vendors" }
-                    };
-                    await context.Permissions.AddRangeAsync(permissions);
-                    await context.SaveChangesAsync();
-                    logger.LogInformation($"Seeded {permissions.Count} permissions.");
-                }
-
-                // ── 1. Seed Roles ────────────────────────────────────────────────────
-                if (!await context.Roles.AnyAsync())
-                {
-                    var initialAdminRole = new AppRole { Name = "Admin", Description = "Full system access" };
-                    var staffRole = new AppRole { Name = "Staff", Description = "Operational access" };
-                    var customerRole = new AppRole { Name = "Customer", Description = "Basic access" };
-
-                    await context.Roles.AddRangeAsync(initialAdminRole, staffRole, customerRole);
-                    await context.SaveChangesAsync();
-
-                    // Link all permissions to Admin
-                    var allPermissions = await context.Permissions.ToListAsync();
-                    foreach (var p in allPermissions)
-                    {
-                        context.RolePermissions.Add(new RolePermission { RoleId = initialAdminRole.Id, PermissionId = p.Id });
-                    }
-
-                    // Link basic permissions to Staff
-                    var staffPerms = allPermissions.Where(p => p.Name.StartsWith("parts") || p.Name.StartsWith("categories")).ToList();
-                    foreach (var p in staffPerms)
-                    {
-                        context.RolePermissions.Add(new RolePermission { RoleId = staffRole.Id, PermissionId = p.Id });
-                    }
-
-                    await context.SaveChangesAsync();
-                    logger.LogInformation("Seeded default roles and linked permissions.");
-                }
-
-                // Seeding of roles and permissions is still required for the system to function.
+                // ── 0. Seed Permissions and Roles ──────────────────────────────────
+                // Seeding of roles and permissions has been removed as per user request.
+                // The system expects roles (like Admin and Customer) and permissions to be managed via the UI or external scripts.
 
                 // Check if categories already exist
                 if (!await context.Categories.AnyAsync())

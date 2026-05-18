@@ -13,6 +13,9 @@ const PartsManager = () => {
   const [currentPart, setCurrentPart] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [localPreview, setLocalPreview] = useState(null);
+  const [selectedImageFile, setSelectedImageFile] = useState(null);
   
   const [formData, setFormData] = useState({
     partNumber: '',
@@ -56,11 +59,33 @@ const PartsManager = () => {
     });
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Show local preview immediately and store file for later upload
+    const objectUrl = URL.createObjectURL(file);
+    setLocalPreview(objectUrl);
+    setSelectedImageFile(file);
+    // Clear any previously uploaded imageUrl to signify we want to use the new file
+    setFormData(prev => ({ ...prev, imageUrl: '' }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      let finalImageUrl = formData.imageUrl;
+
+      if (selectedImageFile) {
+        setUploadingImage(true);
+        const response = await api.uploadPartImage(selectedImageFile);
+        finalImageUrl = response.url;
+        setUploadingImage(false);
+      }
+
       const payload = {
         ...formData,
+        imageUrl: finalImageUrl,
         categoryId: parseInt(formData.categoryId),
         price: parseFloat(formData.price),
         stockQuantity: parseInt(formData.stockQuantity),
@@ -134,6 +159,8 @@ const PartsManager = () => {
       isActive: true
     });
     setCurrentPart(null);
+    setLocalPreview(null);
+    setSelectedImageFile(null);
   };
 
   const filteredParts = parts.filter(p => {
@@ -348,14 +375,43 @@ const PartsManager = () => {
                   </select>
                 </div>
                 <div className="form-group-part">
-                  <label>Image URL</label>
-                  <input
-                    type="text"
-                    name="imageUrl"
-                    value={formData.imageUrl}
-                    onChange={handleInputChange}
-                    placeholder="https://example.com/image.jpg"
-                  />
+                  <label>Part Image</label>
+                  <div className="image-upload-container">
+                    {(formData.imageUrl || localPreview) && (
+                      <div className="image-preview">
+                        <img src={localPreview || formData.imageUrl} alt="Part preview" style={{ opacity: uploadingImage ? 0.5 : 1 }} />
+                        {!uploadingImage && (
+                          <button 
+                            type="button" 
+                            className="btn-remove-image"
+                            onClick={() => {
+                              setFormData({ ...formData, imageUrl: '' });
+                              setLocalPreview(null);
+                              setSelectedImageFile(null);
+                            }}
+                          >
+                            &times;
+                          </button>
+                        )}
+                        {uploadingImage && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>Uploading...</div>}
+                      </div>
+                    )}
+                    {!(formData.imageUrl || localPreview) && (
+                      <div className="upload-placeholder">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          disabled={uploadingImage}
+                          id="partImageUpload"
+                          className="file-input-hidden"
+                        />
+                        <label htmlFor="partImageUpload" className={`btn-upload ${uploadingImage ? 'uploading' : ''}`}>
+                          {uploadingImage ? 'Uploading...' : 'Upload Photo'}
+                        </label>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -371,8 +427,10 @@ const PartsManager = () => {
               </div>
 
               <div className="modal-actions-part">
-                <button type="button" className="btn-cancel-part" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn-submit-part">{currentPart ? 'Update Part' : 'Add Part'}</button>
+                <button type="button" className="btn-cancel-part" onClick={() => setShowModal(false)} disabled={uploadingImage}>Cancel</button>
+                <button type="submit" className="btn-submit-part" disabled={uploadingImage}>
+                  {uploadingImage ? 'Uploading Image...' : (currentPart ? 'Update Part' : 'Add Part')}
+                </button>
               </div>
             </form>
           </div>

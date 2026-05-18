@@ -4,6 +4,7 @@ using backend.Services.Interfaces;
 using backend.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using backend.Services;
 
 namespace backend.Controllers
 {
@@ -129,6 +130,23 @@ namespace backend.Controllers
         {
             await _partService.DeletePartAsync(id);
             return Ok(ApiResponse.Ok("Part deleted successfully."));
+        }
+        // ── POST /api/parts/upload-image ─────────────────────────────────────────
+        [HttpPost("upload-image")]
+        [HasPermission("parts.create")]
+        public async Task<IActionResult> UploadImage(IFormFile file, [FromServices] ICloudinaryService cloudinaryService)
+        {
+            try 
+            {
+                var url = await cloudinaryService.UploadImageAsync(file);
+                if (url == null) return BadRequest(ApiResponse.Fail("Upload failed"));
+                
+                return Ok(ApiResponse<object>.Ok(new { url }, "Image uploaded successfully"));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ApiResponse.Fail(ex.Message));
+            }
         }
     }
 }

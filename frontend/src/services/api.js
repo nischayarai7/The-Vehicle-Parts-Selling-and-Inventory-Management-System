@@ -208,6 +208,16 @@ export const api = {
     return handleResponse(response);
   },
   
+  uploadPartImage: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return fetch(`${API_BASE}/parts/upload-image`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+      body: formData
+    }).then(handleResponse);
+  },
+  
   async searchParts(keyword) {
     const response = await fetch(`${API_BASE}/parts/search?keyword=${encodeURIComponent(keyword)}`);
     return handleResponse(response);

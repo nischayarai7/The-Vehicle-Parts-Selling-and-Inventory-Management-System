@@ -115,6 +115,7 @@ const PermissionManager = () => {
                   <div style={{ fontSize: '11px', color: 'var(--admin-text-muted)' }}>{perm.group}</div>
                 </div>
                 <button 
+                  className="btn-delete-small"
                   onClick={() => openDeleteConfirm(perm.id, perm.name)}
                   style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '18px' }}
                 >

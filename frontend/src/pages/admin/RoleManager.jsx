@@ -16,19 +16,27 @@ const RoleManager = () => {
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const [rolesData, permsData] = await Promise.all([
         api.getRoles(),
         api.getPermissions()
       ]);
       setRoles(rolesData);
       setPermissions(permsData);
+      
+      // Update selectedRole to have the latest rolePermissions array
+      if (selectedRole) {
+        const updatedSelected = rolesData.find(r => r.id === selectedRole.id);
+        if (updatedSelected) {
+          setSelectedRole(updatedSelected);
+        }
+      }
     } catch (error) {
       console.error("Failed to load roles", error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -45,10 +53,6 @@ const RoleManager = () => {
 
   const openDeleteConfirm = (e, id, name) => {
     e.stopPropagation();
-    if (name === 'Admin' || name === 'Customer') {
-      alert("System roles cannot be deleted");
-      return;
-    }
     setConfirmModal({ isOpen: true, roleId: id, roleName: name });
   };
 
@@ -65,20 +69,60 @@ const RoleManager = () => {
   };
 
   const handlePermissionToggle = async (roleId, permId, isAssigned) => {
-    const role = roles.find(r => r.id === roleId);
-    let newPermIds = role.rolePermissions.map(rp => rp.permissionId);
-    
+    // 1. Store previous state backups for safe rollback
+    const previousRoles = [...roles];
+    const previousSelectedRole = selectedRole ? { ...selectedRole } : null;
+
+    // 2. Perform optimistic update locally for immediate UI response
+    const updatedRoles = roles.map(r => {
+      if (r.id === roleId) {
+        let updatedRolePermissions;
+        if (isAssigned) {
+          // Remove permission locally
+          updatedRolePermissions = r.rolePermissions.filter(rp => rp.permissionId !== permId);
+        } else {
+          // Add permission locally
+          updatedRolePermissions = [...r.rolePermissions, { roleId, permissionId: permId }];
+        }
+        return {
+          ...r,
+          rolePermissions: updatedRolePermissions
+        };
+      }
+      return r;
+    });
+
+    const updatedSelectedRole = updatedRoles.find(r => r.id === roleId);
+
+    // Apply state changes immediately (0ms UI delay)
+    setRoles(updatedRoles);
+    if (updatedSelectedRole) {
+      setSelectedRole(updatedSelectedRole);
+    }
+
+    // 3. Prepare payload using the original backup data to prevent race conditions
+    const originalRole = previousRoles.find(r => r.id === roleId);
+    if (!originalRole) return;
+
+    let newPermIds = originalRole.rolePermissions.map(rp => rp.permissionId);
     if (isAssigned) {
       newPermIds = newPermIds.filter(id => id !== permId);
     } else {
       newPermIds.push(permId);
     }
 
+    // 4. Send background request to backend
     try {
       await api.assignPermissions(roleId, newPermIds);
-      loadData(); // Refresh to show changes
+      // Silently sync database values in background to ensure database-generated IDs match
+      await loadData(true);
     } catch (error) {
-      alert("Failed to update permissions");
+      // 5. Rollback to original state if backend call fails
+      setRoles(previousRoles);
+      if (previousSelectedRole) {
+        setSelectedRole(previousSelectedRole);
+      }
+      alert("Failed to update permissions. Reverting changes.");
     }
   };
 
@@ -120,6 +164,7 @@ const RoleManager = () => {
                 <div 
                   key={role.id} 
                   onClick={() => setSelectedRole(role)}
+                  className={`admin-role-item ${selectedRole?.id === role.id ? 'selected' : ''}`}
                   style={{ 
                     padding: '12px', 
                     borderRadius: '8px', 
@@ -136,15 +181,13 @@ const RoleManager = () => {
                     <div style={{ fontWeight: 'bold', color: selectedRole?.id === role.id ? 'var(--admin-accent)' : 'white' }}>{role.name}</div>
                     <div style={{ fontSize: '12px', color: 'var(--admin-text-muted)' }}>{role.description}</div>
                   </div>
-                  {(role.name !== 'Admin' && role.name !== 'Customer') && (
-                    <button 
-                      className="btn-delete-small"
-                      onClick={(e) => openDeleteConfirm(e, role.id, role.name)}
-                      style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '18px', padding: '0 5px' }}
-                    >
-                      ×
-                    </button>
-                  )}
+                  <button 
+                    className="btn-delete-small"
+                    onClick={(e) => openDeleteConfirm(e, role.id, role.name)}
+                    style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '18px', padding: '0 5px' }}
+                  >
+                    ×
+                  </button>
                 </div>
               ))}
             </div>
@@ -166,6 +209,7 @@ const RoleManager = () => {
                     <div 
                       key={perm.id} 
                       onClick={() => handlePermissionToggle(selectedRole.id, perm.id, isAssigned)}
+                      className="admin-perm-item"
                       style={{ 
                         padding: '12px', 
                         borderRadius: '8px', 
