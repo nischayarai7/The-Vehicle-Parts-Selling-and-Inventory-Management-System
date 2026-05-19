@@ -57,7 +57,7 @@ namespace backend.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpGet("my")]
         public async Task<ActionResult> GetMyOrders()
         {
             try

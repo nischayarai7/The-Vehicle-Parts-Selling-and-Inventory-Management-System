@@ -158,21 +158,6 @@ const CustomerLayout = () => {
 
       {/* Main Content Area */}
       <div className="admin-main">
-        <style>
-          {`
-            .liquid-logo-hover {
-              background: linear-gradient(110deg, #0d1117 0%, #0d1117 40%, rgba(248, 81, 73, 0.15) 48%, rgba(255, 255, 255, 0.8) 52%, rgba(248, 81, 73, 0.15) 56%, #0d1117 100%) !important;
-              background-size: 400% 100% !important;
-              background-position: 100% 0 !important;
-              transition: border-color 0.4s ease, box-shadow 0.4s ease, background-position 0.6s cubic-bezier(0.25, 1, 0.5, 1) !important;
-            }
-            .liquid-logo-hover:hover {
-              background-position: 0% 0 !important;
-              border-color: #ffffff !important;
-              box-shadow: 0 0 15px rgba(248, 81, 73, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.2);
-            }
-          `}
-        </style>
         <header className="admin-top-bar">
           <div className="top-bar-left">
             <h2>Customer Dashboard</h2>
@@ -180,29 +165,13 @@ const CustomerLayout = () => {
           <div className="top-bar-right" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             <Link 
               to="/" 
-              className="liquid-logo-hover"
-              style={{ 
-                color: '#fff', 
-                textDecoration: 'none', 
-                fontWeight: 'bold', 
-                fontSize: '14px', 
-                background: '#0d1117', 
-                padding: '6px 12px', 
-                borderRadius: '4px', 
-                border: '1px solid #2f363d',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
+              className="btn-storefront"
             >
-              <svg style={{ width: '16px', height: '16px', color: '#f85149' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="btn-storefront-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
-              <span style={{ fontWeight: '800', letterSpacing: '0.5px' }}>
-                <span style={{ color: '#f85149' }}>6ix</span>
-                <span style={{ color: '#ffffff' }}>7even</span>
-              </span>
+              <span>6ix<span className="accent-text">7</span>even</span>
             </Link>
             <div className="notification-bell">
               <svg style={{ width: '20px', height: '20px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>

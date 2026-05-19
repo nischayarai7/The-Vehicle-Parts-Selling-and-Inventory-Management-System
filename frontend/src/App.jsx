@@ -104,6 +104,7 @@ function App() {
         <Route path="reports" element={<CustomerReports />} />
         <Route path="appointments" element={<AppointmentsManager />} />
         <Route path="settings" element={<ProfileSettings />} />
+        <Route path="orders" element={<OrderManager />} />
       </Route>
 
       {/* Admin Routes - Protected by AdminRoute */}

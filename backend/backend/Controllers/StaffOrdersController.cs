@@ -42,8 +42,8 @@ namespace backend.Controllers
 
             if (!isAdmin)
             {
-                // Each individual staff should see its own sales record
-                query = query.Where(o => o.CreatedById == userId);
+                // Staff should see their own POS sales record and all storefront customer orders
+                query = query.Where(o => o.CreatedById == userId || o.CreatedById == null);
             }
 
             var orders = await query
@@ -233,7 +233,7 @@ namespace backend.Controllers
         }
 
         [HttpPut("{id}/status")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<ActionResult> UpdateOrderStatus(int id, [FromBody] UpdateOrderStatusDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.Status))

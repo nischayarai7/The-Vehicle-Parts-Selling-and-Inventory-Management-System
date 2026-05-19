@@ -172,7 +172,9 @@ const Navbar = () => {
                   {(user?.role === 'Staff' || user?.role === 'Admin') && (
                     <Link to="/staff" className="dropdown-item">Staff Dashboard</Link>
                   )}
-                  <Link to="/customer/dashboard" className="dropdown-item">My Dashboard</Link>
+                  {user?.role === 'Customer' && (
+                    <Link to="/customer/dashboard" className="dropdown-item">My Dashboard</Link>
+                  )}
                   <Link to="/settings" className="dropdown-item">Profile Settings</Link>
                   <div className="dropdown-divider"></div>
                   <button onClick={handleLogout} className="dropdown-item">Logout</button>

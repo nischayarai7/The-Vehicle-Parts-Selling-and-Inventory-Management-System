@@ -155,7 +155,7 @@
     min-width: 280px;
 }
 
-.search-icon {
+.search-wrapper .search-icon {
     position: absolute;
     left: 1rem;
     top: 50%;

@@ -4,6 +4,7 @@ using backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using backend.Data;
+using backend.Common;
 using System.ComponentModel.DataAnnotations;
 
 namespace backend.Controllers
@@ -22,12 +23,12 @@ namespace backend.Controllers
 
         // POST: api/PartRequests
         [HttpPost]
-        public async Task<ActionResult<PartRequest>> PostPartRequest(PartRequestDto requestDto)
+        public async Task<IActionResult> PostPartRequest(PartRequestDto requestDto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized();
+                return Unauthorized(ApiResponse.Fail("Unauthorized access."));
             }
 
             var partRequest = new PartRequest
@@ -45,49 +46,58 @@ namespace backend.Controllers
             _context.PartRequests.Add(partRequest);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetPartRequest", new { id = partRequest.Id }, partRequest);
+            // Load customer details
+            await _context.Entry(partRequest).Reference(r => r.Customer).LoadAsync();
+
+            return Ok(ApiResponse<PartRequest>.Ok(partRequest, "Part request submitted successfully"));
         }
 
         // GET: api/PartRequests/my
         [HttpGet("my")]
-        public async Task<ActionResult<IEnumerable<PartRequest>>> GetMyPartRequests()
+        public async Task<IActionResult> GetMyPartRequests()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized();
+                return Unauthorized(ApiResponse.Fail("Unauthorized access."));
             }
 
             var customerId = int.Parse(userId);
-            return await _context.PartRequests
+            var requests = await _context.PartRequests
                 .Where(r => r.CustomerId == customerId)
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
+
+            return Ok(ApiResponse<IEnumerable<PartRequest>>.Ok(requests));
         }
 
         // GET: api/PartRequests
         [HttpGet]
         [Authorize(Roles = "Admin,Staff")]
-        public async Task<ActionResult<IEnumerable<PartRequest>>> GetPartRequests()
+        public async Task<IActionResult> GetPartRequests()
         {
-            return await _context.PartRequests
+            var requests = await _context.PartRequests
                 .Include(r => r.Customer)
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
+
+            return Ok(ApiResponse<IEnumerable<PartRequest>>.Ok(requests));
         }
 
         // GET: api/PartRequests/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<PartRequest>> GetPartRequest(int id)
+        public async Task<IActionResult> GetPartRequest(int id)
         {
-            var partRequest = await _context.PartRequests.FindAsync(id);
+            var partRequest = await _context.PartRequests
+                .Include(r => r.Customer)
+                .FirstOrDefaultAsync(r => r.Id == id);
 
             if (partRequest == null)
             {
-                return NotFound();
+                return NotFound(ApiResponse.Fail("Part request not found"));
             }
 
-            return partRequest;
+            return Ok(ApiResponse<PartRequest>.Ok(partRequest));
         }
 
         // PUT: api/PartRequests/5/status
@@ -98,13 +108,13 @@ namespace backend.Controllers
             var partRequest = await _context.PartRequests.FindAsync(id);
             if (partRequest == null)
             {
-                return NotFound();
+                return NotFound(ApiResponse.Fail("Part request not found"));
             }
 
             partRequest.Status = status;
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(ApiResponse.Ok("Part request status updated successfully"));
         }
     }
 

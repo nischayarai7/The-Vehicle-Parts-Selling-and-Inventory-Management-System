@@ -18,8 +18,6 @@ const ProfileSettings = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  const [myOrders, setMyOrders] = useState([]);
-
   useEffect(() => {
     if (user) {
       setProfileData({
@@ -28,24 +26,6 @@ const ProfileSettings = () => {
       });
     }
   }, [user]);
-
-  useEffect(() => {
-    if (activeTab === 'orders') {
-      fetchMyOrders();
-    }
-  }, [activeTab]);
-
-  const fetchMyOrders = async () => {
-    setLoading(true);
-    try {
-      const data = await api.getCustomerOrders();
-      setMyOrders(data);
-    } catch (err) {
-      showMessage('error', 'Failed to load your purchase orders');
-    } finally {
-      setLoading(false);
-    }
-  };
 
 
 
@@ -142,12 +122,7 @@ const ProfileSettings = () => {
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Password & Security
           </button>
-          <button 
-            className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
-            onClick={() => setActiveTab('orders')}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> My Purchase Orders
-          </button>
+
         </div>
 
         {message.text && (
@@ -226,7 +201,7 @@ const ProfileSettings = () => {
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>
             </form>
-          ) : activeTab === 'security' ? (
+          ) : (
             <form onSubmit={handlePasswordChange} className="settings-form">
               <div className="form-group">
                 <label>Current Password</label>
@@ -263,81 +238,6 @@ const ProfileSettings = () => {
                 {loading ? 'Updating...' : 'Update Password'}
               </button>
             </form>
-          ) : (
-            <div className="orders-container">
-              <div className="garage-header" style={{ marginBottom: '20px' }}>
-                <h3>My Purchase Orders ({myOrders.length})</h3>
-              </div>
-
-              {loading ? (
-                <p style={{ color: '#888' }}>Refreshing orders log...</p>
-              ) : myOrders.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {myOrders.map(order => (
-                    <div key={order.id} style={{ background: '#181818', border: '1px solid #222', borderRadius: '8px', padding: '20px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '15px', marginBottom: '15px' }}>
-                        <div>
-                          <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', display: 'block', letterSpacing: '0.5px' }}>Order Reference</span>
-                          <strong style={{ color: '#fff', fontSize: '1.05rem' }}>{order.orderNumber}</strong>
-                        </div>
-                        <div>
-                          <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', display: 'block', letterSpacing: '0.5px' }}>Ordered On</span>
-                          <span style={{ color: '#aaa', fontSize: '0.9rem' }}>{new Date(order.createdAt).toLocaleDateString()}</span>
-                        </div>
-                        <div>
-                          <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', display: 'block', letterSpacing: '0.5px' }}>Delivery Status</span>
-                          <span style={{ 
-                            padding: '4px 10px', 
-                            borderRadius: '4px', 
-                            fontSize: '11px', 
-                            fontWeight: 'bold',
-                            background: order.status === 'Completed' ? 'rgba(46,160,67,0.1)' : 'rgba(227,179,59,0.1)',
-                            color: order.status === 'Completed' ? '#3fb950' : '#e3b33b',
-                            border: order.status === 'Completed' ? '1px solid #2ea043' : '1px solid #d4a727'
-                          }}>
-                            {order.status}
-                          </span>
-                        </div>
-                      </div>
-                      <div style={{ borderTop: '1px dashed #282828', borderBottom: '1px dashed #282828', padding: '12px 0', margin: '12px 0' }}>
-                        <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', display: 'block', marginBottom: '6px', letterSpacing: '0.5px' }}>Delivery Address</span>
-                        <p style={{ margin: 0, color: '#aaa', fontSize: '0.9rem' }}>{order.shippingAddress}</p>
-                        {order.notes && (
-                          <div style={{ marginTop: '10px' }}>
-                            <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', display: 'block', marginBottom: '4px', letterSpacing: '0.5px' }}>Special Instructions</span>
-                            <p style={{ margin: 0, color: '#888', fontSize: '0.85rem', fontStyle: 'italic' }}>{order.notes}</p>
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', color: '#888' }}>
-                          <span>Payment Method: <strong style={{ color: '#fff' }}>{order.paymentMethod || 'Cash on Delivery'}</strong></span>
-                          <span>Subtotal: Rs. {(order.originalAmount > 0 ? order.originalAmount : order.totalAmount).toFixed(2)}</span>
-                        </div>
-                        {order.discountAmount > 0 && (
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', fontSize: '0.9rem', color: '#3fb950' }}>
-                            <span>Loyalty Discount Applied:</span>
-                            <strong>-Rs. {order.discountAmount.toFixed(2)}</strong>
-                          </div>
-                        )}
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', alignItems: 'center', borderTop: '1px solid #222', paddingTop: '8px', marginTop: '4px' }}>
-                          <span style={{ color: '#fff', fontSize: '0.95rem', fontWeight: '500' }}>Grand Total Paid:</span>
-                          <strong style={{ color: 'var(--primary)', fontSize: '1.2rem', fontWeight: '700' }}>
-                            {new Intl.NumberFormat('en-US', {
-                              style: 'currency',
-                              currency: 'NPR',
-                              minimumFractionDigits: 2
-                            }).format(order.totalAmount).replace('NPR', 'Rs.')}
-                          </strong>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p style={{ color: '#888' }}>You haven't placed any storefront orders yet.</p>
-              )}
-            </div>
           )}
         </div>
       </div>
