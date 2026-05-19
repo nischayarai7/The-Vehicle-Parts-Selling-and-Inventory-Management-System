@@ -123,9 +123,14 @@
   color: var(--admin-text-muted) !important;
 }
 
-.highlight-value {
+.report-table .highlight-value {
   font-weight: 600;
   color: var(--admin-primary);
+  background: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  font-size: 14px !important;
+  align-self: auto !important;
 }
 
 /* Flex header for card actions */
