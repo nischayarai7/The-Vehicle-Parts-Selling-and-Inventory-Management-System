@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.ComponentModel.DataAnnotations;
 using backend.Data;
+using backend.Common;
 
 namespace backend.Controllers
 {
@@ -22,12 +23,12 @@ namespace backend.Controllers
         // POST: api/ServiceReviews
         [HttpPost]
         [Authorize]
-        public async Task<ActionResult<ServiceReview>> PostServiceReview(ServiceReviewDto reviewDto)
+        public async Task<IActionResult> PostServiceReview(ServiceReviewDto reviewDto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized();
+                return Unauthorized(ApiResponse.Fail("Unauthorized access."));
             }
 
             var review = new ServiceReview
@@ -44,32 +45,39 @@ namespace backend.Controllers
             _context.ServiceReviews.Add(review);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetServiceReview", new { id = review.Id }, review);
+            // Load customer details so frontend has access to customer name, etc. immediately
+            await _context.Entry(review).Reference(r => r.Customer).LoadAsync();
+
+            return Ok(ApiResponse<ServiceReview>.Ok(review, "Review submitted successfully"));
         }
 
         // GET: api/ServiceReviews
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ServiceReview>>> GetServiceReviews()
+        public async Task<IActionResult> GetServiceReviews()
         {
-            return await _context.ServiceReviews
+            var reviews = await _context.ServiceReviews
                 .Include(r => r.Customer)
                 .Where(r => r.IsVisible)
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
+
+            return Ok(ApiResponse<IEnumerable<ServiceReview>>.Ok(reviews));
         }
 
         // GET: api/ServiceReviews/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<ServiceReview>> GetServiceReview(int id)
+        public async Task<IActionResult> GetServiceReview(int id)
         {
-            var review = await _context.ServiceReviews.FindAsync(id);
+            var review = await _context.ServiceReviews
+                .Include(r => r.Customer)
+                .FirstOrDefaultAsync(r => r.Id == id);
 
             if (review == null)
             {
-                return NotFound();
+                return NotFound(ApiResponse.Fail("Review not found"));
             }
 
-            return review;
+            return Ok(ApiResponse<ServiceReview>.Ok(review));
         }
 
         // PUT: api/ServiceReviews/5/visibility
@@ -80,14 +88,14 @@ namespace backend.Controllers
             var review = await _context.ServiceReviews.FindAsync(id);
             if (review == null)
             {
-                return NotFound();
+                return NotFound(ApiResponse.Fail("Review not found"));
             }
 
             review.IsVisible = isVisible;
             review.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(ApiResponse.Ok("Review visibility updated successfully"));
         }
     }
 

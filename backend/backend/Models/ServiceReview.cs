@@ -9,6 +9,7 @@ namespace backend.Models
         public int Id { get; set; }
 
         [Required]
+        [Column("UserId")]
         public int CustomerId { get; set; }
 
         public int? AppointmentId { get; set; }

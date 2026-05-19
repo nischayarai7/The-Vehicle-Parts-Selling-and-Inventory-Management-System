@@ -2,6 +2,7 @@ import React from 'react';
 import HeroSection from '../components/HeroSection';
 import CategoryGrid from '../components/CategoryGrid';
 import ProductGrid from '../components/ProductGrid';
+import TestimonialSection from '../components/TestimonialSection';
 
 function HomePage() {
   return (
@@ -9,6 +10,7 @@ function HomePage() {
       <HeroSection />
       <CategoryGrid />
       <ProductGrid />
+      <TestimonialSection />
     </div>
   );
 }

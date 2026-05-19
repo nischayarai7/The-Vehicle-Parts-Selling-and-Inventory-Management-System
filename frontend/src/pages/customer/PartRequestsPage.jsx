@@ -119,17 +119,60 @@ const PartRequestsPage = () => {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', color: '#888' }}>Quantity *</label>
-              <input
-                type="number"
-                name="quantity"
-                value={formData.quantity}
-                onChange={handleInputChange}
-                min="1"
-                max="999"
-                style={{ width: '100%', padding: '10px', background: '#0d1117', border: '1px solid #2f363d', borderRadius: '6px', color: '#fff' }}
-                placeholder="1"
-                required
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0', border: '1px solid #2f363d', borderRadius: '6px', overflow: 'hidden', width: 'fit-content' }}>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, quantity: Math.max(1, (prev.quantity || 1) - 1) }))}
+                  style={{
+                    width: '44px', height: '44px',
+                    background: '#161b22', border: 'none', borderRight: '1px solid #2f363d',
+                    color: '#c9d1d9', fontSize: '18px', fontWeight: '600',
+                    cursor: formData.quantity <= 1 ? 'not-allowed' : 'pointer',
+                    opacity: formData.quantity <= 1 ? 0.3 : 1,
+                    transition: 'all 0.15s ease',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                  onMouseEnter={(e) => { if (formData.quantity > 1) e.currentTarget.style.background = '#21262d'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = '#161b22'; }}
+                >
+                  <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+                <input
+                  type="number"
+                  name="quantity"
+                  value={formData.quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    setFormData(prev => ({ ...prev, quantity: Math.max(1, Math.min(999, val)) }));
+                  }}
+                  min="1"
+                  max="999"
+                  style={{
+                    width: '64px', height: '44px', padding: '0',
+                    background: '#0d1117', border: 'none',
+                    color: '#fff', fontSize: '15px', fontWeight: '600',
+                    textAlign: 'center',
+                    MozAppearance: 'textfield', WebkitAppearance: 'none'
+                  }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, quantity: Math.min(999, (prev.quantity || 1) + 1) }))}
+                  style={{
+                    width: '44px', height: '44px',
+                    background: '#161b22', border: 'none', borderLeft: '1px solid #2f363d',
+                    color: '#c9d1d9', fontSize: '18px', fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#21262d'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = '#161b22'; }}
+                >
+                  <svg style={{ width: '16px', height: '16px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+              </div>
             </div>
 
             <div style={{ marginBottom: '15px' }}>
