@@ -160,6 +160,80 @@ namespace backend.Controllers
             }
         }
 
+        [HttpPost("user/{userId}/send-all-reminders")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<ActionResult> SendAllUserReminders(int userId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null) return NotFound(new { success = false, message = "Customer account not found." });
+
+            var userCredits = await _context.PendingCredits
+                .Where(pc => pc.UserId == userId && pc.Status == "Pending")
+                .ToListAsync();
+
+            if (!userCredits.Any())
+            {
+                return BadRequest(new { success = false, message = "No pending credits found for this customer." });
+            }
+
+            var totalOverdue = userCredits.Sum(c => c.Amount);
+            string subject = $"URGENT: Outstanding Balance Statement - 6ix7even Auto Parts";
+            
+            var creditLinesHtml = "";
+            foreach (var c in userCredits)
+            {
+                var days = (DateTime.UtcNow - c.CreatedAt).Days;
+                creditLinesHtml += $@"
+                    <tr>
+                        <td style='padding: 10px; border-bottom: 1px solid #eee;'>{c.CreatedAt:MMM dd, yyyy}</td>
+                        <td style='padding: 10px; border-bottom: 1px solid #eee;'>{c.Description}</td>
+                        <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: right;'>{days} days</td>
+                        <td style='padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;'>Rs. {c.Amount:N2}</td>
+                    </tr>";
+            }
+
+            string emailBody = $@"
+                <div style='font-family: sans-serif; max-width: 650px; margin: 0 auto; padding: 25px; border: 1px solid #eaeaea; border-radius: 8px;'>
+                    <h2 style='color: #e04f5f; border-bottom: 2px solid #e04f5f; padding-bottom: 10px; margin-top: 0;'>Account Balance Statement Notice</h2>
+                    <p>Dear <strong>{user.FullName}</strong>,</p>
+                    <p>This is a formal outstanding statement notification of outstanding credit lines recorded on your account.</p>
+                    
+                    <h4 style='color: #333; margin-bottom: 10px;'>Active Statements Breakdown:</h4>
+                    <table style='width: 100%; border-collapse: collapse; font-size: 13px;'>
+                        <thead>
+                            <tr style='background-color: #f5f5f5;'>
+                                <th style='padding: 10px; text-align: left;'>Date Issued</th>
+                                <th style='padding: 10px; text-align: left;'>Description</th>
+                                <th style='padding: 10px; text-align: right;'>Age</th>
+                                <th style='padding: 10px; text-align: right;'>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {creditLinesHtml}
+                        </tbody>
+                        <tfoot>
+                            <tr style='background-color: #fafafa; font-size: 14px;'>
+                                <td colspan='3' style='padding: 12px 10px; text-align: right; font-weight: bold;'>Total Balance Due:</td>
+                                <td style='padding: 12px 10px; text-align: right; font-weight: bold; color: #e04f5f;'>Rs. {totalOverdue:N2}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <p style='margin-top: 20px;'>Please arrange for immediate settlement. Settle in person at our showroom or coordinate with administrative auditing to process online confirmation.</p>
+                    <p style='margin-top: 30px; font-size: 12px; color: #777;'>Thank you,<br/><strong>Administrative Auditing Team</strong><br/>6ix7even Auto Parts</p>
+                </div>";
+
+            try
+            {
+                await _emailService.SendEmailAsync(user.Email, subject, emailBody, true);
+                return Ok(new { success = true, message = $"Account statement successfully compiled and sent to {user.Email}." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = $"Failed to send account statement: {ex.Message}" });
+            }
+        }
+
         [HttpPost("send-all-overdue-reminders")]
         [Authorize(Roles = "Admin,Staff")]
         public async Task<ActionResult> SendAllOverdueReminders()

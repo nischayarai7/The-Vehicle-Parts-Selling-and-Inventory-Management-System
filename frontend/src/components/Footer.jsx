@@ -6,7 +6,9 @@ const Footer = () => {
     <footer className="footer">
       <div className="container footer-container">
         <div className="footer-col brand-col">
-          <h2 className="footer-logo">6IX7EVEN.</h2>
+          <h2 className="footer-logo" style={{ textTransform: 'none', letterSpacing: '0.02em', fontWeight: 'bold' }}>
+            6ix<span style={{ color: '#e04f5f' }}>7</span>even
+          </h2>
           <p className="footer-desc">
             We provide the best vehicle parts for all brands. High quality, affordable prices, and excellent customer service.
           </p>

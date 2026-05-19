@@ -115,8 +115,10 @@ const Navbar = () => {
         <div className="container navbar-container">
           {/* Logo */}
           <div className="navbar-logo">
-            <Link to="/">
-              <h2>6IX7EVEN.</h2>
+            <Link to="/" style={{ textDecoration: 'none' }}>
+              <h2 style={{ letterSpacing: '0.02em', fontWeight: 'bold', margin: 0, textTransform: 'none' }}>
+                6ix<span style={{ color: '#e04f5f' }}>7</span>even
+              </h2>
             </Link>
           </div>
 

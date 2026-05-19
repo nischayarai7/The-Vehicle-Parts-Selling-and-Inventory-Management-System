@@ -20,6 +20,7 @@ import UserManager from './pages/admin/UserManager'
 import VendorsManager from './pages/admin/VendorsManager'
 import PurchaseInvoiceManager from './pages/admin/PurchaseInvoiceManager'
 import FinancialReports from './pages/admin/FinancialReports'
+import ReviewManager from './pages/admin/ReviewManager'
 import OrderManager from './pages/admin/OrderManager'
 import VehiclesManager from './pages/admin/VehiclesManager'
 import ProfileSettings from './pages/ProfileSettings'
@@ -118,6 +119,7 @@ function App() {
         <Route path="vendors" element={<VendorsManager />} />
         <Route path="purchase-invoices" element={<PurchaseInvoiceManager />} />
         <Route path="reports" element={<FinancialReports />} />
+        <Route path="reviews" element={<ReviewManager />} />
         <Route path="settings" element={<ProfileSettings />} />
         <Route path="orders" element={<OrderManager />} />
         <Route path="vehicles" element={<VehiclesManager />} />

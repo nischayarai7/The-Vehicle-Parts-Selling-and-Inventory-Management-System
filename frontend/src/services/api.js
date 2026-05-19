@@ -85,6 +85,17 @@ export const api = {
     headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
   }).then(handleResponse),
+  getMyLastServiceReview: () => fetch(`${API_BASE}/servicereviews/my-last-review`, { headers: getAuthHeaders() }).then(handleResponse),
+  getAdminServiceReviews: () => fetch(`${API_BASE}/servicereviews/admin`, { headers: getAuthHeaders() }).then(handleResponse),
+  updateServiceReviewVisibility: (id, isVisible) => fetch(`${API_BASE}/servicereviews/${id}/visibility`, {
+    method: 'PUT',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(isVisible)
+  }).then(handleResponse),
+  deleteServiceReview: (id) => fetch(`${API_BASE}/servicereviews/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
   getMyOrders: () => fetch(`${API_BASE}/orders/my`, { headers: getAuthHeaders() }).then(handleResponse),
 
   // ── Roles & Permissions ───────────────────────────────────────────────────

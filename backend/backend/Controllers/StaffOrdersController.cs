@@ -163,6 +163,21 @@ namespace backend.Controllers
             await _context.Orders.AddAsync(newOrder);
             await _context.SaveChangesAsync();
 
+            if (newOrder.Status == "Credit")
+            {
+                var pc = new PendingCredit
+                {
+                    UserId = newOrder.UserId,
+                    Amount = newOrder.TotalAmount,
+                    Description = $"Credit for Order {newOrder.OrderNumber}",
+                    Status = "Pending",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                await _context.PendingCredits.AddAsync(pc);
+                await _context.SaveChangesAsync();
+            }
+
             return Ok(new { success = true, data = new { Message = "Order created successfully.", OrderId = newOrder.Id } });
         }
 

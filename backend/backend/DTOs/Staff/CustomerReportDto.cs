@@ -22,5 +22,6 @@ namespace backend.DTOs.Staff
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public decimal PendingAmount { get; set; }
+        public System.DateTime? LatestCreditDate { get; set; }
     }
 }

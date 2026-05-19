@@ -20,6 +20,38 @@ namespace backend.Controllers
             _context = context;
         }
 
+        // GET: api/ServiceReviews/my-last-review
+        [HttpGet("my-last-review")]
+        [Authorize]
+        public async Task<IActionResult> GetMyLastReview()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(ApiResponse.Fail("Unauthorized access."));
+            }
+
+            var lastReview = await _context.ServiceReviews
+                .Where(r => r.CustomerId == int.Parse(userId))
+                .OrderByDescending(r => r.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            return Ok(ApiResponse<ServiceReview?>.Ok(lastReview));
+        }
+
+        // GET: api/ServiceReviews/admin
+        [HttpGet("admin")]
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> GetAdminServiceReviews()
+        {
+            var reviews = await _context.ServiceReviews
+                .Include(r => r.Customer)
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
+
+            return Ok(ApiResponse<IEnumerable<ServiceReview>>.Ok(reviews));
+        }
+
         // POST: api/ServiceReviews
         [HttpPost]
         [Authorize]
@@ -31,13 +63,31 @@ namespace backend.Controllers
                 return Unauthorized(ApiResponse.Fail("Unauthorized access."));
             }
 
+            var customerId = int.Parse(userId);
+
+            // Check if user has already reviewed in the last 30 days dynamically
+            var lastReview = await _context.ServiceReviews
+                .Where(r => r.CustomerId == customerId)
+                .OrderByDescending(r => r.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (lastReview != null)
+            {
+                var timePassed = DateTime.UtcNow - lastReview.CreatedAt;
+                if (timePassed.TotalDays < 30)
+                {
+                    var remainingDays = (int)Math.Ceiling(30 - timePassed.TotalDays);
+                    return BadRequest(ApiResponse.Fail($"You have already submitted a review recently. You can submit another review in {remainingDays} days."));
+                }
+            }
+
             var review = new ServiceReview
             {
-                CustomerId = int.Parse(userId),
+                CustomerId = customerId,
                 AppointmentId = reviewDto.AppointmentId,
                 Rating = reviewDto.Rating,
                 Comment = reviewDto.Comment,
-                IsVisible = true,
+                IsVisible = false, // Set to false by default - needs admin review and approval
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -48,7 +98,7 @@ namespace backend.Controllers
             // Load customer details so frontend has access to customer name, etc. immediately
             await _context.Entry(review).Reference(r => r.Customer).LoadAsync();
 
-            return Ok(ApiResponse<ServiceReview>.Ok(review, "Review submitted successfully"));
+            return Ok(ApiResponse<ServiceReview>.Ok(review, "Your review has been submitted successfully! It has been sent to our administration for review and approval."));
         }
 
         // GET: api/ServiceReviews
@@ -95,7 +145,40 @@ namespace backend.Controllers
             review.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            return Ok(ApiResponse.Ok("Review visibility updated successfully"));
+            var statusMessage = isVisible ? "Review approved and is now visible on the homepage." : "Review rejected/hidden from the homepage.";
+            return Ok(ApiResponse.Ok(statusMessage));
+        }
+
+        // DELETE: api/ServiceReviews/5
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteServiceReview(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(ApiResponse.Fail("Unauthorized access."));
+            }
+
+            var review = await _context.ServiceReviews.FindAsync(id);
+            if (review == null)
+            {
+                return NotFound(ApiResponse.Fail("Review not found."));
+            }
+
+            var customerId = int.Parse(userId);
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
+
+            // Allow the owner of the review OR an Admin to delete it
+            if (review.CustomerId != customerId && userRole != "Admin")
+            {
+                return StatusCode(403, ApiResponse.Fail("You do not have permission to delete this review."));
+            }
+
+            _context.ServiceReviews.Remove(review);
+            await _context.SaveChangesAsync();
+
+            return Ok(ApiResponse.Ok("Your review has been successfully deleted."));
         }
     }
 

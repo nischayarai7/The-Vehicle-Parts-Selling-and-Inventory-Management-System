@@ -257,10 +257,7 @@ namespace backend.Controllers
             var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Customer");
             if (customerRole == null) return Ok(new { success = true, data = new CustomerReportDto() });
 
-            var userId = GetCurrentUserId();
-            var isAdmin = User.IsInRole("Admin");
-
-            // Base query for customers
+            // Base query for customers - systems-wide dynamic aggregation
             var customersQuery = _context.Users
                 .Where(u => u.UserRoles.Any(ur => ur.RoleId == customerRole.Id))
                 .Select(u => new ReportCustomerInfo
@@ -268,8 +265,8 @@ namespace backend.Controllers
                     Id = u.Id,
                     FullName = u.FullName,
                     Email = u.Email,
-                    OrderCount = u.Orders.Count(o => (isAdmin || o.CreatedById == userId) && (o.Status == "Delivered" || o.Status == "Shipped" || o.Status == "Completed" || o.Status == "Pending" || o.Status == "Processing")), 
-                    TotalSpent = u.Orders.Where(o => (isAdmin || o.CreatedById == userId) && o.Status != "Cancelled").Sum(o => o.TotalAmount)
+                    OrderCount = u.Orders.Count(o => o.Status == "Delivered" || o.Status == "Shipped" || o.Status == "Completed" || o.Status == "Pending" || o.Status == "Processing" || o.Status == "Credit"), 
+                    TotalSpent = u.Orders.Where(o => o.Status != "Cancelled" && o.Status != "Returned").Sum(o => o.TotalAmount)
                 });
 
             // 1. Regulars: Top 10 by Order Count
@@ -284,17 +281,62 @@ namespace backend.Controllers
                 .Take(10)
                 .ToListAsync();
 
+            // Self-healing: Automatically create missing PendingCredit rows for any orders placed with PaymentMethod == "Credit" or Status == "Credit"
+            try
+            {
+                var creditOrders = await _context.Orders
+                    .Where(o => o.Status.ToLower() == "credit" || 
+                                o.PaymentMethod.ToLower() == "credit" || 
+                                o.Status.ToLower() == "pending" || 
+                                o.PaymentMethod.ToLower() == "pending" || 
+                                o.PaymentMethod.ToLower() == "unpaid")
+                    .ToListAsync();
+
+                bool databaseChanged = false;
+                foreach (var order in creditOrders)
+                {
+                    var descriptionMarker = $"Credit for Order {order.OrderNumber}";
+                    var exists = await _context.PendingCredits
+                        .AnyAsync(p => p.UserId == order.UserId && p.Description == descriptionMarker);
+                    
+                    if (!exists)
+                    {
+                        var pc = new PendingCredit
+                        {
+                            UserId = order.UserId,
+                            Amount = order.TotalAmount,
+                            Description = descriptionMarker,
+                            Status = "Pending",
+                            CreatedAt = order.CreatedAt,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+                        await _context.PendingCredits.AddAsync(pc);
+                        databaseChanged = true;
+                    }
+                }
+                if (databaseChanged)
+                {
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Gracefully log and proceed if self-healing fails
+                Console.WriteLine($"Self-healing credit orders failed: {ex.Message}");
+            }
+
             // 3. Pending Credits
             var pendingCredits = await _context.PendingCredits
                 .Include(p => p.User)
-                .Where(p => p.Status == "Pending")
+                .Where(p => p.Status.ToLower() == "pending")
                 .GroupBy(p => new { p.UserId, p.User.FullName, p.User.Email })
                 .Select(g => new ReportPendingCreditInfo
                 {
                     Id = g.Key.UserId,
                     FullName = g.Key.FullName,
                     Email = g.Key.Email,
-                    PendingAmount = g.Sum(p => p.Amount)
+                    PendingAmount = g.Sum(p => p.Amount),
+                    LatestCreditDate = g.Max(p => p.CreatedAt)
                 })
                 .OrderByDescending(p => p.PendingAmount)
                 .ToListAsync();

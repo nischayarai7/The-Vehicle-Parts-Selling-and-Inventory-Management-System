@@ -23,22 +23,46 @@ namespace backend.Services
             var senderName = _configuration["EmailSettings:SenderName"];
             var senderEmail = _configuration["EmailSettings:SenderEmail"];
 
-            using (var client = new SmtpClient(smtpHost, smtpPort))
+            Console.WriteLine($"[SMTP-DIAGNOSTIC] Initializing SMTP Client. Host={smtpHost}:{smtpPort}, User={smtpUser}");
+            Console.WriteLine($"[SMTP-DIAGNOSTIC] Attempting to deliver email statement to recipient='{to}'");
+
+            if (string.IsNullOrWhiteSpace(to))
             {
-                client.Credentials = new NetworkCredential(smtpUser, smtpPass);
-                client.EnableSsl = true;
+                throw new ArgumentException("Recipient email address cannot be null or empty.");
+            }
 
-                var mailMessage = new MailMessage
+            try
+            {
+                using (var client = new SmtpClient(smtpHost, smtpPort))
                 {
-                    From = new MailAddress(senderEmail!, senderName),
-                    Subject = subject,
-                    Body = body,
-                    IsBodyHtml = isHtml
-                };
+                    client.Credentials = new NetworkCredential(smtpUser, smtpPass);
+                    client.EnableSsl = true;
 
-                mailMessage.To.Add(to);
+                    var fromEmail = smtpHost.Contains("gmail.com") ? smtpUser : senderEmail;
+                    Console.WriteLine($"[SMTP-DIAGNOSTIC] From Email resolved as: '{fromEmail}' based on security policy.");
 
-                await client.SendMailAsync(mailMessage);
+                    var mailMessage = new MailMessage
+                    {
+                        From = new MailAddress(fromEmail!, senderName),
+                        Subject = subject,
+                        Body = body,
+                        IsBodyHtml = isHtml
+                    };
+
+                    mailMessage.To.Add(to);
+
+                    await client.SendMailAsync(mailMessage);
+                    Console.WriteLine($"[SMTP-DIAGNOSTIC] SUCCESS! Statement successfully delivered to SMTP server relay for: '{to}'");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[SMTP-DIAGNOSTIC] [CRITICAL ERROR] Failed to send email to '{to}': {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"[SMTP-DIAGNOSTIC] Inner Exception: {ex.InnerException.Message}");
+                }
+                throw;
             }
         }
     }

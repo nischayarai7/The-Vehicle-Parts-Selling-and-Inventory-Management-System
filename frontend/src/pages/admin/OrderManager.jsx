@@ -150,8 +150,13 @@ const OrderManager = () => {
       {/* Toast Messages */}
       {toast && (
         <div className={`admin-toast ${toast.type}`}>
-          <div className="toast-content">
-            {toast.type === 'error' ? '⚠️' : '✅'} {toast.message}
+          <div className="toast-content" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {toast.type === 'error' ? (
+              <svg style={{ width: '16px', height: '16px', color: '#e04f5f', flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            ) : (
+              <svg style={{ width: '16px', height: '16px', color: '#28a745', flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            )}
+            <span style={{ letterSpacing: '0.2px' }}>{toast.message}</span>
           </div>
         </div>
       )}
@@ -293,22 +298,7 @@ const OrderManager = () => {
                             <svg className="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: '13px', height: '13px' }}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             <span>View</span>
                           </button>
-                          
-                          <button 
-                            className="btn-action-email"
-                            onClick={(e) => handleSendInvoice(o.id, e)}
-                            disabled={sendingInvoiceId === o.id}
-                            title="Send Invoice Email"
-                          >
-                            {sendingInvoiceId === o.id ? (
-                              <span className="mini-spinner"></span>
-                            ) : (
-                              <>
-                                <svg className="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: '13px', height: '13px' }}><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                                <span>Email</span>
-                              </>
-                            )}
-                          </button>
+                          {/* Email button removed from main table actions row as requested */}
                         </div>
                       </td>
                     </tr>

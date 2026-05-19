@@ -649,18 +649,22 @@
   top: 24px;
   right: 24px;
   z-index: 1500;
-  background: #28a745;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(22, 27, 34, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+  border: 1px solid rgba(40, 167, 69, 0.35); /* Subtle green border for success */
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .admin-toast.error {
-  background: #e04f5f;
+  background: rgba(22, 27, 34, 0.95);
+  border-color: rgba(224, 79, 95, 0.35); /* Subtle red border for error */
 }
 
 @keyframes toastSlideIn {

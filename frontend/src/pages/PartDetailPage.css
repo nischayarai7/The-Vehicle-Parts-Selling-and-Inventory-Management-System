@@ -452,7 +452,7 @@
   font-weight: 600;
 }
 
-.highlight-value {
+.part-specs-table .highlight-value {
   color: #e33b3b;
   background: #fef2f2;
   padding: 2px 8px;

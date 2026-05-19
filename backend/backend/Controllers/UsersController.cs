@@ -78,6 +78,70 @@ namespace backend.Controllers
                 return BadRequest(ApiResponse.Fail("The primary system administrator cannot be deleted"));
             }
 
+            // Prevent deleting the system-wide placeholder account
+            if (userToDelete.Email == "deleted@6ix7even.com")
+            {
+                return BadRequest(ApiResponse.Fail("The system placeholder account cannot be deleted as it is required to preserve transaction history."));
+            }
+
+            // Resolve or dynamically create the system-wide "Deleted User" placeholder
+            var deletedUserPlaceholder = await _context.Users.FirstOrDefaultAsync(u => u.Email == "deleted@6ix7even.com");
+            if (deletedUserPlaceholder == null)
+            {
+                deletedUserPlaceholder = new User
+                {
+                    FullName = "Deleted User",
+                    Email = "deleted@6ix7even.com",
+                    PasswordHash = System.Guid.NewGuid().ToString(), // secure random hash
+                    IsEmailVerified = true,
+                    AuthProvider = "System"
+                };
+                await _context.Users.AddAsync(deletedUserPlaceholder);
+                await _context.SaveChangesAsync();
+            }
+
+            // 1. Reassign orders purchased by this customer to the placeholder account to preserve store ledger history
+            var ordersToReassign = await _context.Orders.Where(o => o.UserId == id).ToListAsync();
+            foreach (var order in ordersToReassign)
+            {
+                order.UserId = deletedUserPlaceholder.Id;
+            }
+
+            // 2. Reassign orders created/managed by this user (if they had staff privileges) to the placeholder account
+            var ordersCreatedToReassign = await _context.Orders.Where(o => o.CreatedById == id).ToListAsync();
+            foreach (var order in ordersCreatedToReassign)
+            {
+                order.CreatedById = deletedUserPlaceholder.Id;
+            }
+
+            // 3. Remove User Roles association
+            var userRoles = await _context.UserRoles.Where(ur => ur.UserId == id).ToListAsync();
+            _context.UserRoles.RemoveRange(userRoles);
+
+            // 4. Remove customer vehicles
+            var customerVehicles = await _context.CustomerVehicles.Where(cv => cv.UserId == id).ToListAsync();
+            _context.CustomerVehicles.RemoveRange(customerVehicles);
+
+            // 5. Remove pending credits
+            var pendingCredits = await _context.PendingCredits.Where(pc => pc.UserId == id).ToListAsync();
+            _context.PendingCredits.RemoveRange(pendingCredits);
+
+            // 6. Remove appointments
+            var appointments = await _context.Appointments.Where(a => a.UserId == id).ToListAsync();
+            _context.Appointments.RemoveRange(appointments);
+
+            // 7. Remove service reviews
+            var reviews = await _context.ServiceReviews.Where(sr => sr.CustomerId == id).ToListAsync();
+            _context.ServiceReviews.RemoveRange(reviews);
+
+            // 8. Remove part requests
+            var partRequests = await _context.PartRequests.Where(pr => pr.CustomerId == id).ToListAsync();
+            _context.PartRequests.RemoveRange(partRequests);
+
+            // Save relationship adjustments
+            await _context.SaveChangesAsync();
+
+            // Finally, remove the actual user profile safely
             _context.Users.Remove(userToDelete);
             await _context.SaveChangesAsync();
             
