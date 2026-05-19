@@ -24,6 +24,8 @@ namespace backend.Models
         [MaxLength(1000)]
         public string? Notes { get; set; }
 
+        public int Quantity { get; set; } = 1;
+
         [MaxLength(50)]
         public string Status { get; set; } = "Pending"; // Pending, Sourced, Unavailable
 

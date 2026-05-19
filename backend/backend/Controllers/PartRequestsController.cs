@@ -37,6 +37,7 @@ namespace backend.Controllers
                 PartNumber = requestDto.PartNumber,
                 VehicleDetails = requestDto.VehicleDetails,
                 Notes = requestDto.Notes,
+                Quantity = requestDto.Quantity,
                 Status = "Pending",
                 CreatedAt = DateTime.UtcNow
             };
@@ -114,5 +115,6 @@ namespace backend.Controllers
         public string? PartNumber { get; set; }
         public string? VehicleDetails { get; set; }
         public string? Notes { get; set; }
+        public int Quantity { get; set; } = 1;
     }
 }

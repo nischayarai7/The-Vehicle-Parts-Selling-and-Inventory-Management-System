@@ -158,6 +158,21 @@ const CustomerLayout = () => {
 
       {/* Main Content Area */}
       <div className="admin-main">
+        <style>
+          {`
+            .liquid-logo-hover {
+              background: linear-gradient(110deg, #0d1117 0%, #0d1117 40%, rgba(248, 81, 73, 0.15) 48%, rgba(255, 255, 255, 0.8) 52%, rgba(248, 81, 73, 0.15) 56%, #0d1117 100%) !important;
+              background-size: 400% 100% !important;
+              background-position: 100% 0 !important;
+              transition: border-color 0.4s ease, box-shadow 0.4s ease, background-position 0.6s cubic-bezier(0.25, 1, 0.5, 1) !important;
+            }
+            .liquid-logo-hover:hover {
+              background-position: 0% 0 !important;
+              border-color: #ffffff !important;
+              box-shadow: 0 0 15px rgba(248, 81, 73, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.2);
+            }
+          `}
+        </style>
         <header className="admin-top-bar">
           <div className="top-bar-left">
             <h2>Customer Dashboard</h2>
@@ -165,6 +180,7 @@ const CustomerLayout = () => {
           <div className="top-bar-right" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             <Link 
               to="/" 
+              className="liquid-logo-hover"
               style={{ 
                 color: '#fff', 
                 textDecoration: 'none', 
@@ -176,18 +192,7 @@ const CustomerLayout = () => {
                 border: '1px solid #2f363d',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#1890ff';
-                e.currentTarget.style.background = 'rgba(24, 144, 255, 0.1)';
-                e.currentTarget.style.color = '#1890ff';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#2f363d';
-                e.currentTarget.style.background = '#0d1117';
-                e.currentTarget.style.color = '#fff';
+                gap: '6px'
               }}
             >
               <svg style={{ width: '16px', height: '16px', color: '#f85149' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

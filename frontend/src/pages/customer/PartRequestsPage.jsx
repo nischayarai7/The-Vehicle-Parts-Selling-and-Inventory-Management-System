@@ -10,6 +10,7 @@ const PartRequestsPage = () => {
   const [formData, setFormData] = useState({
     partName: '',
     partNumber: '',
+    quantity: 1,
     vehicleDetails: '',
     notes: ''
   });
@@ -48,7 +49,7 @@ const PartRequestsPage = () => {
       setSubmitting(true);
       await api.createPartRequest(formData);
       setMessage({ text: 'Part request submitted successfully!', type: 'success' });
-      setFormData({ partName: '', partNumber: '', vehicleDetails: '', notes: '' });
+      setFormData({ partName: '', partNumber: '', quantity: 1, vehicleDetails: '', notes: '' });
       fetchMyRequests(); // Refresh list
     } catch (err) {
       console.error('Failed to submit part request:', err);
@@ -117,6 +118,21 @@ const PartRequestsPage = () => {
             </div>
 
             <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', color: '#888' }}>Quantity *</label>
+              <input
+                type="number"
+                name="quantity"
+                value={formData.quantity}
+                onChange={handleInputChange}
+                min="1"
+                max="999"
+                style={{ width: '100%', padding: '10px', background: '#0d1117', border: '1px solid #2f363d', borderRadius: '6px', color: '#fff' }}
+                placeholder="1"
+                required
+              />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', color: '#888' }}>Vehicle Details</label>
               <input
                 type="text"
@@ -159,6 +175,7 @@ const PartRequestsPage = () => {
               <thead>
                 <tr style={{ borderBottom: '1px solid #222' }}>
                   <th style={{ textAlign: 'left', padding: '10px', color: '#888' }}>Part</th>
+                  <th style={{ textAlign: 'center', padding: '10px', color: '#888' }}>Qty</th>
                   <th style={{ textAlign: 'left', padding: '10px', color: '#888' }}>Vehicle</th>
                   <th style={{ textAlign: 'left', padding: '10px', color: '#888' }}>Status</th>
                 </tr>
@@ -166,7 +183,7 @@ const PartRequestsPage = () => {
               <tbody>
                 {requests.length === 0 ? (
                   <tr>
-                    <td colSpan="3" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                    <td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
                       No requests found.
                     </td>
                   </tr>
@@ -177,6 +194,7 @@ const PartRequestsPage = () => {
                         <div>{r.partName}</div>
                         {r.partNumber && <div style={{ fontSize: '12px', color: '#666' }}>No: {r.partNumber}</div>}
                       </td>
+                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '600' }}>{r.quantity || 1}</td>
                       <td style={{ padding: '10px', color: '#888' }}>{r.vehicleDetails || 'N/A'}</td>
                       <td style={{ padding: '10px' }}>
                         <span className={`status-pill ${r.status.toLowerCase()}`}>

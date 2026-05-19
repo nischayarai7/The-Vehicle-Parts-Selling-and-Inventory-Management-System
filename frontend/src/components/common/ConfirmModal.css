@@ -27,12 +27,30 @@
 }
 
 .modal-icon {
-  font-size: 40px;
   margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.modal-icon svg {
+  width: 48px;
+  height: 48px;
 }
 
 .modal-icon.danger {
   color: #ea4444;
+}
+
+.modal-icon.danger svg {
+  filter: drop-shadow(0 0 10px rgba(234, 68, 68, 0.4));
+}
+
+.modal-icon.info {
+  color: #1890ff;
+}
+
+.modal-icon.info svg {
+  filter: drop-shadow(0 0 10px rgba(24, 144, 255, 0.4));
 }
 
 .modal-title {

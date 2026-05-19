@@ -231,34 +231,6 @@ const CustomerAppointmentsPage = () => {
 
   return (
     <div>
-      <style>
-        {`
-          .liquid-hover-btn {
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease !important;
-            z-index: 1;
-          }
-          .liquid-hover-btn::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 50%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(248, 81, 73, 0.6), rgba(255, 255, 255, 0.9), transparent);
-            transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: -1;
-            transform: skewX(-25deg);
-          }
-          .liquid-hover-btn:hover::before {
-            left: 200%;
-          }
-          .liquid-hover-btn:hover {
-            box-shadow: 0 0 15px rgba(248, 81, 73, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.2);
-            border-color: #fff !important;
-            background: rgba(248, 81, 73, 0.15) !important;
-          }
-        `}
-      </style>
       {/* Success Modal */}
       {showModal && (
         <div style={{
@@ -280,7 +252,12 @@ const CustomerAppointmentsPage = () => {
             textAlign: 'center',
             boxShadow: '0 0 20px rgba(82, 196, 26, 0.3)'
           }}>
-            <div style={{ fontSize: '50px', marginBottom: '15px' }}>🎉</div>
+            <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'center' }}>
+              <svg style={{ width: '52px', height: '52px', color: '#52c41a', filter: 'drop-shadow(0 0 12px rgba(82, 196, 26, 0.4))' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
             <h2 style={{ color: '#52c41a', marginBottom: '10px' }}>Thank You!</h2>
             <p style={{ color: '#fff', marginBottom: '20px' }}>Your appointment has been booked successfully. We look forward to serving you!</p>
             <button 
@@ -330,7 +307,18 @@ const CustomerAppointmentsPage = () => {
               alignItems: 'center',
               gap: '10px'
             }}>
-              <span style={{ fontSize: '16px' }}>{message.type === 'success' ? '✓' : '⚠️'}</span>
+              {message.type === 'success' ? (
+                <svg style={{ width: '18px', height: '18px', flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              ) : (
+                <svg style={{ width: '18px', height: '18px', flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              )}
               {message.text}
             </div>
           )}
@@ -368,7 +356,6 @@ const CustomerAppointmentsPage = () => {
                     <button
                       key={service}
                       type="button"
-                      className={!isSelected ? "liquid-hover-btn" : ""}
                       onClick={() => {
                         setSelectedServices(prev => 
                           prev.includes(service) 
@@ -385,7 +372,20 @@ const CustomerAppointmentsPage = () => {
                         cursor: 'pointer',
                         textAlign: 'center',
                         fontSize: '13px',
+                        transition: 'all 0.2s ease',
                         boxShadow: isSelected ? '0 0 10px rgba(82, 196, 26, 0.2)' : 'none'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = '#f85149';
+                          e.currentTarget.style.background = 'rgba(248, 81, 73, 0.05)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = '#2f363d';
+                          e.currentTarget.style.background = '#0d1117';
+                        }
                       }}
                     >
                       {service}
@@ -400,7 +400,6 @@ const CustomerAppointmentsPage = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>
                 <button
                   type="button"
-                  className={formData.vehicleId !== '' ? "liquid-hover-btn" : ""}
                   onClick={() => setFormData(prev => ({ ...prev, vehicleId: '' }))}
                   style={{
                     padding: '12px',
@@ -410,7 +409,20 @@ const CustomerAppointmentsPage = () => {
                     borderRadius: '8px',
                     cursor: 'pointer',
                     textAlign: 'center',
-                    fontSize: '13px'
+                    fontSize: '13px',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (formData.vehicleId !== '') {
+                      e.currentTarget.style.borderColor = '#f85149';
+                      e.currentTarget.style.background = 'rgba(248, 81, 73, 0.05)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (formData.vehicleId !== '') {
+                      e.currentTarget.style.borderColor = '#2f363d';
+                      e.currentTarget.style.background = '#0d1117';
+                    }
                   }}
                 >
                   -- No specific vehicle --
@@ -421,7 +433,6 @@ const CustomerAppointmentsPage = () => {
                     <button
                       key={v.id}
                       type="button"
-                      className={!isSelected ? "liquid-hover-btn" : ""}
                       onClick={() => setFormData(prev => ({ ...prev, vehicleId: String(v.id) }))}
                       style={{
                         padding: '12px',
@@ -431,7 +442,20 @@ const CustomerAppointmentsPage = () => {
                         borderRadius: '8px',
                         cursor: 'pointer',
                         textAlign: 'center',
-                        fontSize: '13px'
+                        fontSize: '13px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = '#f85149';
+                          e.currentTarget.style.background = 'rgba(248, 81, 73, 0.05)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = '#2f363d';
+                          e.currentTarget.style.background = '#0d1117';
+                        }
                       }}
                     >
                       {v.displayName || `${v.make} ${v.model}`}
@@ -462,7 +486,6 @@ const CustomerAppointmentsPage = () => {
                     <button
                       key={day}
                       type="button"
-                      className={selectedDay !== day ? "liquid-hover-btn" : ""}
                       onClick={() => setSelectedDay(day)}
                       style={{
                         padding: '8px 16px',
@@ -473,7 +496,20 @@ const CustomerAppointmentsPage = () => {
                         cursor: 'pointer',
                         whiteSpace: 'nowrap',
                         fontWeight: selectedDay === day ? 'bold' : 'normal',
+                        transition: 'all 0.2s',
                         opacity: isDayBooked && selectedDay !== day ? 0.7 : 1
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedDay !== day) {
+                          e.currentTarget.style.borderColor = '#f85149';
+                          e.currentTarget.style.background = 'rgba(248, 81, 73, 0.05)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedDay !== day) {
+                          e.currentTarget.style.borderColor = '#2f363d';
+                          e.currentTarget.style.background = '#0d1117';
+                        }
                       }}
                     >
                       {day} {isDayBooked && '(Booked)'}
@@ -511,7 +547,6 @@ const CustomerAppointmentsPage = () => {
                       <button
                         key={slot.dateTime}
                         type="button"
-                        className={!isSelected && !isDisabled ? "liquid-hover-btn" : ""}
                         onClick={() => {
                           if (isDisabled) {
                             if (isDayBooked) {
@@ -519,6 +554,7 @@ const CustomerAppointmentsPage = () => {
                             } else if (isFull) {
                               setMessage({ text: 'This time slot is fully booked.', type: 'error' });
                             }
+                            // Clear message after 3 seconds
                             setTimeout(() => setMessage({ text: '', type: '' }), 3000);
                             return;
                           }
@@ -533,11 +569,24 @@ const CustomerAppointmentsPage = () => {
                           cursor: isDisabled ? 'not-allowed' : 'pointer',
                           textAlign: 'center',
                           fontSize: '13px',
+                          transition: 'all 0.2s',
                           display: 'flex',
                           flexDirection: 'column',
                           gap: '4px',
                           alignItems: 'center',
                           opacity: isDisabled && !isBooked && !isSelected ? 0.4 : 1
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected && !isDisabled) {
+                            e.currentTarget.style.borderColor = '#f85149';
+                            e.currentTarget.style.background = 'rgba(248, 81, 73, 0.05)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected && !isDisabled) {
+                            e.currentTarget.style.borderColor = '#2f363d';
+                            e.currentTarget.style.background = '#0d1117';
+                          }
                         }}
                       >
                         <span style={{ fontWeight: isSelected ? 'bold' : 'normal' }}>{timeStr}</span>
