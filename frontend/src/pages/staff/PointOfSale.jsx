@@ -13,6 +13,8 @@ const PointOfSale = () => {
   const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Paid');
   const [searchTerm, setSearchTerm] = useState('');
+  const [customerSearchTerm, setCustomerSearchTerm] = useState('');
+  const [customerDropdownOpen, setCustomerDropdownOpen] = useState(false);
   const [loyaltySettings, setLoyaltySettings] = useState({ thresholdAmount: 5000, discountRate: 0.10 });
   
   const [loading, setLoading] = useState(false);
@@ -132,6 +134,13 @@ const PointOfSale = () => {
     (p.brand && p.brand.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const filteredCustomers = customers.filter(c => 
+    c.fullName.toLowerCase().includes(customerSearchTerm.toLowerCase()) || 
+    c.email.toLowerCase().includes(customerSearchTerm.toLowerCase())
+  );
+
+  const selectedCustomer = customers.find(c => c.id.toString() === selectedCustomerId.toString());
+
   return (
     <div className="pos-container">
       {/* Toast */}
@@ -234,18 +243,78 @@ const PointOfSale = () => {
 
           <div className="cart-body">
             {/* Customer Select */}
-            <div className="cart-field-group">
+            <div className="cart-field-group" style={{ position: 'relative' }}>
               <label>Customer Account</label>
-              <select 
-                value={selectedCustomerId} 
-                onChange={(e) => setSelectedCustomerId(e.target.value)}
-                className="cart-select"
+              
+              <div 
+                className={`custom-select-trigger ${customerDropdownOpen ? 'open' : ''}`}
+                onClick={() => {
+                  setCustomerDropdownOpen(!customerDropdownOpen);
+                  setCustomerSearchTerm(''); // reset search when opening
+                }}
               >
-                <option value="">-- Select Customer --</option>
-                {customers.map(c => (
-                  <option key={c.id} value={c.id}>{c.fullName} ({c.email})</option>
-                ))}
-              </select>
+                <div className="custom-select-value">
+                  {selectedCustomer ? (
+                    <div className="selected-customer-display">
+                      <div className="sc-avatar">{selectedCustomer.fullName.charAt(0)}</div>
+                      <div className="sc-info">
+                        <span className="sc-name">{selectedCustomer.fullName}</span>
+                        <span className="sc-email">{selectedCustomer.email}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="sc-placeholder">-- Select Customer --</span>
+                  )}
+                </div>
+                <svg className="custom-select-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+
+              {customerDropdownOpen && (
+                <>
+                  <div className="custom-select-overlay" onClick={() => setCustomerDropdownOpen(false)}></div>
+                  <div className="custom-select-dropdown">
+                    <div className="custom-select-search">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      <input 
+                        type="text" 
+                        placeholder="Search by name or email..." 
+                        autoFocus
+                        value={customerSearchTerm}
+                        onChange={(e) => setCustomerSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    <ul className="custom-select-options">
+                      <li 
+                        className={`custom-select-option ${!selectedCustomerId ? 'selected' : ''}`}
+                        onClick={() => { setSelectedCustomerId(''); setCustomerDropdownOpen(false); }}
+                        style={{ justifyContent: 'center', color: 'var(--admin-text-muted)' }}
+                      >
+                        -- Clear Selection --
+                      </li>
+                      {filteredCustomers.length === 0 ? (
+                        <li className="custom-select-empty">No customers found.</li>
+                      ) : (
+                        filteredCustomers.map(c => (
+                          <li 
+                            key={c.id}
+                            className={`custom-select-option ${selectedCustomerId.toString() === c.id.toString() ? 'selected' : ''}`}
+                            onClick={() => { setSelectedCustomerId(c.id); setCustomerDropdownOpen(false); }}
+                          >
+                            <div className="sc-avatar small">{c.fullName.charAt(0)}</div>
+                            <div className="sc-info">
+                              <span className="sc-name">{c.fullName}</span>
+                              <span className="sc-email">{c.email}</span>
+                            </div>
+                            {selectedCustomerId.toString() === c.id.toString() && (
+                              <svg className="sc-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            )}
+                          </li>
+                        ))
+                      )}
+                    </ul>
+                  </div>
+                </>
+              )}
             </div>
 
             <hr className="cart-divider" />
@@ -321,44 +390,18 @@ const PointOfSale = () => {
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('Paid')}
-                  style={{
-                    flex: 1,
-                    padding: '10px',
-                    borderRadius: '8px',
-                    border: paymentMethod === 'Paid' ? '2px solid var(--primary)' : '1px solid #333',
-                    background: paymentMethod === 'Paid' ? 'rgba(56, 139, 253, 0.15)' : '#1a1a1a',
-                    color: paymentMethod === 'Paid' ? 'var(--primary)' : '#888',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px'
-                  }}
+                  className={`payment-btn paid ${paymentMethod === 'Paid' ? 'active' : ''}`}
                 >
-                  🟢 Paid Settlement
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                  Paid Settlement
                 </button>
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('Credit')}
-                  style={{
-                    flex: 1,
-                    padding: '10px',
-                    borderRadius: '8px',
-                    border: paymentMethod === 'Credit' ? '2px solid #e3b33b' : '1px solid #333',
-                    background: paymentMethod === 'Credit' ? 'rgba(227, 179, 59, 0.15)' : '#1a1a1a',
-                    color: paymentMethod === 'Credit' ? '#e3b33b' : '#888',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px'
-                  }}
+                  className={`payment-btn credit ${paymentMethod === 'Credit' ? 'active' : ''}`}
                 >
-                  🟡 Credit Deferred
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Credit Deferred
                 </button>
               </div>
             </div>

@@ -343,6 +343,194 @@
   min-height: 60px;
 }
 
+/* Custom Dropdown Styling */
+.custom-select-trigger {
+  width: 100%;
+  padding: 10px 12px;
+  background: #0d1117;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  color: white;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 44px;
+}
+
+.custom-select-trigger:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.custom-select-trigger.open {
+  border-color: #388bfd;
+  box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.15);
+}
+
+.custom-select-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--admin-text-muted);
+  transition: transform 0.2s ease;
+}
+
+.custom-select-trigger.open .custom-select-icon {
+  transform: rotate(180deg);
+}
+
+.sc-placeholder {
+  color: var(--admin-text-muted);
+}
+
+.selected-customer-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sc-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #388bfd;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.sc-avatar.small {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+
+.sc-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-name {
+  font-weight: 600;
+  color: #fff;
+  font-size: 13px;
+}
+
+.sc-email {
+  font-size: 11px;
+  color: var(--admin-text-muted);
+}
+
+.custom-select-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+}
+
+.custom-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #161b22;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.custom-select-search {
+  padding: 10px;
+  border-bottom: 1px solid var(--admin-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.custom-select-search svg {
+  width: 14px;
+  height: 14px;
+  color: var(--admin-text-muted);
+}
+
+.custom-select-search input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 13px;
+  outline: none;
+}
+
+.custom-select-search input::placeholder {
+  color: var(--admin-text-muted);
+}
+
+.custom-select-options {
+  max-height: 250px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.custom-select-options::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-select-options::-webkit-scrollbar-thumb {
+  background: var(--admin-border);
+  border-radius: 3px;
+}
+
+.custom-select-option {
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: background 0.15s ease;
+}
+
+.custom-select-option:last-child {
+  border-bottom: none;
+}
+
+.custom-select-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.custom-select-option.selected {
+  background: rgba(56, 139, 253, 0.15);
+}
+
+.sc-check {
+  width: 16px;
+  height: 16px;
+  color: #388bfd;
+  margin-left: auto;
+}
+
+.custom-select-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--admin-text-muted);
+  font-size: 13px;
+}
+
 .cart-divider {
   border: none;
   border-top: 1px solid var(--admin-border);
@@ -555,6 +743,42 @@
 .btn-checkout:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Payment Settlement Buttons */
+.payment-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #333;
+  background: #1a1a1a;
+  color: #888;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.payment-btn:hover {
+  background: #252525;
+  border-color: #555;
+  color: #bbb;
+}
+
+.payment-btn.paid.active {
+  border-color: #2ea043;
+  background: rgba(46, 160, 67, 0.15);
+  color: #2ea043;
+}
+
+.payment-btn.credit.active {
+  border-color: #388bfd;
+  background: rgba(56, 139, 253, 0.15);
+  color: #388bfd;
 }
 
 /* POS Toast */
