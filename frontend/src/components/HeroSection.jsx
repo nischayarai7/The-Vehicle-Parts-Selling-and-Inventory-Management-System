@@ -11,6 +11,7 @@ const HeroSection = () => {
   const { showToast } = useCart();
   const [vehicles, setVehicles] = useState([]);
   const [myVehicles, setMyVehicles] = useState([]);
+  const [wallpaperUrl, setWallpaperUrl] = useState(null);
   
   const [selectedMake, setSelectedMake] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
@@ -25,10 +26,22 @@ const HeroSection = () => {
 
   useEffect(() => {
     fetchVehicles();
+    fetchWallpaper();
     if (isAuthenticated) {
       fetchMyVehicles();
     }
   }, [isAuthenticated]);
+
+  const fetchWallpaper = async () => {
+    try {
+      const data = await api.getWallpaper();
+      if (data && data.url) {
+        setWallpaperUrl(data.url);
+      }
+    } catch (err) {
+      console.error('Error fetching system wallpaper:', err);
+    }
+  };
 
   const fetchVehicles = async () => {
     try {
@@ -105,7 +118,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="hero-section">
+    <section className="hero-section" style={wallpaperUrl ? { backgroundImage: `url(${wallpaperUrl})` } : {}}>
       <div className="container hero-container">
         <div className="vehicle-selector-box">
           
@@ -166,18 +179,9 @@ const HeroSection = () => {
                     placeholder="License Plate (Optional)" 
                     value={licensePlate} 
                     onChange={e => setLicensePlate(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '15px',
-                      border: 'none',
-                      borderRadius: '4px',
-                      fontSize: '15px',
-                      color: 'var(--text-main)',
-                      backgroundColor: 'white'
-                    }}
                   />
                 </div>
-                <button type="submit" className="btn-garage-dark" disabled={!addYear}>
+                <button type="submit" className="btn-garage-action" disabled={!addYear} style={{ marginTop: '10px' }}>
                   Save to Garage
                 </button>
                 <button 
@@ -191,9 +195,10 @@ const HeroSection = () => {
             </>
           ) : (
             <>
-              <h2 className="selector-title">My Garage</h2>
               {myVehicles.length > 0 ? (
-                <div className="my-garage-list">
+                <>
+                  <h2 className="selector-title">My Garage</h2>
+                  <div className="my-garage-list">
                   {myVehicles.slice(0, 2).map(v => (
                     <div key={v.id} className="garage-item" style={{ background: '#fff', padding: '15px', marginBottom: '10px', borderRadius: '4px', color: '#333' }}>
                       <p style={{ margin: 0, fontWeight: 'bold', fontSize: '1.1rem' }}>{v.displayName}</p>
@@ -218,12 +223,14 @@ const HeroSection = () => {
                     <Link to="/settings" className="btn-secondary" style={{ display: 'block', textAlign: 'center' }}>Manage Garage</Link>
                   </div>
                 </div>
+                </>
               ) : (
-                <div style={{ textAlign: 'center', color: '#fff' }}>
-                  <p style={{ marginBottom: '20px' }}>You haven't added any vehicles yet.</p>
+                <div className="empty-garage-state">
+                  <h3>Your Garage is Empty</h3>
+                  <p>Save your vehicles to quickly find compatible premium auto parts.</p>
                   <button 
                     onClick={() => setShowAddForm(true)} 
-                    className="btn-garage-dark"
+                    className="btn-garage-action"
                   >
                     Add Your First Vehicle
                   </button>

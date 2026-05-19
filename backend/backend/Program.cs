@@ -95,6 +95,15 @@ using (var scope = app.Services.CreateScope())
     try
     {
         db.Database.ExecuteSqlRaw(@"
+            CREATE TABLE IF NOT EXISTS system_settings (
+                key VARCHAR(100) PRIMARY KEY,
+                value TEXT NULL
+            );
+
+            INSERT INTO system_settings (key, value) 
+            VALUES ('system_wallpaper', NULL) 
+            ON CONFLICT (key) DO NOTHING;
+
             DO $$
             BEGIN
                 IF NOT EXISTS (

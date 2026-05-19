@@ -593,3 +593,45 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Professional PDF Button style - Premium Green Theme matching Customer Reports UI */
+.professional-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(46, 204, 113, 0.05);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+  color: #2ecc71;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.05);
+  outline: none;
+  font-family: inherit;
+}
+
+.professional-pdf-btn:hover {
+  background: #2ecc71;
+  color: white;
+  border-color: #2ecc71;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(46, 204, 113, 0.35);
+}
+
+.professional-pdf-btn:active {
+  transform: translateY(0);
+}
+
+.pdf-btn-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.professional-pdf-btn:hover .pdf-btn-icon {
+  transform: rotate(-10deg) scale(1.1);
+}

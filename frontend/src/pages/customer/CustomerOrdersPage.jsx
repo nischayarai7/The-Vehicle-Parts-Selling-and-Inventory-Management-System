@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import './CustomerOrdersPage.css';
 
 const CustomerOrdersPage = () => {
@@ -28,6 +30,187 @@ const CustomerOrdersPage = () => {
       setOrders(res || []);
     } catch (err) {
       console.error('Failed to load orders:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadHistoryPDF = async () => {
+    if (!orders || orders.length === 0) return;
+
+    try {
+      setLoading(true);
+      // Fetch details of all orders in parallel to get full details dynamically!
+      const detailedOrders = await Promise.all(
+        orders.map(async (o) => {
+          try {
+            const detail = await api.getOrderDetails(o.id);
+            return detail.data || detail;
+          } catch (e) {
+            return null;
+          }
+        })
+      );
+
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+
+      // --- Elegant Header Decorator ---
+      doc.setFillColor(33, 37, 41); // Slate Dark Theme
+      doc.rect(0, 0, pageWidth, 40, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.text("6IX7EVEN AUTO PARTS", 14, 18);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text("CUSTOMER PURCHASE & ORDER STATEMENT", 14, 30);
+
+      // Metadata Right-aligned
+      const customerName = api.getUser()?.fullName || 'Valued Customer';
+      doc.setFontSize(9);
+      doc.text(`STATEMENT TYPE: FULL HISTORICAL REPORT`, pageWidth - 90, 16);
+      doc.text(`CUSTOMER: ${customerName.toUpperCase()}`, pageWidth - 90, 23);
+      doc.text(`DATE GENERATED: ${new Date().toLocaleDateString()}`, pageWidth - 90, 30);
+
+      // Reset styles
+      doc.setTextColor(33, 37, 41);
+      
+      // --- 1. Executive Summary Block ---
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text("1. Historical Overview Summary", 14, 52);
+
+      const totalSpent = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+      const completedOrders = orders.filter(o => {
+        const status = (o.status || '').toLowerCase();
+        return status === 'completed' || status === 'delivered';
+      }).length;
+
+      const summaryRows = [
+        ["Parameter", "Historical Record Value"],
+        ["Total Placed Orders", orders.length.toString()],
+        ["Successful Completed Orders", completedOrders.toString()],
+        ["Total Account Expenditures", `Rs. ${totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2 })}`],
+        ["Statement Generation Time", new Date().toLocaleTimeString()]
+      ];
+
+      autoTable(doc, {
+        startY: 57,
+        head: [summaryRows[0]],
+        body: summaryRows.slice(1),
+        theme: 'grid',
+        headStyles: { fillColor: [46, 160, 67], textColor: [255, 255, 255] }, // Elegant Green theme
+        columnStyles: {
+          0: { fontStyle: 'bold', width: 90 },
+          1: { halign: 'right' }
+        }
+      });
+
+      let lastY = doc.lastAutoTable.finalY + 15;
+
+      // --- 2. Master Purchases Index Table ---
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text("2. Purchase Orders Log", 14, lastY);
+
+      const orderHeaders = [["Order ID", "Reference Number", "Placed Date", "Parts Count", "Total Amount", "Status"]];
+      const orderBody = orders.map(o => [
+        `#${o.id}`,
+        o.orderNumber || 'N/A',
+        new Date(o.createdAt).toLocaleDateString(),
+        (o.itemCount || 1).toString(),
+        `Rs. ${o.totalAmount?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}`,
+        o.status || 'Pending'
+      ]);
+
+      autoTable(doc, {
+        startY: lastY + 5,
+        head: orderHeaders,
+        body: orderBody,
+        theme: 'striped',
+        headStyles: { fillColor: [54, 69, 79], textColor: [255, 255, 255] },
+        columnStyles: {
+          4: { halign: 'right' }
+        }
+      });
+
+      lastY = doc.lastAutoTable.finalY + 15;
+
+      // --- 3. Detailed Itemized Breakdown Section ---
+      if (lastY > doc.internal.pageSize.height - 40) {
+        doc.addPage();
+        lastY = 20;
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text("3. Detailed Parts Breakdown per Purchase", 14, lastY);
+      lastY += 6;
+
+      detailedOrders.forEach((o) => {
+        if (!o) return;
+        if (lastY > doc.internal.pageSize.height - 60) {
+          doc.addPage();
+          lastY = 20;
+        }
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text(`Order #${o.id} - ${o.orderNumber || 'ORD-REF'} (${new Date(o.createdAt).toLocaleDateString()})`, 14, lastY);
+        lastY += 4;
+
+        const items = o.items || [];
+        const itemRows = items.map((i, idx) => [
+          `#${idx + 1}`,
+          i.partName || 'Unknown Component',
+          `Rs. ${i.unitPrice?.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+          i.quantity?.toString() || '1',
+          `Rs. ${i.subtotal?.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+        ]);
+
+        if (itemRows.length === 0) {
+          itemRows.push(["-", "No parts item details found.", "-", "-", "-"]);
+        }
+
+        autoTable(doc, {
+          startY: lastY,
+          head: [["Item #", "Component Description", "Unit Price", "Qty", "Subtotal"]],
+          body: itemRows,
+          theme: 'grid',
+          headStyles: { fillColor: [100, 110, 120], textColor: [255, 255, 255] },
+          columnStyles: {
+            2: { halign: 'right' },
+            3: { halign: 'center' },
+            4: { halign: 'right' }
+          },
+          margin: { left: 14 }
+        });
+
+        lastY = doc.lastAutoTable.finalY + 8;
+      });
+
+      // Professional Footer Signatures
+      if (lastY > doc.internal.pageSize.height - 35) {
+        doc.addPage();
+        lastY = 30;
+      }
+
+      doc.setDrawColor(200, 200, 200);
+      doc.line(14, lastY, 74, lastY);
+      doc.line(pageWidth - 74, lastY, pageWidth - 14, lastY);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text("Authorized Audit Signature", 14, lastY + 5);
+      doc.text("Customer Verification Signature", pageWidth - 74, lastY + 5);
+
+      // Save File
+      doc.save(`Order_History_Statement.pdf`);
+    } catch (err) {
+      console.error('Failed to generate statement PDF', err);
     } finally {
       setLoading(false);
     }
@@ -116,9 +299,15 @@ const CustomerOrdersPage = () => {
   return (
     <div className="customer-orders-container">
       {/* Header section */}
-      <div className="orders-page-header">
-        <h1>Purchase Order History</h1>
-        <p>View, track, and review invoice details of your past parts purchases.</p>
+      <div className="orders-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+        <div>
+          <h1>Purchase Order History</h1>
+          <p>View, track, and review invoice details of your past parts purchases.</p>
+        </div>
+        <button onClick={handleDownloadHistoryPDF} className="professional-pdf-btn">
+          <svg className="pdf-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>Download PDF History</span>
+        </button>
       </div>
 
       {/* Control row with search and filter inputs */}

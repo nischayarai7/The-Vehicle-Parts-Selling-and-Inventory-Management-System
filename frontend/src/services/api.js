@@ -162,6 +162,22 @@ export const api = {
     }).then(handleResponse);
   },
 
+  // ── System Wallpaper Settings ─────────────────────────────────────────────
+  getWallpaper: () => fetch(`${API_BASE}/SystemSettings/wallpaper`).then(handleResponse),
+  uploadWallpaper: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return fetch(`${API_BASE}/SystemSettings/wallpaper/upload`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+      body: formData
+    }).then(handleResponse);
+  },
+  deleteWallpaper: () => fetch(`${API_BASE}/SystemSettings/wallpaper`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+
   // --- Vehicles ---
   getVehicles: () => fetch(`${API_BASE}/vehicles`).then(handleResponse),
   addVehicle: (data) => fetch(`${API_BASE}/vehicles`, {

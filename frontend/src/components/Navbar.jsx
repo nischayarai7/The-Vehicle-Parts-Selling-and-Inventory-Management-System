@@ -115,10 +115,8 @@ const Navbar = () => {
         <div className="container navbar-container">
           {/* Logo */}
           <div className="navbar-logo">
-            <Link to="/" style={{ textDecoration: 'none' }}>
-              <h2 style={{ letterSpacing: '0.02em', fontWeight: 'bold', margin: 0, textTransform: 'none' }}>
-                6ix<span style={{ color: '#e04f5f' }}>7</span>even
-              </h2>
+            <Link to="/" className="logo-premium">
+              6ix<span className="brand-accent">7</span>even
             </Link>
           </div>
 
