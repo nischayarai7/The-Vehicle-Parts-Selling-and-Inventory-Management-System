@@ -12,6 +12,7 @@ function PartDetailPage() {
   const [part, setPart] = useState(null);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
 
   // Part Reviews States
   const [reviews, setReviews] = useState([]);
@@ -192,9 +193,7 @@ function PartDetailPage() {
       showToast('This item is currently out of stock.', 'error');
       return;
     }
-    addToCart(part);
-    navigate('/shop'); // Opens the catalog/cart context
-    showToast('Redirected with your part in the cart!', 'success');
+    navigate(`/checkout?partId=${part.id}&quantity=${quantity}`);
   };
 
   return (
@@ -389,6 +388,38 @@ function PartDetailPage() {
             <p>{part.description || 'No additional description provided for this catalog inventory part.'}</p>
           </div>
 
+          {/* Quantity Selector */}
+          {part.stockQuantity > 0 && (
+            <div className="detail-qty-row" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>Quantity:</span>
+              <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '4px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
+                  style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: '#475569', fontSize: '18px', cursor: 'pointer', fontWeight: '600' }}
+                >
+                  -
+                </button>
+                <input 
+                  type="text" 
+                  readOnly
+                  value={quantity}
+                  style={{ width: '50px', background: 'none', border: 'none', color: '#0f172a', textAlign: 'center', fontSize: '15px', fontWeight: '700', outline: 'none' }}
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setQuantity(prev => Math.min(part.stockQuantity, prev + 1))}
+                  style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: '#475569', fontSize: '18px', cursor: 'pointer', fontWeight: '600' }}
+                >
+                  +
+                </button>
+              </div>
+              <span style={{ fontSize: '12.5px', color: '#64748b' }}>
+                ({part.stockQuantity} units available)
+              </span>
+            </div>
+          )}
+
           {/* Action Buy Buttons */}
           <div className="purchase-buttons-action">
             {part.stockQuantity <= 0 ? (
@@ -400,7 +431,7 @@ function PartDetailPage() {
                 </button>
                 <button 
                   className="btn-add-to-cart-icon" 
-                  onClick={() => { addToCart(part); showToast(`${part.name} added to cart!`, 'success'); }}
+                  onClick={() => { addToCart(part, quantity); showToast(`${quantity}x ${part.name} added to cart!`, 'success'); }}
                   title="Add to cart"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">

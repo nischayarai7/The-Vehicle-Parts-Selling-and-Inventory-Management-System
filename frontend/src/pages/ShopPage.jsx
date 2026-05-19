@@ -436,7 +436,22 @@ function ShopPage() {
                 <div className="product-price-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'stretch', width: '100%' }}>
                   <span className="price">{formatCurrency(part.price)}</span>
                   {part.stockQuantity <= 0 ? (
-                    <button className="btn-secondary add-to-cart-btn" disabled style={{ opacity: 0.5, cursor: 'not-allowed', width: '100%' }}>
+                    <button 
+                      className="btn-secondary add-to-cart-btn" 
+                      disabled 
+                      style={{ 
+                        opacity: 0.5, 
+                        cursor: 'not-allowed', 
+                        width: '100%', 
+                        height: '36px', 
+                        fontSize: '13px', 
+                        margin: 0,
+                        padding: '0 12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
                       Sold Out
                     </button>
                   ) : (

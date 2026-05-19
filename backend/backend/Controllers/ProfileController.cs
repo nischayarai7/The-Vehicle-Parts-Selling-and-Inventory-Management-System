@@ -29,7 +29,7 @@ namespace backend.Controllers
         {
             var email = User.FindFirst(ClaimTypes.Email)?.Value;
             var user = await _context.Users
-                .Select(u => new { u.FullName, u.Email, u.AvatarUrl, u.CreatedAt })
+                .Select(u => new { u.FullName, u.Email, u.AvatarUrl, u.CreatedAt, u.PhoneNumber, u.Address })
                 .FirstOrDefaultAsync(u => u.Email == email);
 
             if (user == null) return NotFound(ApiResponse.Fail("User not found"));
@@ -50,8 +50,51 @@ namespace backend.Controllers
                 user.AvatarUrl = dto.AvatarUrl;
             }
 
+            // Validate and save phone number based on role
+            var isCustomer = User.IsInRole("Customer") || User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value == "Customer";
+
+            if (isCustomer)
+            {
+                if (string.IsNullOrWhiteSpace(dto.PhoneNumber))
+                {
+                    return BadRequest(ApiResponse.Fail("Phone number is required for customers."));
+                }
+                var digitsOnly = new string(dto.PhoneNumber.Where(char.IsDigit).ToArray());
+                if (digitsOnly.Length != 10)
+                    return BadRequest(ApiResponse.Fail("Phone number must be exactly 10 digits (Nepal local format, e.g. 98XXXXXXXX)."));
+                user.PhoneNumber = digitsOnly;
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(dto.PhoneNumber))
+                {
+                    user.PhoneNumber = null;
+                }
+                else
+                {
+                    var digitsOnly = new string(dto.PhoneNumber.Where(char.IsDigit).ToArray());
+                    if (digitsOnly.Length != 10)
+                        return BadRequest(ApiResponse.Fail("Phone number must be exactly 10 digits (Nepal local format, e.g. 98XXXXXXXX)."));
+                    user.PhoneNumber = digitsOnly;
+                }
+            }
+
+            // Validate and save address based on role
+            if (isCustomer)
+            {
+                if (string.IsNullOrWhiteSpace(dto.Address))
+                {
+                    return BadRequest(ApiResponse.Fail("Delivery address is required for customers."));
+                }
+                user.Address = dto.Address.Trim();
+            }
+            else
+            {
+                user.Address = string.IsNullOrWhiteSpace(dto.Address) ? null : dto.Address.Trim();
+            }
+
             await _context.SaveChangesAsync();
-            return Ok(ApiResponse<object>.Ok(new { user.FullName, user.AvatarUrl }, "Profile updated successfully"));
+            return Ok(ApiResponse<object>.Ok(new { user.FullName, user.AvatarUrl, user.PhoneNumber, user.Address }, "Profile updated successfully"));
         }
 
         [HttpPost("change-password")]

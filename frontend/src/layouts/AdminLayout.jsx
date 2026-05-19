@@ -2,14 +2,110 @@ import React from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
+import { api } from '../services/api';
 import './AdminLayout.css';
+
+const formatRelativeTime = (dateString) => {
+  if (!dateString) return 'Just now';
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  
+  if (isNaN(diffMs) || diffMs < 0) return 'Just now';
+  
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  const diffWeeks = Math.floor(diffDays / 7);
+  
+  if (diffSecs < 60) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffWeeks === 1) return '1 week ago';
+  return `${diffWeeks} weeks ago`;
+};
 
 const AdminLayout = () => {
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [panelData, setPanelData] = React.useState({
+    usersCount: 0,
+    ordersCount: 0,
+    partsCount: 0,
+    appointmentsCount: 0,
+    recentUser: 'New user registered',
+    recentPart: 'New products added',
+    contactsList: [],
+    lowStockAlerts: [],
+    recentOrders: []
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+
+  React.useEffect(() => {
+    const loadRightPanelData = async () => {
+      try {
+        const [usersRes, ordersRes, partsRes, appointmentsRes] = await Promise.all([
+          api.getUsers().catch(() => []),
+          api.getStaffOrders().catch(() => []),
+          api.getAllParts().catch(() => []),
+          api.getAllAppointments().catch(() => ({ data: [] }))
+        ]);
+
+        const users = Array.isArray(usersRes) ? usersRes : (usersRes?.data || []);
+        const orders = Array.isArray(ordersRes) ? ordersRes : (ordersRes?.data || []);
+        const parts = Array.isArray(partsRes) ? partsRes : (partsRes?.data || []);
+        const appointments = appointmentsRes?.data || (Array.isArray(appointmentsRes) ? appointmentsRes : []);
+
+        const sortedUsers = [...users].sort((a, b) => b.id - a.id);
+        const sortedParts = [...parts].sort((a, b) => b.id - a.id);
+        const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        const lowStock = parts.filter(p => p.stockQuantity < 10);
+
+        const recentUserText = sortedUsers.length > 0 
+          ? `${sortedUsers[0].fullName || 'New member'} registered`
+          : "New user registered";
+
+        const recentPartText = sortedParts.length > 0
+          ? `${sortedParts[0].name || 'New catalog item'} added`
+          : "New products added";
+
+        // Generate dynamic online contacts from database users
+        const otherUsers = users
+          .filter(u => u.id !== user?.id)
+          .slice(0, 3)
+          .map(u => ({
+            name: u.fullName || 'Auto Parts Partner',
+            initials: (u.fullName || 'AP').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2),
+            status: 'Online'
+          }));
+
+        setPanelData({
+          usersCount: users.length,
+          ordersCount: orders.length,
+          partsCount: parts.length,
+          appointmentsCount: appointments.length,
+          recentUser: recentUserText,
+          recentPart: recentPartText,
+          contactsList: otherUsers.length > 0 ? otherUsers : [
+            { name: "Daniel Craig", initials: "DC", status: "Online" },
+            { name: "Jessica Alba", initials: "JA", status: "Online" }
+          ],
+          lowStockAlerts: lowStock,
+          recentOrders: sortedOrders
+        });
+      } catch (err) {
+        console.error("Failed to load layout panel metadata:", err);
+      }
+    };
+
+    loadRightPanelData();
+  }, [user]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -161,48 +257,80 @@ const AdminLayout = () => {
       <aside className="admin-right-panel">
         <div className="right-panel-section">
           <h4>Notifications</h4>
-          <div className="notification-item">
-            <div className="dot"></div>
-            <div className="item-content">
-              <p>56 New users registered</p>
-              <span>Just now</span>
+          {/* Low Stock Alerts */}
+          {panelData.lowStockAlerts.length > 0 ? (
+            panelData.lowStockAlerts.slice(0, 2).map((p) => (
+              <div 
+                className="notification-item warning-alert clickable" 
+                key={`stock-${p.id}`}
+                onClick={() => {
+                  setSearchTerm(p.name);
+                  navigate('/admin/parts');
+                }}
+                style={{ cursor: 'pointer', background: 'rgba(227, 59, 59, 0.05)', padding: '8px 12px', borderRadius: '8px', borderLeft: '3px solid #ff4d4f', marginBottom: '8px' }}
+              >
+                <div className="item-content">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ff4d4f', marginBottom: '4px' }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px' }}>
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                      <line x1="12" y1="9" x2="12" y2="13"></line>
+                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <p style={{ fontWeight: '700', fontSize: '12px', margin: 0 }}>LOW STOCK ALERT</p>
+                  </div>
+                  <p style={{ margin: '2px 0 0 0', fontWeight: '500', fontSize: '13px' }}>{p.name}</p>
+                  <span style={{ color: '#ffa39e', fontSize: '11px' }}>Only {p.stockQuantity} left (Reorder: {p.reorderLevel})</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="notification-item" style={{ background: 'rgba(82, 196, 26, 0.05)', padding: '8px 12px', borderRadius: '8px', borderLeft: '3px solid #52c41a', marginBottom: '8px' }}>
+              <div className="item-content">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#52c41a', marginBottom: '4px' }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px' }}>
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                  <p style={{ fontWeight: '700', fontSize: '12px', margin: 0 }}>INVENTORY STABLE</p>
+                </div>
+                <span style={{ color: '#b7eb8f', fontSize: '11px' }}>All parts stock levels optimal</span>
+              </div>
             </div>
-          </div>
-          <div className="notification-item">
-            <div className="dot"></div>
-            <div className="item-content">
-              <p>132 Orders placed</p>
-              <span>59 minutes ago</span>
-            </div>
-          </div>
+          )}
         </div>
 
         <div className="right-panel-section">
           <h4>Recent Activity</h4>
-          <div className="activity-item">
+          <div className="activity-item clickable" onClick={() => navigate('/admin/users')} style={{ cursor: 'pointer', background: 'rgba(255, 255, 255, 0.02)', padding: '8px 12px', borderRadius: '8px', marginBottom: '8px' }}>
             <div className="item-content">
-              <p>Changed the style</p>
-              <span>Just now</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', color: 'var(--admin-accent)' }}>
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <p style={{ fontWeight: '600', fontSize: '13px', margin: 0 }}>User registered</p>
+              </div>
+              <p style={{ margin: '2px 0 0 0', color: 'var(--admin-text-muted)', fontSize: '12px' }}>{panelData.recentUser}</p>
+              <span style={{ fontSize: '10px' }}>Active member audit</span>
             </div>
           </div>
-          <div className="activity-item">
+          <div className="activity-item clickable" onClick={() => navigate('/admin/parts')} style={{ cursor: 'pointer', background: 'rgba(255, 255, 255, 0.02)', padding: '8px 12px', borderRadius: '8px' }}>
             <div className="item-content">
-              <p>177 New products added</p>
-              <span>47 minutes ago</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '14px', height: '14px', color: 'var(--admin-accent)' }}>
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+                <p style={{ fontWeight: '600', fontSize: '13px', margin: 0 }}>Catalog expanded</p>
+              </div>
+              <p style={{ margin: '2px 0 0 0', color: 'var(--admin-text-muted)', fontSize: '12px' }}>{panelData.recentPart}</p>
+              <span style={{ fontSize: '10px' }}>Inventory catalog check</span>
             </div>
           </div>
         </div>
 
-        <div className="right-panel-section">
-          <h4>Contacts</h4>
-          <div className="activity-item">
-            <div className="profile-avatar" style={{ width: '24px', height: '24px', fontSize: '10px' }}>DC</div>
-            <div className="item-content">
-              <p>Daniel Craig</p>
-              <span>Online</span>
-            </div>
-          </div>
-        </div>
+
       </aside>
     </div>
   );

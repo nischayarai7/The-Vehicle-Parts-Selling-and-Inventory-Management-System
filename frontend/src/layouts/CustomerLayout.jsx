@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/slices/authSlice';
+import { api } from '../services/api';
 import './AdminLayout.css'; // Reusing admin layout styles for consistency
 
 const OPERATIONS_NAV = [
@@ -94,6 +95,95 @@ const CustomerLayout = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
+  const [totalSpent, setTotalSpent] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      api.getMyOrders()
+        .then((orders) => {
+          const list = Array.isArray(orders) ? orders : (orders?.data || []);
+          const validOrders = list.filter(o => o.status !== 'Cancelled');
+          const spent = validOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+          setTotalSpent(spent);
+        })
+        .catch((err) => {
+          console.error("Failed to load customer orders for tag estimation:", err);
+        });
+    }
+  }, [user]);
+
+  const getCustomerTag = (spent) => {
+    if (spent === 0) {
+      return { 
+        name: "Tire Kicker", 
+        color: "#8b949e",
+        icon: (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="4"/>
+          </svg>
+        )
+      };
+    }
+    if (spent < 10000) {
+      return { 
+        name: "Daily Driver", 
+        color: "#58a6ff",
+        icon: (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+            <circle cx="7" cy="17" r="2"/>
+            <circle cx="17" cy="17" r="2"/>
+          </svg>
+        )
+      };
+    }
+    if (spent < 50000) {
+      return { 
+        name: "Gearhead", 
+        color: "#34d058",
+        icon: (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        )
+      };
+    }
+    if (spent < 120000) {
+      return { 
+        name: "Turbo Charger", 
+        color: "#ff9f1c",
+        icon: (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+            <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"/>
+          </svg>
+        )
+      };
+    }
+    if (spent < 250000) {
+      return { 
+        name: "Drift King", 
+        color: "#ff4d4f",
+        icon: (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+        )
+      };
+    }
+    return { 
+      name: "Garage Emperor", 
+      color: "#d4af37",
+      icon: (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+          <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14a1 1 0 0 0 1-1v-1H4v1a1 1 0 0 0 1 1z"/>
+        </svg>
+      )
+    };
+  };
+
+  const tag = getCustomerTag(totalSpent);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -118,7 +208,21 @@ const CustomerLayout = () => {
           </div>
           <div className="profile-info">
             <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{user?.fullName || 'Customer'}</div>
-            <div style={{ fontSize: '11px', color: 'var(--admin-text-muted)' }}>Premium Member</div>
+            <div style={{ 
+              fontSize: '10px', 
+              fontWeight: '700', 
+              color: tag.color,
+              marginTop: '4px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              background: 'rgba(255, 255, 255, 0.04)',
+              padding: '2px 8px',
+              borderRadius: '12px'
+            }}>
+              {tag.icon} {tag.name}
+            </div>
           </div>
         </div>
 

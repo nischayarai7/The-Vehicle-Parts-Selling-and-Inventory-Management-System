@@ -124,7 +124,7 @@
   border-left: 4px solid #f0883e;
 }
 
-.status-pill {
+.review-audit-card .status-pill {
   position: absolute;
   top: 1rem;
   right: 1rem;
@@ -136,13 +136,13 @@
   letter-spacing: 0.3px;
 }
 
-.status-pill.live {
+.review-audit-card .status-pill.live {
   background: rgba(46, 160, 67, 0.1);
   color: #3fb950;
   border: 1px solid rgba(46, 160, 67, 0.25);
 }
 
-.status-pill.moderating {
+.review-audit-card .status-pill.moderating {
   background: rgba(240, 136, 62, 0.1);
   color: #f0883e;
   border: 1px solid rgba(240, 136, 62, 0.25);

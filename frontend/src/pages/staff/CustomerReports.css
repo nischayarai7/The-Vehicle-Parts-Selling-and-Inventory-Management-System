@@ -605,7 +605,7 @@
 }
 
 /* Professional PDF Button style */
-.professional-pdf-btn {
+.reports-top-controls .professional-pdf-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -623,7 +623,7 @@
   font-family: inherit;
 }
 
-.professional-pdf-btn:hover {
+.reports-top-controls .professional-pdf-btn:hover {
   background: var(--admin-primary, #e04f5f);
   color: white;
   border-color: var(--admin-primary, #e04f5f);
@@ -631,7 +631,7 @@
   box-shadow: 0 6px 20px rgba(224, 79, 95, 0.35);
 }
 
-.professional-pdf-btn:active {
+.reports-top-controls .professional-pdf-btn:active {
   transform: translateY(0);
 }
 
@@ -642,7 +642,7 @@
   transition: transform 0.25s ease;
 }
 
-.professional-pdf-btn:hover .pdf-btn-icon {
+.reports-top-controls .professional-pdf-btn:hover .pdf-btn-icon {
   transform: rotate(-10deg) scale(1.1);
 }
 

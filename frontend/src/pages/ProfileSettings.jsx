@@ -10,13 +10,15 @@ const ProfileSettings = () => {
   const dispatch = useDispatch();
   
   const [activeTab, setActiveTab] = useState('profile');
-  const [profileData, setProfileData] = useState({ fullName: '', avatarUrl: '' });
+  const [profileData, setProfileData] = useState({ fullName: '', avatarUrl: '', phoneNumber: '', address: '' });
+  const [initialProfileData, setInitialProfileData] = useState({ fullName: '', avatarUrl: '', phoneNumber: '', address: '' });
   const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [phoneError, setPhoneError] = useState('');
 
   // System wallpaper management (Admin only)
   const [wallpaperUrl, setWallpaperUrl] = useState(null);
@@ -91,9 +93,25 @@ const ProfileSettings = () => {
 
   useEffect(() => {
     if (user) {
-      setProfileData({
-        fullName: user.fullName || '',
-        avatarUrl: user.avatarUrl || ''
+      // Load saved profile from API to get latest phone/address
+      api.getProfile().then((data) => {
+        const loaded = {
+          fullName: data.fullName || user.fullName || '',
+          avatarUrl: data.avatarUrl || user.avatarUrl || '',
+          phoneNumber: data.phoneNumber || user.phoneNumber || '',
+          address: data.address || user.address || ''
+        };
+        setProfileData(loaded);
+        setInitialProfileData(loaded);
+      }).catch(() => {
+        const loaded = {
+          fullName: user.fullName || '',
+          avatarUrl: user.avatarUrl || '',
+          phoneNumber: user.phoneNumber || '',
+          address: user.address || ''
+        };
+        setProfileData(loaded);
+        setInitialProfileData(loaded);
       });
     }
   }, [user]);
@@ -107,8 +125,34 @@ const ProfileSettings = () => {
     }, 5000);
   };
 
+  const handlePhoneChange = (e) => {
+    const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setProfileData({ ...profileData, phoneNumber: val });
+    if (val.length > 0 && val.length < 10) {
+      setPhoneError('Phone number must be exactly 10 digits.');
+    } else {
+      setPhoneError('');
+    }
+  };
+
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
+    const isCustomer = user?.role === 'Customer';
+    if (isCustomer) {
+      if (!profileData.phoneNumber || profileData.phoneNumber.replace(/\D/g, '').length !== 10) {
+        showMessage('error', 'Phone number is required and must be exactly 10 digits.');
+        return;
+      }
+      if (!profileData.address || !profileData.address.trim()) {
+        showMessage('error', 'Delivery location is required.');
+        return;
+      }
+    } else {
+      if (profileData.phoneNumber && profileData.phoneNumber.replace(/\D/g, '').length !== 10) {
+        showMessage('error', 'Phone number must be exactly 10 digits if provided.');
+        return;
+      }
+    }
     setLoading(true);
     try {
       let finalAvatarUrl = profileData.avatarUrl;
@@ -122,9 +166,32 @@ const ProfileSettings = () => {
       }
       const response = await api.updateProfile({
         fullName: profileData.fullName,
-        avatarUrl: finalAvatarUrl
+        avatarUrl: finalAvatarUrl,
+        phoneNumber: profileData.phoneNumber || null,
+        address: profileData.address || null
       });
+      // Update localStorage so checkout can auto-fill address immediately
+      const currentUser = api.getUser();
+      if (currentUser) {
+        localStorage.setItem('user', JSON.stringify({
+          ...currentUser,
+          phoneNumber: response.phoneNumber || profileData.phoneNumber || null,
+          address: response.address || profileData.address || null
+        }));
+      }
       dispatch(updateUser(response));
+
+      const savedData = {
+        fullName: response.fullName || profileData.fullName,
+        avatarUrl: response.avatarUrl || finalAvatarUrl,
+        phoneNumber: response.phoneNumber || profileData.phoneNumber || '',
+        address: response.address || profileData.address || ''
+      };
+      setProfileData(savedData);
+      setInitialProfileData(savedData);
+      setSelectedFile(null);
+      setPreviewUrl(null);
+
       showMessage('success', 'Profile updated successfully!');
     } catch (err) {
       showMessage('error', err.message || 'Failed to save changes');
@@ -184,6 +251,13 @@ const ProfileSettings = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
   };
+
+  const hasProfileChanges = 
+    profileData.fullName !== initialProfileData.fullName ||
+    profileData.phoneNumber !== initialProfileData.phoneNumber ||
+    profileData.address !== initialProfileData.address ||
+    profileData.avatarUrl !== initialProfileData.avatarUrl ||
+    selectedFile !== null;
 
   return (
     <div className="settings-container">
@@ -274,6 +348,46 @@ const ProfileSettings = () => {
                 <span className="input-hint">Email cannot be changed.</span>
               </div>
 
+              {/* Phone + Address in a compact 2-col grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 15.1 19.79 19.79 0 0 1 1.61 6.53 2 2 0 0 1 3.59 4h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 11.61a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.5 19v-.08z"/></svg>
+                    Phone Number {user?.role === 'Customer' && <span style={{ color: '#ff4d4f', marginLeft: '2px' }}>*</span>}
+                  </label>
+                  <div className="phone-input-wrapper">
+                    <span className="phone-prefix">+977</span>
+                    <input
+                      type="tel"
+                      placeholder="98XXXXXXXX"
+                      value={profileData.phoneNumber}
+                      onChange={handlePhoneChange}
+                      maxLength={10}
+                      required={user?.role === 'Customer'}
+                    />
+                  </div>
+                  {phoneError
+                    ? <span className="input-hint" style={{ color: '#ff4d4f', marginTop: '4px', display: 'block' }}>{phoneError}</span>
+                    : <span className="input-hint" style={{ marginTop: '4px', display: 'block' }}>10-digit Nepal number, e.g. 9812345678</span>
+                  }
+                </div>
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Delivery Location {user?.role === 'Customer' && <span style={{ color: '#ff4d4f', marginLeft: '2px' }}>*</span>}
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Street, City, Landmark..."
+                    value={profileData.address}
+                    onChange={(e) => setProfileData({...profileData, address: e.target.value})}
+                    required={user?.role === 'Customer'}
+                  />
+                  <span className="input-hint" style={{ marginTop: '4px', display: 'block' }}>Auto-fills your checkout address</span>
+                </div>
+              </div>
+
               {selectedFile && (
                 <div className="settings-message warning" style={{ marginBottom: '15px', background: 'rgba(250, 173, 20, 0.1)', color: '#faad14', border: '1px solid rgba(250, 173, 20, 0.2)' }}>
                   Save Changes will automatically upload and apply your new avatar.
@@ -283,7 +397,7 @@ const ProfileSettings = () => {
               <button 
                 type="submit" 
                 className="btn-primary" 
-                disabled={loading || uploading}
+                disabled={loading || uploading || !hasProfileChanges}
               >
                 {loading || uploading ? 'Saving...' : 'Save Changes'}
               </button>

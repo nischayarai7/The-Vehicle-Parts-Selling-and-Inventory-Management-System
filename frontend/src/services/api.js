@@ -453,8 +453,10 @@ export const api = {
     localStorage.setItem('user', JSON.stringify({ 
       email: data.email, 
       fullName: data.fullName,
-      role: data.role, // Save the role
-      avatarUrl: data.avatarUrl // Save the avatarUrl
+      role: data.role,
+      avatarUrl: data.avatarUrl,
+      phoneNumber: data.phoneNumber || null,
+      address: data.address || null
     }));
   },
 

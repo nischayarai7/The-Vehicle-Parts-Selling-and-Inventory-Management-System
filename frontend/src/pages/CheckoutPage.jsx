@@ -11,7 +11,7 @@ function CheckoutPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useSelector((state) => state.auth);
-  const { cart, cartSubtotal, discountApplied, cartTotal, loyaltyThreshold, loyaltyRate, clearCart, showToast } = useCart();
+  const { cart, cartSubtotal, discountApplied, cartTotal, loyaltyThreshold, loyaltyRate, updateQuantity, clearCart, showToast } = useCart();
 
   const partIdParam = searchParams.get('partId');
   const quantityParam = parseInt(searchParams.get('quantity') || '1', 10);
@@ -23,7 +23,11 @@ function CheckoutPage() {
   const [successOrder, setSuccessOrder] = useState(null);
 
   // Form fields
-  const [shippingAddress, setShippingAddress] = useState('');
+  const [shippingAddress, setShippingAddress] = useState(() => {
+    // Pre-fill from user's saved profile address
+    const savedUser = api.getUser();
+    return savedUser?.address || '';
+  });
   const [notes, setNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Online'); // Default to Paynow (Online)
 
@@ -101,6 +105,30 @@ function CheckoutPage() {
     : discountApplied;
 
   const total = subtotal - discount;
+
+  const handleUpdateQuantity = (itemId, newQty) => {
+    if (partIdParam) {
+      // Direct Buy - update local checkoutItems state
+      const item = checkoutItems[0];
+      if (!item) return;
+      if (newQty <= 0) {
+        showToast('Quantity cannot be less than 1 for direct buy.', 'warning');
+        return;
+      }
+      if (newQty > item.stockQuantity) {
+        showToast(`Cannot exceed warehouse stock of ${item.stockQuantity} units.`, 'error');
+        return;
+      }
+      setCheckoutItems([{ ...item, quantity: newQty }]);
+      // Update URL query string to keep quantity synced
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('quantity', newQty.toString());
+      navigate(`/checkout?${newParams.toString()}`, { replace: true });
+    } else {
+      // Cart Checkout - update via cart context
+      updateQuantity(itemId, newQty);
+    }
+  };
 
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
@@ -369,6 +397,11 @@ function CheckoutPage() {
                 onChange={(e) => setShippingAddress(e.target.value)}
                 required
               />
+              {shippingAddress && (
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                  📍 Pre-filled from your profile. <a href="/customer/settings" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>Update in Settings</a> to change default.
+                </span>
+              )}
             </div>
 
             <div className="form-group">
@@ -445,20 +478,68 @@ function CheckoutPage() {
           <h3>Order Summary</h3>
           <div className="items-list-container">
             {checkoutItems.map((item) => (
-              <div key={item.id} className="summary-item-row">
+              <div key={item.id} className="summary-item-row" style={{ alignItems: 'center' }}>
                 <div className="item-thumbnail">
                   <img 
                     src={item.imageUrl || `https://ui-avatars.com/api/?name=${item.name}&background=fff&color=e33b3b&size=100`} 
                     alt={item.name}
                     onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${item.name}&background=fff&color=e33b3b&size=100` }}
                   />
-                  <span className="item-qty-badge">{item.quantity}</span>
                 </div>
-                <div className="item-details">
+                <div className="item-details" style={{ flex: 1 }}>
                   <span className="item-name">{item.name}</span>
-                  <span className="item-cat">{item.categoryName || 'Auto Component'}</span>
+                  <span className="item-cat" style={{ marginBottom: '8px' }}>{item.categoryName || 'Auto Component'}</span>
+                  
+                  {/* Inline Quantity Controls */}
+                  <div className="checkout-qty-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                    <button 
+                      type="button"
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                      style={{ 
+                        width: '24px', 
+                        height: '24px', 
+                        borderRadius: '4px', 
+                        border: '1px solid #cbd5e1', 
+                        background: '#f8fafc', 
+                        color: '#475569', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        padding: 0
+                      }}
+                    >
+                      -
+                    </button>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', minWidth: '18px', textAlign: 'center' }}>
+                      {item.quantity}
+                    </span>
+                    <button 
+                      type="button"
+                      onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                      style={{ 
+                        width: '24px', 
+                        height: '24px', 
+                        borderRadius: '4px', 
+                        border: '1px solid #cbd5e1', 
+                        background: '#f8fafc', 
+                        color: '#475569', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        padding: 0
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
-                <span className="item-price">{formatCurrency(item.price * item.quantity)}</span>
+                <span className="item-price" style={{ alignSelf: 'center' }}>{formatCurrency(item.price * item.quantity)}</span>
               </div>
             ))}
           </div>

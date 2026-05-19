@@ -148,7 +148,22 @@ const ProductGrid = () => {
                 })()}
                 <div className="product-price">Rs. {part.price.toFixed(2)}</div>
                 {part.stockQuantity <= 0 ? (
-                  <button className="add-to-cart-btn disabled" disabled style={{ opacity: 0.5, cursor: 'not-allowed', width: '100%' }}>
+                  <button 
+                    className="add-to-cart-btn disabled" 
+                    disabled 
+                    style={{ 
+                      opacity: 0.5, 
+                      cursor: 'not-allowed', 
+                      width: '100%', 
+                      height: '36px', 
+                      fontSize: '13px', 
+                      padding: '0 12px', 
+                      margin: '10px 0 0 0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
                     Sold Out
                   </button>
                 ) : (
@@ -164,19 +179,6 @@ const ProductGrid = () => {
                       className="btn-add-to-cart-icon-small" 
                       onClick={() => { addToCart(part); if (showToast) showToast(`${part.name} added!`, 'success'); }}
                       title="Add to cart"
-                      style={{ 
-                        width: '36px', 
-                        height: '36px', 
-                        borderRadius: '6px', 
-                        border: '1px solid #e33b3b', 
-                        background: 'transparent', 
-                        color: '#e33b3b', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        cursor: 'pointer',
-                        padding: 0
-                      }}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                         <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>

@@ -15,6 +15,7 @@
   margin: 0 0 0.5rem 0;
   background: linear-gradient(135deg, #fff 0%, #a5a5a5 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -595,7 +596,7 @@
 }
 
 /* Professional PDF Button style - Premium Green Theme matching Customer Reports UI */
-.professional-pdf-btn {
+.customer-orders-container .professional-pdf-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -613,7 +614,7 @@
   font-family: inherit;
 }
 
-.professional-pdf-btn:hover {
+.customer-orders-container .professional-pdf-btn:hover {
   background: #2ecc71;
   color: white;
   border-color: #2ecc71;
@@ -621,7 +622,7 @@
   box-shadow: 0 6px 20px rgba(46, 204, 113, 0.35);
 }
 
-.professional-pdf-btn:active {
+.customer-orders-container .professional-pdf-btn:active {
   transform: translateY(0);
 }
 
@@ -632,6 +633,6 @@
   transition: transform 0.25s ease;
 }
 
-.professional-pdf-btn:hover .pdf-btn-icon {
+.customer-orders-container .professional-pdf-btn:hover .pdf-btn-icon {
   transform: rotate(-10deg) scale(1.1);
 }

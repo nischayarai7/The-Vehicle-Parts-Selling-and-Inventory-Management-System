@@ -45,7 +45,7 @@
   gap: 4px;
 }
 
-.tab-btn {
+.settings-tabs .tab-btn {
   padding: 16px 20px;
   border: none;
   background: none;
@@ -60,17 +60,17 @@
   gap: 8px;
 }
 
-.tab-btn:hover {
+.settings-tabs .tab-btn:hover {
   color: #fff;
   background: rgba(255, 255, 255, 0.03);
 }
 
-.tab-btn.active {
+.settings-tabs .tab-btn.active {
   color: #fff;
   background: rgba(255, 255, 255, 0.05);
 }
 
-.tab-btn.active::after {
+.settings-tabs .tab-btn.active::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -106,8 +106,8 @@
 
 .settings-form input,
 .settings-form select {
-  background: #0d1117;
-  border: 1px solid var(--admin-border, #30363d);
+  background: #21262d;
+  border: 1px solid #5b6672;
   color: #fff;
   padding: 10px 14px;
   border-radius: 8px;
@@ -376,4 +376,57 @@
     flex-direction: column;
     text-align: center;
   }
+}
+
+/* Phone Number Input Wrapper - matches standard settings-form input visually */
+.phone-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #21262d;
+  border: 1px solid #5b6672;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.phone-input-wrapper:focus-within {
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.03);
+}
+
+.phone-input-wrapper .phone-prefix {
+  padding: 10px 12px;
+  border-right: 1px solid #5b6672;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--admin-text-muted, #8b949e);
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.phone-input-wrapper input[type='tel'] {
+  flex: 1;
+  min-width: 0;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  color: #fff;
+  font-size: 13.5px;
+  padding: 10px 14px;
+}
+
+.phone-input-wrapper input[type='tel']:focus {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Dimmed placeholders to reduce exposure */
+.settings-form input::placeholder,
+.phone-input-wrapper input::placeholder {
+  color: #6e7681 !important;
+  opacity: 1 !important;
 }

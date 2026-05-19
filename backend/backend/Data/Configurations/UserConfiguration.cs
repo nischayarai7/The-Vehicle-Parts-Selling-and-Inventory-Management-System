@@ -35,6 +35,10 @@ namespace backend.Data.Configurations
                 .HasColumnName("phone_number")
                 .HasMaxLength(20);
 
+            builder.Property(u => u.Address)
+                .HasColumnName("address")
+                .HasMaxLength(500);
+
             // Unique index on email for fast lookup + constraint enforcement
             builder.HasIndex(u => u.Email)
                 .IsUnique()
