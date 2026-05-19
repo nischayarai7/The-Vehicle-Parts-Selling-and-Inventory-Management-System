@@ -348,3 +348,128 @@
   padding: 100px 0;
   color: var(--admin-text-muted);
 }
+
+
+/* Spending Insights Section */
+.spending-insights-section {
+  background: var(--admin-card);
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.spending-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.spending-card {
+  background: #161b22;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.spending-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.20);
+}
+
+.spending-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.spending-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--admin-border);
+}
+
+.spending-icon-wrapper svg {
+  width: 18px;
+  height: 18px;
+}
+
+.spending-icon-wrapper.month-spent {
+  background: rgba(56, 139, 253, 0.1);
+  color: #58a6ff;
+}
+
+.spending-icon-wrapper.recent-spent {
+  background: rgba(210, 153, 34, 0.1);
+  color: #d29922;
+}
+
+.spending-icon-wrapper.avg-spent {
+  background: rgba(46, 160, 67, 0.1);
+  color: #3fb950;
+}
+
+.spending-icon-wrapper.recent-item {
+  background: rgba(188, 143, 143, 0.15);
+  color: #ff7b72;
+}
+
+.spending-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+}
+
+.spending-card-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.spending-card-subtext {
+  margin: 0;
+  font-size: 11px;
+  color: var(--admin-text-muted);
+}
+
+.spending-item-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.spending-item-thumbnail {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: #0d1117;
+  border: 1px solid var(--admin-border);
+}
+
+.spending-item-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.spending-item-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

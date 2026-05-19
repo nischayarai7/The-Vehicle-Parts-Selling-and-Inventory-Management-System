@@ -16,6 +16,18 @@ const PartsManager = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [localPreview, setLocalPreview] = useState(null);
   const [selectedImageFile, setSelectedImageFile] = useState(null);
+
+  // Advanced Filters State
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [filterCategory, setFilterCategory] = useState('');
+  const [filterBrand, setFilterBrand] = useState('');
+  const [filterCondition, setFilterCondition] = useState('');
+  const [filterStockStatus, setFilterStockStatus] = useState('');
+  const [filterMinPrice, setFilterMinPrice] = useState('');
+  const [filterMaxPrice, setFilterMaxPrice] = useState('');
+  const [localSearch, setLocalSearch] = useState('');
+  const [sortOption, setSortOption] = useState('recent');
+  const [refreshing, setRefreshing] = useState(false);
   
   const [formData, setFormData] = useState({
     partNumber: '',
@@ -48,6 +60,24 @@ const PartsManager = () => {
       showNotification('Failed to load parts data', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const [partsData, categoriesData] = await Promise.all([
+        api.getAllParts(),
+        api.getCategories()
+      ]);
+      setParts(partsData);
+      setCategories(categoriesData.filter(c => c.isActive));
+      showNotification('Inventory refreshed successfully');
+    } catch (error) {
+      console.error('Error refreshing parts:', error);
+      showNotification('Failed to refresh inventory', 'error');
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -163,14 +193,47 @@ const PartsManager = () => {
     setSelectedImageFile(null);
   };
 
+  // Get unique brands dynamically
+  const uniqueBrands = Array.from(
+    new Set(parts.map(p => p.brand).filter(Boolean))
+  ).sort();
+
   const filteredParts = parts.filter(p => {
-    const search = searchTerm.toLowerCase();
-    return (
+    const search = (localSearch || searchTerm).toLowerCase();
+    const matchesSearch = !search || (
       p.name?.toLowerCase().includes(search) ||
       p.partNumber?.toLowerCase().includes(search) ||
       p.categoryName?.toLowerCase().includes(search) ||
       p.brand?.toLowerCase().includes(search)
     );
+
+    const matchesCategory = !filterCategory || p.categoryId === parseInt(filterCategory);
+    const matchesBrand = !filterBrand || p.brand?.toLowerCase() === filterBrand.toLowerCase();
+    const matchesCondition = !filterCondition || p.condition === filterCondition;
+
+    let matchesStock = true;
+    if (filterStockStatus === 'in') {
+      matchesStock = p.stockQuantity > p.reorderLevel;
+    } else if (filterStockStatus === 'low') {
+      matchesStock = p.stockQuantity <= p.reorderLevel && p.stockQuantity > 0;
+    } else if (filterStockStatus === 'out') {
+      matchesStock = p.stockQuantity === 0;
+    }
+
+    const minP = parseFloat(filterMinPrice);
+    const maxP = parseFloat(filterMaxPrice);
+    const matchesMinPrice = isNaN(minP) || p.price >= minP;
+    const matchesMaxPrice = isNaN(maxP) || p.price <= maxP;
+
+    return matchesSearch && matchesCategory && matchesBrand && matchesCondition && matchesStock && matchesMinPrice && matchesMaxPrice;
+  });
+
+  const sortedParts = [...filteredParts].sort((a, b) => {
+    if (sortOption === 'price_asc') return a.price - b.price;
+    if (sortOption === 'price_desc') return b.price - a.price;
+    if (sortOption === 'stock_asc') return a.stockQuantity - b.stockQuantity;
+    if (sortOption === 'stock_desc') return b.stockQuantity - a.stockQuantity;
+    return b.id - a.id; // recent
   });
 
   // Pagination Logic
@@ -179,12 +242,23 @@ const PartsManager = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, localSearch, filterCategory, filterBrand, filterCondition, filterStockStatus, filterMinPrice, filterMaxPrice, sortOption]);
+
+  const resetFilters = () => {
+    setFilterCategory('');
+    setFilterBrand('');
+    setFilterCondition('');
+    setFilterStockStatus('');
+    setFilterMinPrice('');
+    setFilterMaxPrice('');
+    setLocalSearch('');
+    setSortOption('recent');
+  };
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentParts = filteredParts.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredParts.length / itemsPerPage);
+  const currentParts = sortedParts.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(sortedParts.length / itemsPerPage);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -248,10 +322,145 @@ const PartsManager = () => {
           <h2>Parts Inventory</h2>
           <p className="subtitle">Manage vehicle components, pricing and stock levels.</p>
         </div>
-        <button className="btn-add-part" onClick={() => { resetForm(); setShowModal(true); }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          Add New Part
-        </button>
+        <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
+          <button 
+            className="btn-refresh-inventory" 
+            onClick={handleRefresh} 
+            disabled={refreshing}
+            title="Refresh Inventory Data"
+          >
+            <svg 
+              width="20" 
+              height="20" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Refresh
+          </button>
+          <button className="btn-add-part" onClick={() => { resetForm(); setShowModal(true); }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add New Part
+          </button>
+        </div>
+      </div>
+
+      {/* Search & Filters Controls */}
+      <div className="inventory-filters-container">
+        <div className="filters-primary-row">
+          <div className="search-box-wrapper">
+            <svg className="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input
+              type="text"
+              placeholder="Search by part name, SKU, category or brand..."
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              className="local-search-input"
+            />
+          </div>
+          
+          <button 
+            type="button" 
+            className={`btn-toggle-advanced ${showAdvanced ? 'active' : ''}`}
+            onClick={() => setShowAdvanced(!showAdvanced)}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+            {showAdvanced ? 'Hide Filters' : 'Advanced Filters'}
+          </button>
+
+          {(filterCategory || filterBrand || filterCondition || filterStockStatus || filterMinPrice || filterMaxPrice || localSearch || sortOption !== 'recent') && (
+            <button type="button" className="btn-reset-filters" onClick={resetFilters}>
+              Reset Filters
+            </button>
+          )}
+        </div>
+
+        {showAdvanced && (
+          <div className="advanced-filters-panel">
+            <div className="filters-grid-row">
+              <div className="filter-item">
+                <label>Category</label>
+                <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
+                  <option value="">All Categories</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="filter-item">
+                <label>Brand</label>
+                <select value={filterBrand} onChange={(e) => setFilterBrand(e.target.value)}>
+                  <option value="">All Brands</option>
+                  {uniqueBrands.map(brand => (
+                    <option key={brand} value={brand}>{brand}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="filter-item">
+                <label>Condition</label>
+                <select value={filterCondition} onChange={(e) => setFilterCondition(e.target.value)}>
+                  <option value="">All Conditions</option>
+                  <option value="New">New</option>
+                  <option value="Used">Used</option>
+                  <option value="Refurbished">Refurbished</option>
+                </select>
+              </div>
+
+              <div className="filter-item">
+                <label>Stock Status</label>
+                <select value={filterStockStatus} onChange={(e) => setFilterStockStatus(e.target.value)}>
+                  <option value="">All Statuses</option>
+                  <option value="in">In Stock (Normal)</option>
+                  <option value="low">Low Stock</option>
+                  <option value="out">Out of Stock</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="filters-grid-row second-row">
+              <div className="filter-item price-range-group">
+                <label>Price Range (Rs.)</label>
+                <div className="price-inputs">
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={filterMinPrice}
+                    onChange={(e) => setFilterMinPrice(e.target.value)}
+                    min="0"
+                  />
+                  <span>to</span>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={filterMaxPrice}
+                    onChange={(e) => setFilterMaxPrice(e.target.value)}
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <div className="filter-item">
+                <label>Sort By</label>
+                <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+                  <option value="recent">Recently Added</option>
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                  <option value="stock_asc">Stock: Low to High</option>
+                  <option value="stock_desc">Stock: High to Low</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="parts-grid">
@@ -308,7 +517,7 @@ const PartsManager = () => {
           </div>
         ))}
 
-        {filteredParts.length === 0 && (
+        {sortedParts.length === 0 && (
           <div className="no-results-full">
             <p>No parts match your search or filters.</p>
           </div>
@@ -316,10 +525,10 @@ const PartsManager = () => {
       </div>
 
       {/* Pagination Controls */}
-      {filteredParts.length > 0 && totalPages > 1 && (
+      {sortedParts.length > 0 && totalPages > 1 && (
         <div className="pagination-container">
           <div className="pagination-info">
-            Showing <span>{indexOfFirstItem + 1}</span> to <span>{Math.min(indexOfLastItem, filteredParts.length)}</span> of <span>{filteredParts.length}</span> parts
+            Showing <span>{indexOfFirstItem + 1}</span> to <span>{Math.min(indexOfLastItem, sortedParts.length)}</span> of <span>{sortedParts.length}</span> parts
           </div>
           <div className="pagination-controls">
             <button 

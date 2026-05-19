@@ -4,29 +4,7 @@ import { useSelector } from 'react-redux';
 import { api } from '../../services/api';
 import './CustomerDashboard.css';
 
-const DASHBOARD_OPERATIONS = [
-  {
-    icon: <svg style={{ width: '22px', height: '22px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-    title: "Book Appointment",
-    description: "Schedule a service or repair appointment with our expert mechanics.",
-    to: "/customer/appointments",
-    btnText: "Book Now ➔"
-  },
-  {
-    icon: <svg style={{ width: '22px', height: '22px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>,
-    title: "Request Part",
-    description: "Can't find a part? Request it here and we will source it for you.",
-    to: "/customer/part-requests",
-    btnText: "Request Part ➔"
-  },
-  {
-    icon: <svg style={{ width: '22px', height: '22px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>,
-    title: "Review Services",
-    description: "Rate your experience and help us improve our services.",
-    to: "/customer/reviews",
-    btnText: "Leave Review ➔"
-  }
-];
+
 
 const CustomerDashboard = () => {
   const { user } = useSelector((state) => state.auth);
@@ -35,6 +13,14 @@ const CustomerDashboard = () => {
     activeAppointments: 0,
     pendingRequests: 0,
     totalOrders: 0
+  });
+
+  const [spendingStats, setSpendingStats] = useState({
+    totalSpentLastMonth: 0,
+    recentSpent: 0,
+    recentItemName: '',
+    recentItemImage: null,
+    averageOrderValue: 0
   });
   
   const [recentAppointments, setRecentAppointments] = useState([]);
@@ -72,6 +58,52 @@ const CustomerDashboard = () => {
       });
 
       setMyVehicles(vehiclesRes || []);
+
+      // Calculate spending statistics dynamically
+      const now = new Date();
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(now.getMonth() - 1);
+
+      const validOrders = orders.filter(o => o.status !== 'Cancelled');
+
+      const totalSpentLastMonth = validOrders
+        .filter(o => new Date(o.createdAt) >= oneMonthAgo)
+        .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+      const totalSpentAllTime = validOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+      const averageOrderValue = validOrders.length > 0
+        ? totalSpentAllTime / validOrders.length
+        : 0;
+
+      let recentSpent = 0;
+      let recentItemName = 'No items purchased';
+      let recentItemImage = null;
+
+      // Find the most recent order to fetch item details
+      const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      if (sortedOrders.length > 0) {
+        const latestOrder = sortedOrders[0];
+        recentSpent = latestOrder.totalAmount || 0;
+
+        try {
+          // Fetch detailed information of the latest order to get part names/images
+          const details = await api.getCustomerOrderDetails(latestOrder.id);
+          if (details && details.items && details.items.length > 0) {
+            recentItemName = details.items[0].partName || 'Unknown Component';
+            recentItemImage = details.items[0].partImage || null;
+          }
+        } catch (err) {
+          console.error('Failed to load recent order details:', err);
+        }
+      }
+
+      setSpendingStats({
+        totalSpentLastMonth,
+        recentSpent,
+        recentItemName,
+        recentItemImage,
+        averageOrderValue
+      });
 
       // Get latest 5 recent appointments
       const sortedAppointments = [...appointments]
@@ -149,18 +181,62 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
-      {/* Grid Menu Navigation */}
-      <div className="operation-menu-grid">
-        {DASHBOARD_OPERATIONS.map((op, idx) => (
-          <div key={idx} className="operation-nav-card">
-            <div className="card-top-icon">
-              {op.icon}
+      {/* Spending Insights Section */}
+      <div className="spending-insights-section" style={{ marginBottom: '24px' }}>
+        <h3 className="section-title">Spending Insights & Analytics</h3>
+        <div className="spending-grid">
+          <div className="spending-card">
+            <div className="spending-card-header">
+              <div className="spending-icon-wrapper month-spent">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+              <span className="spending-card-title">Spent (Last 30 Days)</span>
             </div>
-            <h3>{op.title}</h3>
-            <p>{op.description}</p>
-            <Link to={op.to} className="btn-card-launch">{op.btnText}</Link>
+            <div className="spending-card-value">${spendingStats.totalSpentLastMonth.toFixed(2)}</div>
+            <p className="spending-card-subtext">Sum of completed storefront orders</p>
           </div>
-        ))}
+
+          <div className="spending-card">
+            <div className="spending-card-header">
+              <div className="spending-icon-wrapper recent-spent">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
+              <span className="spending-card-title">Recent Order Amount</span>
+            </div>
+            <div className="spending-card-value">${spendingStats.recentSpent.toFixed(2)}</div>
+            <p className="spending-card-subtext">Amount of your latest order</p>
+          </div>
+
+          <div className="spending-card">
+            <div className="spending-card-header">
+              <div className="spending-icon-wrapper avg-spent">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+              </div>
+              <span className="spending-card-title">Average Order Value</span>
+            </div>
+            <div className="spending-card-value">${spendingStats.averageOrderValue.toFixed(2)}</div>
+            <p className="spending-card-subtext">Average spend across all orders</p>
+          </div>
+
+          <div className="spending-card recent-item-card">
+            <div className="spending-card-header">
+              <div className="spending-icon-wrapper recent-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+              </div>
+              <span className="spending-card-title">Last Item Purchased</span>
+            </div>
+            <div className="spending-item-content">
+              {spendingStats.recentItemImage ? (
+                <img src={spendingStats.recentItemImage} alt={spendingStats.recentItemName} className="spending-item-thumbnail" />
+              ) : (
+                <div className="spending-item-thumbnail" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>🛒</div>
+              )}
+              <div className="spending-item-details">
+                <div className="spending-item-name">{spendingStats.recentItemName}</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Side-by-Side Dashboard Columns */}
