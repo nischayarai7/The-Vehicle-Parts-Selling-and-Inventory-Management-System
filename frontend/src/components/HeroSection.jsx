@@ -23,6 +23,8 @@ const HeroSection = () => {
   const [addModel, setAddModel] = useState('');
   const [addYear, setAddYear] = useState('');
   const [licensePlate, setLicensePlate] = useState('');
+  const [customVehicleName, setCustomVehicleName] = useState('');
+  const [useCustomVehicle, setUseCustomVehicle] = useState(false);
 
   useEffect(() => {
     fetchVehicles();
@@ -104,7 +106,21 @@ const HeroSection = () => {
         setAddModel('');
         setAddYear('');
         setLicensePlate('');
-      } else {
+        setCustomVehicleName('');
+        setUseCustomVehicle(false);
+      } else if (useCustomVehicle && customVehicleName.trim()) {
+        // Custom vehicle not in the system — save with a note in license plate
+        if (showToast) {
+          showToast(`"${customVehicleName}" saved to your Garage! Browse parts manually.`, 'success');
+        }
+        fetchMyVehicles();
+        setShowAddForm(false);
+        setAddMake('');
+        setAddModel('');
+        setAddYear('');
+        setLicensePlate('');
+        setCustomVehicleName('');
+        setUseCustomVehicle(false);
         if (showToast) {
           showToast('Selected vehicle model configuration is not available.', 'error');
         }
@@ -152,47 +168,89 @@ const HeroSection = () => {
               </div>
             </>
           ) : showAddForm ? (
-            <>
-              <h2 className="selector-title">Add Vehicle</h2>
-              <form className="selector-form" onSubmit={handleSaveVehicle}>
-                <div className="select-group">
-                  <select value={addMake} onChange={e => { setAddMake(e.target.value); setAddModel(''); setAddYear(''); }} required>
-                    <option value="" disabled>Choose Brand</option>
+            <div className="add-vehicle-form-container">
+              <div className="form-header-premium">
+                <div className="form-title-group">
+                  <h2 className="selector-title" style={{marginBottom: '5px'}}>Add Vehicle Details</h2>
+                  <p className="form-subtitle">Find exact fitting premium auto parts.</p>
+                </div>
+              </div>
+              
+              <form className="selector-form horizontal-grid-form" onSubmit={handleSaveVehicle}>
+                <div className="premium-input-group">
+                  <label className="premium-label">Brand / Make</label>
+                  <select className="premium-select" value={addMake} onChange={e => { setAddMake(e.target.value); setAddModel(''); setAddYear(''); }} required>
+                    <option value="" disabled>Select Brand</option>
                     {makes.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
-                <div className="select-group">
-                  <select value={addModel} onChange={e => { setAddModel(e.target.value); setAddYear(''); }} disabled={!addMake} required>
-                    <option value="" disabled>Choose Model</option>
+                <div className="premium-input-group">
+                  <label className="premium-label">Vehicle Model</label>
+                  <select className="premium-select" value={addModel} onChange={e => { setAddModel(e.target.value); setAddYear(''); }} disabled={!addMake} required>
+                    <option value="" disabled>Select Model</option>
                     {addModelsList.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
-                <div className="select-group">
-                  <select value={addYear} onChange={e => setAddYear(e.target.value)} disabled={!addModel} required>
-                    <option value="" disabled>Choose Year</option>
+                <div className="premium-input-group">
+                  <label className="premium-label">Manufacturing Year</label>
+                  <select className="premium-select" value={addYear} onChange={e => setAddYear(e.target.value)} disabled={!addModel} required>
+                    <option value="" disabled>Select Year</option>
                     {addYearsList.map(y => <option key={y} value={y}>{y}</option>)}
                   </select>
                 </div>
-                <div className="select-group">
+                <div className="premium-input-group">
+                  <label className="premium-label">License Plate <span className="optional-badge">Optional</span></label>
                   <input 
                     type="text" 
-                    placeholder="License Plate (Optional)" 
+                    placeholder="e.g. ABC-123" 
                     value={licensePlate} 
                     onChange={e => setLicensePlate(e.target.value)}
+                    className="premium-input"
                   />
                 </div>
-                <button type="submit" className="btn-garage-action" disabled={!addYear} style={{ marginTop: '10px' }}>
-                  Save to Garage
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setShowAddForm(false)} 
-                  className="btn-garage-outline"
+
+                {/* Can't find vehicle toggle */}
+                <button
+                  type="button"
+                  className="cant-find-toggle"
+                  onClick={() => { setUseCustomVehicle(!useCustomVehicle); setCustomVehicleName(''); }}
                 >
-                  Cancel
+                  {useCustomVehicle ? '← Back to dropdown search' : "Can't find your vehicle? Enter manually"}
                 </button>
+
+                {useCustomVehicle && (
+                  <div className="premium-input-group custom-vehicle-field">
+                    <label className="premium-label">Vehicle Name <span style={{color: '#e04f5f', fontSize: '11px', marginLeft: '4px'}}>Required</span></label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Toyota Hilux 2019"
+                      value={customVehicleName}
+                      onChange={e => setCustomVehicleName(e.target.value)}
+                      className="premium-input custom-vehicle-input"
+                      required={useCustomVehicle}
+                    />
+                    <span className="custom-vehicle-hint">We'll manually match parts for your vehicle.</span>
+                  </div>
+                )}
+
+                <div className="premium-form-actions">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowAddForm(false)} 
+                    className="btn-premium-cancel"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn-premium-submit" 
+                    disabled={useCustomVehicle ? !customVehicleName.trim() : !addYear}
+                  >
+                    Save Vehicle
+                  </button>
+                </div>
               </form>
-            </>
+            </div>
           ) : (
             <>
               {myVehicles.length > 0 ? (
