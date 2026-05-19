@@ -73,7 +73,8 @@ namespace backend.Controllers
                         o.Status,
                         o.TotalAmount,
                         o.CreatedAt,
-                        ItemCount = o.Items.Sum(i => i.Quantity)
+                        ItemCount = o.Items.Sum(i => i.Quantity),
+                        ProductNames = o.Items.Select(i => i.Part != null ? i.Part.Name : "").ToList()
                     })
                     .ToListAsync();
 

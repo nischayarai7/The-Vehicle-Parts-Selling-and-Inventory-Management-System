@@ -40,11 +40,24 @@ const ProfileSettings = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await api.updateProfile(profileData);
+      let finalAvatarUrl = profileData.avatarUrl;
+      if (selectedFile) {
+        setUploading(true);
+        const uploadRes = await api.uploadAvatar(selectedFile);
+        finalAvatarUrl = uploadRes.url;
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        setUploading(false);
+      }
+      const response = await api.updateProfile({
+        fullName: profileData.fullName,
+        avatarUrl: finalAvatarUrl
+      });
       dispatch(updateUser(response));
       showMessage('success', 'Profile updated successfully!');
     } catch (err) {
-      showMessage('error', err.message);
+      showMessage('error', err.message || 'Failed to save changes');
+      setUploading(false);
     } finally {
       setLoading(false);
     }
@@ -184,21 +197,17 @@ const ProfileSettings = () => {
               </div>
 
               {selectedFile && (
-                <div className="settings-message warning" style={{ marginBottom: '15px' }}>
-                  Please confirm or cancel your avatar upload before saving changes.
+                <div className="settings-message warning" style={{ marginBottom: '15px', background: 'rgba(250, 173, 20, 0.1)', color: '#faad14', border: '1px solid rgba(250, 173, 20, 0.2)' }}>
+                  Save Changes will automatically upload and apply your new avatar.
                 </div>
               )}
 
               <button 
                 type="submit" 
                 className="btn-primary" 
-                disabled={
-                  loading || 
-                  selectedFile !== null || 
-                  (profileData.fullName === (user?.fullName || '') && profileData.avatarUrl === (user?.avatarUrl || ''))
-                }
+                disabled={loading || uploading}
               >
-                {loading ? 'Saving...' : 'Save Changes'}
+                {loading || uploading ? 'Saving...' : 'Save Changes'}
               </button>
             </form>
           ) : (

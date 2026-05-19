@@ -177,7 +177,12 @@ const Navbar = () => {
                   {user?.role === 'Customer' && (
                     <Link to="/customer/dashboard" className="dropdown-item">My Dashboard</Link>
                   )}
-                  <Link to="/settings" className="dropdown-item">Profile Settings</Link>
+                  <Link 
+                    to={user?.role === 'Admin' ? '/admin/settings' : user?.role === 'Staff' ? '/staff/settings' : '/customer/settings'} 
+                    className="dropdown-item"
+                  >
+                    Profile Settings
+                  </Link>
                   <div className="dropdown-divider"></div>
                   <button onClick={handleLogout} className="dropdown-item">Logout</button>
                 </div>

@@ -87,7 +87,8 @@ const CustomerOrdersPage = () => {
       const orderIdMatch = order.id.toString().includes(query);
       const orderNumMatch = (order.orderNumber || '').toLowerCase().includes(query);
       const statusMatch = (order.status || '').toLowerCase().includes(query);
-      return orderIdMatch || orderNumMatch || statusMatch;
+      const productMatch = (order.productNames || []).some(name => name.toLowerCase().includes(query));
+      return orderIdMatch || orderNumMatch || statusMatch || productMatch;
     }
 
     return true;
