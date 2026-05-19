@@ -434,3 +434,208 @@
     padding: 0 0.25rem;
     font-weight: 600;
 }
+
+/* Search & Advanced Filters Container */
+.inventory-filters-container {
+  background: var(--admin-bg-secondary);
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.filters-primary-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.search-box-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--admin-text-muted);
+  pointer-events: none;
+}
+
+.local-search-input {
+  width: 100%;
+  background: #0d1117 !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 10px !important;
+  padding: 0.75rem 1rem 0.75rem 2.5rem !important;
+  color: white !important;
+  font-size: 0.9rem !important;
+  transition: all 0.3s ease !important;
+}
+
+.local-search-input:focus {
+  outline: none;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(227, 59, 59, 0.15);
+}
+
+.btn-toggle-advanced {
+  background: rgba(255, 255, 255, 0.03);
+  color: white;
+  border: 1px solid var(--admin-border);
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.btn-toggle-advanced:hover,
+.btn-toggle-advanced.active {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--primary);
+}
+
+.btn-reset-filters {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reset-filters:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.advanced-filters-panel {
+  background: #0d1117;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid var(--admin-border);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.filters-grid-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-item label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-text-muted);
+}
+
+.filter-item select,
+.filter-item input {
+  background: #161b22;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  color: white;
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.filter-item select:focus,
+.filter-item input:focus {
+  border-color: var(--primary);
+}
+
+.price-range-group {
+  grid-column: span 1;
+}
+
+.price-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.price-inputs span {
+  color: var(--admin-text-muted);
+  font-size: 0.8rem;
+}
+
+.price-inputs input {
+  flex: 1;
+  text-align: center;
+}
+
+.no-results-full {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--admin-text-muted);
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: 12px;
+  border: 1px dashed var(--admin-border);
+}
+
+.no-results-full p {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.btn-refresh-inventory {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--admin-border);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-refresh-inventory:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.btn-refresh-inventory:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+
