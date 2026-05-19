@@ -97,6 +97,7 @@ export const api = {
     headers: getAuthHeaders()
   }).then(handleResponse),
   getMyOrders: () => fetch(`${API_BASE}/orders/my`, { headers: getAuthHeaders() }).then(handleResponse),
+  getOrderDetails: (id) => fetch(`${API_BASE}/orders/${id}`, { headers: getAuthHeaders() }).then(handleResponse),
 
   // ── Roles & Permissions ───────────────────────────────────────────────────
   getRoles: () => fetch(`${API_BASE}/roles`, { headers: getAuthHeaders() }).then(handleResponse),

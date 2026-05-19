@@ -23,6 +23,30 @@
   --font-family: 'Inter', sans-serif;
 }
 
+/* Premium Global Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(13, 17, 23, 0.15);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 148, 158, 0.35);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #e04f5f;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
 * {
   margin: 0;
   padding: 0;
