@@ -14,8 +14,7 @@ function ShopPage() {
       showToast('This item is currently out of stock.', 'error');
       return;
     }
-    addToCart(part);
-    showToast('Item ready for checkout!', 'success');
+    navigate(`/checkout?partId=${part.id}&quantity=1`);
   };
 
   // State arrays
@@ -41,7 +40,7 @@ function ShopPage() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 12;
+  const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
     // Sync local dropdown states with search parameter updates
@@ -410,13 +409,30 @@ function ShopPage() {
                   <h3 style={{ minHeight: '44px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', cursor: 'pointer' }}>{part.name}</h3>
                 </Link>
                 <p style={{ fontSize: '12px', color: '#666', margin: '-10px 0 8px 0' }}>Part No: {part.partNumber || 'N/A'}</p>
-                <div style={{ fontSize: '11px', color: '#e33b3b', margin: '-4px 0 14px 0', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <div style={{ fontSize: '11px', color: '#e33b3b', margin: '-4px 0 6px 0', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16" style={{ flexShrink: 0, marginTop: '-1px' }}>
                     <path d="M4 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zm8 0a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM0 6h16v1a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V6zm1.5-1.5A.5.5 0 0 1 2 4h12a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H2a.5.5 0 0 1-.5-.5v-1z"/>
                     <path d="M2.52 3.862c.19-.626.78-1.056 1.436-1.056h8.088c.657 0 1.248.43 1.438 1.056l1.24 4.092c.09.296-.06.602-.34.697a.49.49 0 0 1-.606-.31L12.52 4.195a.498.498 0 0 0-.476-.34H3.956a.498.498 0 0 0-.476.34L2.24 8.286a.491.491 0 0 1-.607.31c-.28-.095-.43-.401-.34-.697l1.24-4.092z"/>
                   </svg>
                   <span>Fits: {getCompatibilityText(part.compatibleVehicles)}</span>
                 </div>
+                {(() => {
+                  const local = localStorage.getItem(`part_reviews_${part.id}`);
+                  const reviews = local ? JSON.parse(local) : [
+                    { rating: 5 },
+                    { rating: 4 }
+                  ];
+                  const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+                  const filledStars = '★'.repeat(Math.round(avg));
+                  const emptyStars = '☆'.repeat(5 - Math.round(avg));
+                  return (
+                    <div className="product-rating" style={{ fontSize: '11px', color: '#e3b341', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <span style={{ color: '#e3b341' }}>{filledStars}</span>
+                      <span style={{ color: '#555' }}>{emptyStars}</span>
+                      <span className="rating-count" style={{ color: '#888', marginLeft: '4px' }}>({reviews.length})</span>
+                    </div>
+                  );
+                })()}
                 <div className="product-price-row" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'stretch', width: '100%' }}>
                   <span className="price">{formatCurrency(part.price)}</span>
                   {part.stockQuantity <= 0 ? (

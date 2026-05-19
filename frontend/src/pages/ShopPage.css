@@ -34,8 +34,8 @@
 
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 20px;
 }
 
 .product-card {
@@ -47,13 +47,13 @@
 }
 
 .product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.06);
 }
 
 .product-image-wrapper {
   position: relative;
-  height: 220px;
+  height: 160px;
   overflow: hidden;
   background-color: #f0f0f0;
 }
@@ -71,23 +71,23 @@
 
 .product-category-tag {
   position: absolute;
-  top: 15px;
-  left: 15px;
+  top: 10px;
+  left: 10px;
   background-color: rgba(255, 255, 255, 0.9);
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-main);
 }
 
 .product-info {
-  padding: 20px;
+  padding: 15px;
 }
 
 .product-info h3 {
-  font-size: 16px;
-  margin-bottom: 15px;
+  font-size: 13.5px;
+  margin-bottom: 8px;
   color: var(--text-main);
   font-weight: 600;
 }

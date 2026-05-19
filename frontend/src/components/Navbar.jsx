@@ -31,10 +31,6 @@ const Navbar = () => {
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState(urlSearchQuery);
-  const [shippingAddress, setShippingAddress] = useState('');
-  const [notes, setNotes] = useState('');
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [successOrder, setSuccessOrder] = useState(null);
 
   // Keep the top search input synced when URL query changes (e.g. cleared on ShopPage)
   useEffect(() => {
@@ -56,50 +52,7 @@ const Navbar = () => {
     }
   };
 
-  const handleCheckout = async (e) => {
-    e.preventDefault();
-    if (!isAuthenticated) {
-      showToast('Please login to finalize your purchase order.', 'error');
-      navigate('/login');
-      setIsDrawerOpen(false);
-      return;
-    }
 
-    if (!shippingAddress.trim()) {
-      showToast('Please input a valid shipping delivery address.', 'error');
-      return;
-    }
-
-    try {
-      setCheckoutLoading(true);
-      const payload = {
-        shippingAddress: shippingAddress.trim(),
-        notes: notes.trim(),
-        items: cart.map(item => ({
-          partId: item.id,
-          quantity: item.quantity
-        }))
-      };
-
-      const result = await api.createStorefrontOrder(payload);
-      setSuccessOrder({
-        orderNumber: result.orderNumber || result.OrderNumber,
-        originalAmount: cartSubtotal,
-        discountAmount: discountApplied,
-        total: cartTotal,
-        address: shippingAddress.trim()
-      });
-
-      clearCart();
-      setShippingAddress('');
-      setNotes('');
-      setIsDrawerOpen(false);
-    } catch (err) {
-      showToast(err.message || 'Failed to place storefront order.', 'error');
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -284,91 +237,24 @@ const Navbar = () => {
                   </div>
                 </div>
 
-                <form className="drawer-checkout-form" onSubmit={handleCheckout}>
-                  <div className="checkout-field">
-                    <label>Shipping Address *</label>
-                    <textarea 
-                      placeholder="Input complete delivery and street address..." 
-                      value={shippingAddress} 
-                      onChange={(e) => setShippingAddress(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="checkout-field">
-                    <label>Delivery Instructions / Notes</label>
-                    <textarea 
-                      placeholder="Special instructions for courier..." 
-                      value={notes} 
-                      onChange={(e) => setNotes(e.target.value)}
-                    />
-                  </div>
-
-                  {!isAuthenticated ? (
-                    <div className="drawer-login-prompt">
-                      <p>You must be authenticated to check out.</p>
-                      <button type="button" className="btn-primary" onClick={() => { setIsDrawerOpen(false); navigate('/login'); }} style={{ width: '100%' }}>Login / Register</button>
-                    </div>
-                  ) : (
-                    <button 
-                      type="submit" 
-                      className="btn-primary checkout-submit-btn" 
-                      disabled={checkoutLoading}
-                    >
-                      {checkoutLoading ? 'Processing Checkout...' : 'Confirm & Place Order'}
-                    </button>
-                  )}
-                </form>
+                <div style={{ marginTop: '16px' }}>
+                  <button 
+                    className="btn-primary checkout-submit-btn" 
+                    onClick={() => {
+                      setIsDrawerOpen(false);
+                      navigate('/checkout');
+                    }}
+                    style={{ width: '100%', padding: '12px', fontSize: '15px' }}
+                  >
+                    Proceed to Checkout ➔
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Checkout Order Finalized Overlay Success Modal */}
-      {successOrder && (
-        <div className="checkout-success-backdrop" onClick={() => setSuccessOrder(null)}>
-          <div className="checkout-success-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="success-icon-badge">✓</div>
-            <h3>Purchase Finalized Successfully!</h3>
-            <p className="success-subtitle">Thank you for choosing 6ix7even Auto Parts. Your order is registered in our warehouse catalog.</p>
-            
-            <div className="success-invoice-receipt">
-              <div className="receipt-line">
-                <span>Order Reference:</span>
-                <strong>{successOrder.orderNumber}</strong>
-              </div>
-              <div className="receipt-line">
-                <span>Payment Method:</span>
-                <strong>Cash on Delivery (COD)</strong>
-              </div>
-              <div className="receipt-line">
-                <span>Shipping Address:</span>
-                <span className="address-preview">{successOrder.address}</span>
-              </div>
-              <div className="receipt-line">
-                <span>Item Subtotal:</span>
-                <strong>{formatCurrency(successOrder.originalAmount)}</strong>
-              </div>
-              {successOrder.discountAmount > 0 && (
-                <div className="receipt-line" style={{ color: '#2ea043' }}>
-                  <span>Loyalty Discount Applied:</span>
-                  <strong>-{formatCurrency(successOrder.discountAmount)}</strong>
-                </div>
-              )}
-              <hr />
-              <div className="receipt-line total">
-                <span>Grand Total:</span>
-                <strong>{formatCurrency(successOrder.total)}</strong>
-              </div>
-            </div>
-
-            <button className="btn-primary" onClick={() => setSuccessOrder(null)} style={{ width: '100%', marginTop: '20px' }}>
-              Continue Shopping ➔
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 };

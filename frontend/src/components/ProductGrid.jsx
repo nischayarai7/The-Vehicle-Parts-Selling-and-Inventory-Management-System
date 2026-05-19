@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
 import './ProductGrid.css';
 
 const ProductGrid = () => {
+  const navigate = useNavigate();
   const [parts, setParts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { addToCart, showToast } = useCart();
@@ -14,8 +15,7 @@ const ProductGrid = () => {
       if (showToast) showToast('This item is currently out of stock.', 'error');
       return;
     }
-    addToCart(part);
-    if (showToast) showToast('Item ready for checkout!', 'success');
+    navigate(`/checkout?partId=${part.id}&quantity=1`);
   };
 
   useEffect(() => {
@@ -41,14 +41,35 @@ const ProductGrid = () => {
     }
     return displayList;
   };
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
 
-  const newArrivalParts = parts.slice(0, 20);
+  const [activeTab, setActiveTab] = useState('New Arrival');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
+  const getFilteredParts = () => {
+    switch (activeTab) {
+      case 'New Arrival':
+        return [...parts].sort((a, b) => b.id - a.id).slice(0, 20);
+      case 'Featured':
+        return parts.filter(p => p.price > 5000).slice(0, 20);
+      case 'Popular':
+        return parts.filter(p => p.compatibleVehicles && p.compatibleVehicles.length > 0).slice(0, 20);
+      case 'On Sale':
+        return parts.filter(p => p.price < 3000).slice(0, 20);
+      default:
+        return parts.slice(0, 20);
+    }
+  };
+
+  const filteredParts = getFilteredParts();
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentParts = newArrivalParts.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(newArrivalParts.length / itemsPerPage);
+  const currentParts = filteredParts.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredParts.length / itemsPerPage);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -66,18 +87,28 @@ const ProductGrid = () => {
         <div className="product-header">
           <h2 className="section-title">What We Offer</h2>
           <div className="product-tabs">
-            <button className="tab active">New Arrival</button>
-            <button className="tab">Featured</button>
-            <button className="tab">Popular</button>
-            <button className="tab">On Sale</button>
+            {['New Arrival', 'Featured', 'Popular', 'On Sale'].map((tab) => (
+              <button 
+                key={tab}
+                className={`tab ${activeTab === tab ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="product-grid">
-          {currentParts.map((part) => (
-            <div key={part.id} className="product-card">
-              {part.isLowStock && <div className="badge low-stock">Low Stock</div>}
-              <Link to={`/shop/part/${part.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+        {currentParts.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+            <p>No components found in this category.</p>
+          </div>
+        ) : (
+          <div className="product-grid">
+            {currentParts.map((part) => (
+              <div key={part.id} className="product-card">
+                {part.isLowStock && <div className="badge low-stock">Low Stock</div>}
+                <Link to={`/shop/part/${part.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
                 <div className="product-img-wrapper">
                   <img 
                     src={part.imageUrl || `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b&size=250`} 
@@ -98,9 +129,23 @@ const ProductGrid = () => {
                   </svg>
                   <span>Fits: {getCompatibilityText(part.compatibleVehicles)}</span>
                 </div>
-                <div className="product-rating">
-                  ★★★★★ <span className="rating-count">(5)</span>
-                </div>
+                {(() => {
+                  const local = localStorage.getItem(`part_reviews_${part.id}`);
+                  const reviews = local ? JSON.parse(local) : [
+                    { rating: 5 },
+                    { rating: 4 }
+                  ];
+                  const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+                  const filledStars = '★'.repeat(Math.round(avg));
+                  const emptyStars = '☆'.repeat(5 - Math.round(avg));
+                  return (
+                    <div className="product-rating" style={{ fontSize: '12px', color: '#e3b341', margin: '4px 0 8px 0', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <span style={{ color: '#e3b341' }}>{filledStars}</span>
+                      <span style={{ color: '#555' }}>{emptyStars}</span>
+                      <span className="rating-count" style={{ color: '#888', marginLeft: '4px' }}>({reviews.length})</span>
+                    </div>
+                  );
+                })()}
                 <div className="product-price">Rs. {part.price.toFixed(2)}</div>
                 {part.stockQuantity <= 0 ? (
                   <button className="add-to-cart-btn disabled" disabled style={{ opacity: 0.5, cursor: 'not-allowed', width: '100%' }}>
@@ -143,9 +188,10 @@ const ProductGrid = () => {
             </div>
           ))}
         </div>
+        )}
 
         {/* Home Page Pagination Controls */}
-        {newArrivalParts.length > 0 && totalPages > 1 && (
+        {filteredParts.length > 0 && totalPages > 1 && (
           <div className="home-pagination-container">
             <button 
               className="btn-home-pagination btn-home-pagination-nav" 

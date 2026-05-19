@@ -142,34 +142,36 @@ const StaffLayout = () => {
           </div>
         </div>
 
-        <div className="nav-group-title">Operations</div>
-        <nav className="admin-nav">
-          {OPERATIONS_NAV.map((item) => (
-            <NavLink 
-              key={item.to}
-              to={item.to} 
-              className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
-            >
-              {item.icon} {item.label}
-            </NavLink>
-          ))}
-        </nav>
+        <div className="admin-sidebar-nav-container">
+          <div className="nav-group-title" style={{ marginTop: 0 }}>Operations</div>
+          <nav className="admin-nav" style={{ marginBottom: '16px' }}>
+            {OPERATIONS_NAV.map((item) => (
+              <NavLink 
+                key={item.to}
+                to={item.to} 
+                className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
+              >
+                {item.icon} {item.label}
+              </NavLink>
+            ))}
+          </nav>
 
-        <div className="nav-group-title">Settings</div>
-        <nav className="admin-nav">
-          {SETTINGS_NAV.map((item) => (
-            <NavLink 
-              key={item.to}
-              to={item.to} 
-              className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
-            >
-              {item.icon} {item.label}
-            </NavLink>
-          ))}
-          <button onClick={handleLogout} className="nav-item" style={{ background: 'none', border: 'none', width: '100%', cursor: 'pointer', textAlign: 'left' }}>
-            <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14l5-5-5-5m5 5H9"/></svg> Logout
-          </button>
-        </nav>
+          <div className="nav-group-title">Settings</div>
+          <nav className="admin-nav">
+            {SETTINGS_NAV.map((item) => (
+              <NavLink 
+                key={item.to}
+                to={item.to} 
+                className={({ isActive }) => isActive ? "nav-item active" : "nav-item"}
+              >
+                {item.icon} {item.label}
+              </NavLink>
+            ))}
+            <button onClick={handleLogout} className="nav-item" style={{ background: 'none', border: 'none', width: '100%', cursor: 'pointer', textAlign: 'left' }}>
+              <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14l5-5-5-5m5 5H9"/></svg> Logout
+            </button>
+          </nav>
+        </div>
       </aside>
 
       {/* Main Content */}

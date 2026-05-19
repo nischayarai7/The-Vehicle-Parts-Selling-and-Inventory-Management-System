@@ -147,7 +147,7 @@ export const CartProvider = ({ children }) => {
       <style>{`
         .storefront-toast-alert {
           position: fixed;
-          bottom: 30px;
+          top: 30px;
           right: 30px;
           z-index: 99999;
           padding: 16px 24px;
@@ -157,7 +157,7 @@ export const CartProvider = ({ children }) => {
           font-size: 14px;
           font-weight: 600;
           box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-          animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          animation: slideInDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
           border: 1px solid rgba(255, 255, 255, 0.08);
           max-width: 380px;
         }
@@ -196,8 +196,8 @@ export const CartProvider = ({ children }) => {
           margin: 0;
           line-height: 1.4;
         }
-        @keyframes slideInUp {
-          from { transform: translateY(30px); opacity: 0; }
+        @keyframes slideInDown {
+          from { transform: translateY(-30px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
         }
       `}</style>

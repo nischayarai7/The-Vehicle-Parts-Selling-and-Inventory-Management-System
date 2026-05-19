@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import ScrollToTop from './components/ScrollToTop'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import VerifyEmailPage from './pages/VerifyEmailPage'
@@ -8,6 +9,7 @@ import PartDetailPage from './pages/PartDetailPage'
 import CategoriesPage from './pages/CategoriesPage'
 import AboutPage from './pages/AboutPage'
 import ContactPage from './pages/ContactPage'
+import CheckoutPage from './pages/CheckoutPage'
 import AdminRoute from './components/AdminRoute'
 import AdminLayout from './layouts/AdminLayout'
 import StoreLayout from './layouts/StoreLayout'
@@ -53,7 +55,9 @@ import CustomerGaragePage from './pages/customer/CustomerGaragePage';
 
 function App() {
   return (
-    <Routes>
+    <>
+      <ScrollToTop />
+      <Routes>
       {/* Auth Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -67,6 +71,7 @@ function App() {
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
 
         <Route path="/appointments" element={<AppointmentsPage />} />
       </Route>
@@ -126,7 +131,8 @@ function App() {
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+      </Routes>
+    </>
   )
 }
 

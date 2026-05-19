@@ -420,6 +420,47 @@ const PointOfSale = () => {
 
           {/* Footer */}
           <div className="cart-footer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {/* Promo banner */}
+            <div className="pos-promo-banner" style={{ 
+              background: subtotal >= loyaltySettings.thresholdAmount ? 'linear-gradient(135deg, rgba(46, 160, 67, 0.15) 0%, rgba(46, 160, 67, 0.05) 100%)' : 'linear-gradient(135deg, rgba(227, 179, 65, 0.1) 0%, rgba(227, 179, 65, 0.02) 100%)', 
+              border: subtotal >= loyaltySettings.thresholdAmount ? '1px solid rgba(46, 160, 67, 0.3)' : '1px solid rgba(227, 179, 65, 0.2)', 
+              borderRadius: '8px', 
+              padding: '12px 14px', 
+              marginBottom: '12px',
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '10px' 
+            }}>
+              <div style={{ 
+                background: subtotal >= loyaltySettings.thresholdAmount ? '#2ea043' : '#e3b341', 
+                borderRadius: '50%', 
+                width: '28px', 
+                height: '28px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                flexShrink: 0 
+              }}>
+                <svg width="14" height="14" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                  <line x1="7" y1="7" x2="7.01" y2="7"/>
+                </svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                {subtotal >= loyaltySettings.thresholdAmount ? (
+                  <>
+                    <strong style={{ color: '#2ea043', fontSize: '12px', display: 'block' }}>10% Discount Unlocked!</strong>
+                    <span style={{ color: 'var(--admin-text-muted)', fontSize: '11px' }}>Order total exceeds {formatCurrency(loyaltySettings.thresholdAmount)}. Loyalty discount active.</span>
+                  </>
+                ) : (
+                  <>
+                    <strong style={{ color: '#e3b341', fontSize: '12px', display: 'block' }}>Loyalty Discount Offer</strong>
+                    <span style={{ color: 'var(--admin-text-muted)', fontSize: '11px' }}>Spend <strong>{formatCurrency(loyaltySettings.thresholdAmount)}</strong> or more to get <strong>10% off</strong>! Add <strong>{formatCurrency(loyaltySettings.thresholdAmount - subtotal)}</strong> more.</span>
+                  </>
+                )}
+              </div>
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--admin-text-muted)', opacity: 0.8 }}>
               <span>Subtotal Amount:</span>
               <span>{formatCurrency(subtotal)}</span>

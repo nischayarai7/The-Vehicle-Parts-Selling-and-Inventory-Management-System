@@ -146,6 +146,7 @@ namespace backend.Controllers
                     Status = "Pending",
                     ShippingAddress = dto.ShippingAddress,
                     Notes = dto.Notes,
+                    PaymentMethod = dto.PaymentMethod ?? "COD",
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
                     TotalAmount = 0
@@ -213,6 +214,8 @@ namespace backend.Controllers
         public string ShippingAddress { get; set; } = string.Empty;
 
         public string? Notes { get; set; }
+        
+        public string? PaymentMethod { get; set; }
 
         [Required]
         [MinLength(1, ErrorMessage = "Checkout cart must contain at least 1 item.")]
