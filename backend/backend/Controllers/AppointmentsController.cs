@@ -35,40 +35,39 @@ namespace backend.Controllers
             {
                 var userId = GetCurrentUserId();
                 
-                // Rule: Same user cannot book multiple booking
-                var hasActiveBooking = await _context.Appointments
-                    .AnyAsync(a => a.UserId == userId && (a.Status == "Pending" || a.Status == "Confirmed"));
-                
-                if (hasActiveBooking)
-                {
-                    return Ok(new { success = true, data = new List<object>(), message = "You already have an active booking." });
-                }
-
                 // Generate slots
                 var slots = new List<object>();
-                var startDate = DateTime.UtcNow.AddHours(24); // 24 hours earlier rule
+                var localNow = DateTime.Now;
+                var localEarliest = localNow.AddHours(24); // 24 hours earlier rule
                 
                 // Generate for next 5 days
                 for (int day = 0; day < 5; day++)
                 {
-                    var currentDate = startDate.AddDays(day).Date;
+                    var currentDate = localEarliest.AddDays(day).Date; // Local date
                     
-                    // Business hours: 8 AM to 6 PM
-                    for (int hour = 8; hour < 18; hour++)
+                    // Business hours: 9 AM to 6 PM local time
+                    for (int hour = 9; hour < 18; hour++)
                     {
-                        var slotTime = currentDate.AddHours(hour);
+                        var localSlotTime = currentDate.AddHours(hour); // Local slot time
                         
-                        if (slotTime < startDate) continue;
+                        if (localSlotTime < localEarliest) continue;
 
-                        var nextHour = slotTime.AddHours(1);
+                        var slotTimeUtc = localSlotTime.ToUniversalTime(); // Convert to UTC for DB
+                        var nextHourUtc = slotTimeUtc.AddHours(1);
+
                         var bookingCount = await _context.Appointments
-                            .CountAsync(a => a.AppointmentDate >= slotTime && a.AppointmentDate < nextHour && a.Status != "Cancelled");
+                            .CountAsync(a => a.AppointmentDate >= slotTimeUtc && a.AppointmentDate < nextHourUtc && a.Status != "Cancelled");
+
+                        if (bookingCount > 0)
+                        {
+                            Console.WriteLine($"[Slots] MATCH FOUND! localSlotTime: {localSlotTime}, slotTimeUtc: {slotTimeUtc}, bookingCount: {bookingCount}");
+                        }
 
                         if (bookingCount < 5) // Upto 5 times rule
                         {
                             slots.Add(new {
-                                dateTime = slotTime,
-                                display = slotTime.ToString("yyyy-MM-dd HH:mm"),
+                                dateTime = slotTimeUtc,
+                                display = localSlotTime.ToString("yyyy-MM-dd HH:mm"),
                                 available = 5 - bookingCount
                             });
                         }
@@ -107,8 +106,19 @@ namespace backend.Controllers
                     return BadRequest(new { success = false, message = "Booking must be made at least 24 hours in advance." });
                 }
 
+                // Rule: One appointment per day per user
+                var localTime = dto.AppointmentDate.ToLocalTime();
+                var targetDateLocal = localTime.Date;
+                var hasBookingOnSameDay = await _context.Appointments
+                    .AnyAsync(a => a.UserId == userId && a.AppointmentDate.ToLocalTime().Date == targetDateLocal && a.Status != "Cancelled");
+                if (hasBookingOnSameDay)
+                {
+                    return BadRequest(new { success = false, message = "You can only book one appointment per calendar day." });
+                }
+
                 // Rule: Upto 5 times of each slot
-                var slotStart = new DateTime(dto.AppointmentDate.Year, dto.AppointmentDate.Month, dto.AppointmentDate.Day, dto.AppointmentDate.Hour, 0, 0, DateTimeKind.Utc);
+                var slotStartLocal = new DateTime(localTime.Year, localTime.Month, localTime.Day, localTime.Hour, 0, 0, DateTimeKind.Local);
+                var slotStart = slotStartLocal.ToUniversalTime();
                 var slotEnd = slotStart.AddHours(1);
                 
                 var bookingCount = await _context.Appointments
@@ -124,7 +134,7 @@ namespace backend.Controllers
                     UserId = userId,
                     VehicleId = dto.VehicleId,
                     ServiceType = dto.ServiceType,
-                    AppointmentDate = slotStart, // Snap to hour
+                    AppointmentDate = slotStart, // Snap to hour in local time converted back to UTC
                     Notes = dto.Notes,
                     Status = "Pending",
                     CreatedAt = DateTime.UtcNow

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../services/api';
-import './ShopPage.css'; // Reusing shop page styles
+import { api } from '../../services/api';
+import '../ShopPage.css'; // Reusing shop page styles
 
 const ReviewsPage = () => {
   const [reviews, setReviews] = useState([]);

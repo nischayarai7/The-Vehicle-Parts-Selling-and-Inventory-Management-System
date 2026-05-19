@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { api } from '../services/api';
-import './staff/StaffDashboard.css'; // Reusing staff dashboard styles for consistency
+import { api } from '../../services/api';
+import './CustomerDashboard.css';
 
 const DASHBOARD_OPERATIONS = [
   {
@@ -38,6 +38,7 @@ const CustomerDashboard = () => {
   });
   
   const [recentAppointments, setRecentAppointments] = useState([]);
+  const [myVehicles, setMyVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,10 +50,11 @@ const CustomerDashboard = () => {
       setLoading(true);
       
       // Fetch dynamic dependencies in parallel
-      const [appointmentsRes, requestsRes, ordersRes] = await Promise.all([
+      const [appointmentsRes, requestsRes, ordersRes, vehiclesRes] = await Promise.all([
         api.getMyAppointments().catch(() => ({ data: [] })),
         api.getMyPartRequests().catch(() => []),
-        api.getMyOrders().catch(() => [])
+        api.getMyOrders().catch(() => []),
+        api.getMyVehicles().catch(() => [])
       ]);
 
       const appointments = appointmentsRes.data || (Array.isArray(appointmentsRes) ? appointmentsRes : []);
@@ -68,6 +70,8 @@ const CustomerDashboard = () => {
         pendingRequests,
         totalOrders
       });
+
+      setMyVehicles(vehiclesRes || []);
 
       // Get latest 5 recent appointments
       const sortedAppointments = [...appointments]
@@ -159,50 +163,110 @@ const CustomerDashboard = () => {
         ))}
       </div>
 
-      {/* Recent Appointments Section */}
-      <div className="recent-invoices-section">
-        <div className="recent-invoices-header">
-          <h3>Your Recent Appointments</h3>
-          <Link to="/appointments" className="btn-table-action" style={{ fontSize: '12px' }}>
-            View All
-          </Link>
-        </div>
-        <div className="recent-table-wrapper">
-          <table className="recent-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Service Type</th>
-                <th>Status</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentAppointments.length === 0 ? (
+      {/* Side-by-Side Dashboard Columns */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '24px', alignItems: 'start', marginTop: '10px' }}>
+        
+        {/* Recent Appointments Section */}
+        <div className="recent-invoices-section">
+          <div className="recent-invoices-header">
+            <h3>Your Recent Appointments</h3>
+            <Link to="/customer/appointments" className="btn-table-action" style={{ fontSize: '12px' }}>
+              View All
+            </Link>
+          </div>
+          <div className="recent-table-wrapper">
+            <table className="recent-table">
+              <thead>
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', color: 'var(--admin-text-muted)', padding: '24px' }}>
-                    No appointments booked yet.
-                  </td>
+                  <th>Date</th>
+                  <th>Service</th>
+                  <th>Status</th>
                 </tr>
-              ) : (
-                recentAppointments.map((a) => (
-                  <tr key={a.id}>
-                    <td style={{ fontWeight: '600', color: '#fff' }}>
-                      {new Date(a.appointmentDate).toLocaleDateString()}
+              </thead>
+              <tbody>
+                {recentAppointments.length === 0 ? (
+                  <tr>
+                    <td colSpan="3" style={{ textAlign: 'center', color: 'var(--admin-text-muted)', padding: '24px' }}>
+                      No appointments booked yet.
                     </td>
-                    <td>{a.serviceType}</td>
-                    <td>
-                      <span className={`status-pill ${a.status.toLowerCase()}`}>
-                        {a.status}
-                      </span>
-                    </td>
-                    <td className="text-muted">{a.notes || 'N/A'}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  recentAppointments.map((a) => (
+                    <tr key={a.id}>
+                      <td style={{ fontWeight: '600', color: '#fff' }}>
+                        {new Date(a.appointmentDate).toLocaleDateString()}
+                      </td>
+                      <td>{a.serviceType}</td>
+                      <td>
+                        <span className={`status-pill ${a.status.toLowerCase()}`}>
+                          {a.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        {/* My Garage Overview Section */}
+        <div className="recent-invoices-section">
+          <div className="recent-invoices-header">
+            <h3>My Garage ({myVehicles.length})</h3>
+            <Link to="/customer/garage" className="btn-table-action" style={{ fontSize: '12px', background: '#1890ff', borderColor: '#1890ff' }}>
+              Manage Garage
+            </Link>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '300px', overflowY: 'auto', paddingRight: '4px' }}>
+            {myVehicles.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--admin-text-muted)' }}>
+                <span style={{ fontSize: '32px' }}>🚗</span>
+                <p style={{ marginTop: '8px', fontSize: '13px' }}>Your garage is currently empty.</p>
+                <Link to="/customer/garage" style={{ display: 'inline-block', marginTop: '10px', fontSize: '12px', color: '#1890ff', textDecoration: 'none', fontWeight: 'bold' }}>
+                  + Add Your Vehicle
+                </Link>
+              </div>
+            ) : (
+              myVehicles.map((v) => (
+                <div 
+                  key={v.id} 
+                  style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center', 
+                    padding: '12px 16px', 
+                    background: '#161b22', 
+                    border: '1px solid #30363d', 
+                    borderRadius: '8px' 
+                  }}
+                >
+                  <div>
+                    <h4 style={{ margin: 0, color: '#fff', fontSize: '14px', fontWeight: '600' }}>
+                      {v.displayName || `${v.make} ${v.model}`}
+                    </h4>
+                    <span style={{ fontSize: '12px', color: '#8b949e' }}>Year: {v.year || 'N/A'}</span>
+                  </div>
+                  {v.licensePlate ? (
+                    <span style={{ 
+                      background: '#0d1117', 
+                      border: '1px solid #30363d', 
+                      padding: '2px 8px', 
+                      borderRadius: '4px', 
+                      fontSize: '11px', 
+                      fontWeight: '700', 
+                      color: '#58a6ff',
+                      letterSpacing: '0.5px' 
+                    }}>
+                      {v.licensePlate}
+                    </span>
+                  ) : null}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
       </div>
     </div>
   );

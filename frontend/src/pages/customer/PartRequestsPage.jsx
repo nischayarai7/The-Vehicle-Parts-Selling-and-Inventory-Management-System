@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../services/api';
-import './ShopPage.css'; // Reusing shop page styles for consistency
+import { api } from '../../services/api';
+import '../ShopPage.css'; // Reusing shop page styles for consistency
 
 const PartRequestsPage = () => {
   const [requests, setRequests] = useState([]);

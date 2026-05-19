@@ -18,10 +18,6 @@ const ProfileSettings = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
-  const [myVehicles, setMyVehicles] = useState([]);
-  const [availableVehicles, setAvailableVehicles] = useState([]);
-  const [newVehicle, setNewVehicle] = useState({ vehicleId: '', licensePlate: '', vin: '', color: '' });
-  const [showAddForm, setShowAddForm] = useState(false);
   const [myOrders, setMyOrders] = useState([]);
 
   useEffect(() => {
@@ -34,10 +30,7 @@ const ProfileSettings = () => {
   }, [user]);
 
   useEffect(() => {
-    if (activeTab === 'vehicles') {
-      fetchMyVehicles();
-      fetchAvailableVehicles();
-    } else if (activeTab === 'orders') {
+    if (activeTab === 'orders') {
       fetchMyOrders();
     }
   }, [activeTab]);
@@ -54,50 +47,7 @@ const ProfileSettings = () => {
     }
   };
 
-  const fetchMyVehicles = async () => {
-    try {
-      const data = await api.getMyVehicles();
-      setMyVehicles(data);
-    } catch (err) {
-      showMessage('error', 'Failed to load your vehicles');
-    }
-  };
 
-  const fetchAvailableVehicles = async () => {
-    try {
-      const data = await api.getVehicles();
-      setAvailableVehicles(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleAddVehicle = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await api.addMyVehicle(newVehicle);
-      showMessage('success', 'Vehicle added successfully!');
-      setNewVehicle({ vehicleId: '', licensePlate: '', vin: '', color: '' });
-      setShowAddForm(false);
-      fetchMyVehicles();
-    } catch (err) {
-      showMessage('error', err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteVehicle = async (id) => {
-    if (!window.confirm('Are you sure you want to remove this vehicle?')) return;
-    try {
-      await api.deleteMyVehicle(id);
-      showMessage('success', 'Vehicle removed!');
-      fetchMyVehicles();
-    } catch (err) {
-      showMessage('error', err.message);
-    }
-  };
 
   const showMessage = (type, text) => {
     setMessage({ type, text });
@@ -191,12 +141,6 @@ const ProfileSettings = () => {
             onClick={() => setActiveTab('security')}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Password & Security
-          </button>
-          <button 
-            className={`tab-btn ${activeTab === 'vehicles' ? 'active' : ''}`}
-            onClick={() => setActiveTab('vehicles')}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}><path d="M7 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M17 17m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2m-4 0H9"/></svg> My Garage
           </button>
           <button 
             className={`tab-btn ${activeTab === 'orders' ? 'active' : ''}`}
@@ -319,87 +263,6 @@ const ProfileSettings = () => {
                 {loading ? 'Updating...' : 'Update Password'}
               </button>
             </form>
-          ) : activeTab === 'vehicles' ? (
-            <div className="garage-container">
-              <div className="garage-header">
-                <h3>My Garage</h3>
-                {!showAddForm && (
-                  <button onClick={() => setShowAddForm(true)} className="btn-primary">
-                    + Add Vehicle
-                  </button>
-                )}
-              </div>
-
-              {showAddForm && (
-                <form onSubmit={handleAddVehicle} className="add-vehicle-form">
-                  <h4>Add New Vehicle</h4>
-                  <div className="form-group">
-                    <label>Select Vehicle Model</label>
-                    <select 
-                      value={newVehicle.vehicleId} 
-                      onChange={e => setNewVehicle({...newVehicle, vehicleId: e.target.value})}
-                      required
-                    >
-                      <option value="">-- Choose a vehicle --</option>
-                      {availableVehicles.map(v => (
-                        <option key={v.id} value={v.id}>{v.displayName}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>License Plate (Optional)</label>
-                    <input 
-                      type="text" 
-                      value={newVehicle.licensePlate} 
-                      onChange={e => setNewVehicle({...newVehicle, licensePlate: e.target.value})}
-                      placeholder="e.g. ABC-1234"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Color (Optional)</label>
-                    <input 
-                      type="text" 
-                      value={newVehicle.color} 
-                      onChange={e => setNewVehicle({...newVehicle, color: e.target.value})}
-                      placeholder="e.g. Red"
-                    />
-                  </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button type="submit" className="btn-primary" disabled={loading}>
-                      {loading ? 'Adding...' : 'Add to Garage'}
-                    </button>
-                    <button type="button" className="btn-secondary" onClick={() => setShowAddForm(false)}>
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {myVehicles.length > 0 ? (
-                <div className="vehicles-grid">
-                  {myVehicles.map(v => (
-                    <div key={v.id} className="vehicle-item-row">
-                      <div className="vehicle-item-details">
-                        <h4>{v.displayName}</h4>
-                        <div className="vehicle-item-meta">
-                          {v.licensePlate && <span><strong>Plate:</strong> {v.licensePlate}</span>}
-                          {v.color && <span><strong>Color:</strong> {v.color}</span>}
-                        </div>
-                      </div>
-                      <button 
-                        onClick={() => handleDeleteVehicle(v.id)}
-                        className="btn-remove-vehicle"
-                      >
-                        <svg style={{ width: '12px', height: '12px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                !showAddForm && <p className="garage-empty">No vehicles in your garage yet.</p>
-              )}
-            </div>
           ) : (
             <div className="orders-container">
               <div className="garage-header" style={{ marginBottom: '20px' }}>

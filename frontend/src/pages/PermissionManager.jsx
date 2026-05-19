@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import ConfirmModal from '../components/common/ConfirmModal';
 import './RoleManager.css'; // Reusing styles
 
 const PermissionManager = () => {
@@ -7,6 +8,7 @@ const PermissionManager = () => {
   const [newPermission, setNewPermission] = useState({ name: '', description: '', group: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, idToRemove: null });
 
   useEffect(() => {
     loadPermissions();
@@ -35,8 +37,14 @@ const PermissionManager = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this permission?")) return;
+  const handleDelete = (id) => {
+    setConfirmModal({ isOpen: true, idToRemove: id });
+  };
+
+  const executeDelete = async () => {
+    const id = confirmModal.idToRemove;
+    setConfirmModal({ isOpen: false, idToRemove: null });
+    if (!id) return;
     try {
       await api.deletePermission(id);
       loadPermissions();
@@ -104,6 +112,15 @@ const PermissionManager = () => {
           <p>Define fine-grained access slugs here. These slugs can then be assigned to roles in the Role Manager.</p>
         </div>
       </div>
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title="Delete Permission"
+        message="Are you sure you want to delete this permission? This action cannot be undone."
+        confirmText="Delete"
+        onCancel={() => setConfirmModal({ isOpen: false, idToRemove: null })}
+        onConfirm={executeDelete}
+      />
     </div>
   );
 };

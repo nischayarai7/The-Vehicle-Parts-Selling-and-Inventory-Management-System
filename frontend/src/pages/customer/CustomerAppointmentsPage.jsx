@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../services/api';
-import './ShopPage.css'; // Reusing shop page styles for consistency
+import { api } from '../../services/api';
+import ConfirmModal from '../../components/common/ConfirmModal';
+import '../ShopPage.css'; // Reusing shop page styles for consistency
 
-// Business hours config (8 AM = 8, 6 PM = 18)
-const BUSINESS_START = 8;
+// Business hours config (9 AM = 9, 6 PM = 18)
+const BUSINESS_START = 9;
 const BUSINESS_END = 18;
 const DAYS_AHEAD = 5;
 const MIN_HOURS_ADVANCE = 24;
@@ -57,6 +58,7 @@ const CustomerAppointmentsPage = () => {
   const [showModal, setShowModal] = useState(false);
 
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, idToRemove: null });
 
   useEffect(() => {
     fetchAppointments();
@@ -66,16 +68,30 @@ const CustomerAppointmentsPage = () => {
 
   useEffect(() => {
     if (slots.length > 0 && !selectedDay) {
-      const firstDay = slots[0].display.split('  •  ')[0];
+      const firstDay = slots[0].display.includes('  •  ')
+        ? slots[0].display.split('  •  ')[0]
+        : new Date(slots[0].dateTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
       setSelectedDay(firstDay);
     }
   }, [slots]);
 
   const fetchSlots = async () => {
     try {
-      const data = await api.getAvailableSlots();
-      if (data && data.length > 0) {
-        setSlots(data);
+      const res = await api.getAvailableSlots();
+      const slotsArray = res.data || (Array.isArray(res) ? res : []);
+      if (slotsArray && slotsArray.length > 0) {
+        const parsedSlots = slotsArray.map(slot => {
+          const slotDate = new Date(slot.dateTime);
+          const dayName = slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+          const hour = slotDate.getHours();
+          const hourStr = hour < 12 ? `${hour}:00 AM` : hour === 12 ? `12:00 PM` : `${hour - 12}:00 PM`;
+          
+          return {
+            ...slot,
+            display: `${dayName}  •  ${hourStr}`
+          };
+        });
+        setSlots(parsedSlots);
       }
     } catch (err) {
       console.log('Using local slots fallback (backend might need restart)');
@@ -102,8 +118,6 @@ const CustomerAppointmentsPage = () => {
 
   const fetchMyVehicles = async () => {
     try {
-      // Assuming getMyVehicles exists or we can use getCustomerVehicles if we know customer ID
-      // For now let's try to get them or return empty
       const data = await api.getMyVehicles().catch(() => []);
       setMyVehicles(data);
     } catch (err) {
@@ -116,15 +130,39 @@ const CustomerAppointmentsPage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleRemoveAppointment = async (id) => {
-    if (!window.confirm('Are you sure you want to remove this appointment?')) return;
+  const handleRemoveAppointment = (id) => {
+    setConfirmModal({ isOpen: true, idToRemove: id });
+  };
+
+  const executeRemoveAppointment = async () => {
+    const id = confirmModal.idToRemove;
+    setConfirmModal({ isOpen: false, idToRemove: null });
+    if (!id) return;
+    
+    // Find the appointment date to optimistically update the UI
+    const appointmentToRemove = appointments.find(a => a.id === id);
+    
     try {
       await api.deleteAppointment(id);
+      
+      // Optimistically increment the slot availability instantly
+      if (appointmentToRemove && appointmentToRemove.appointmentDate) {
+        setSlots(prev => prev.map(s => 
+          s.dateTime === appointmentToRemove.appointmentDate 
+            ? { ...s, available: s.available + 1 }
+            : s
+        ));
+      }
+
       setMessage({ text: 'Appointment removed successfully!', type: 'success' });
+      setTimeout(() => setMessage({ text: '', type: '' }), 4000);
+      
       fetchAppointments(); // Refresh list
+      fetchSlots(); // Sync slots with server
     } catch (err) {
       console.error('Failed to remove appointment:', err);
       setMessage({ text: 'Failed to remove appointment.', type: 'error' });
+      setTimeout(() => setMessage({ text: '', type: '' }), 4000);
     }
   };
 
@@ -137,6 +175,14 @@ const CustomerAppointmentsPage = () => {
 
     try {
       setSubmitting(true);
+      
+      // Optimistic instant UI update for immediate feedback
+      setSlots(prev => prev.map(s => 
+        s.dateTime === formData.appointmentDate 
+          ? { ...s, available: Math.max(0, s.available - 1) } 
+          : s
+      ));
+
       await api.bookAppointment({
         vehicleId: formData.vehicleId ? parseInt(formData.vehicleId) : null,
         serviceType: selectedServices.join(', '),
@@ -185,6 +231,34 @@ const CustomerAppointmentsPage = () => {
 
   return (
     <div>
+      <style>
+        {`
+          .liquid-hover-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease !important;
+            z-index: 1;
+          }
+          .liquid-hover-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(248, 81, 73, 0.6), rgba(255, 255, 255, 0.9), transparent);
+            transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: -1;
+            transform: skewX(-25deg);
+          }
+          .liquid-hover-btn:hover::before {
+            left: 200%;
+          }
+          .liquid-hover-btn:hover {
+            box-shadow: 0 0 15px rgba(248, 81, 73, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.2);
+            border-color: #fff !important;
+            background: rgba(248, 81, 73, 0.15) !important;
+          }
+        `}
+      </style>
       {/* Success Modal */}
       {showModal && (
         <div style={{
@@ -239,27 +313,41 @@ const CustomerAppointmentsPage = () => {
           
           {message.text && (
             <div style={{ 
-              padding: '10px', 
-              borderRadius: '4px', 
-              marginBottom: '15px',
-              background: message.type === 'success' ? 'rgba(46, 160, 67, 0.15)' : 'rgba(248, 81, 73, 0.15)',
+              position: 'fixed',
+              top: '30px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 9999,
+              padding: '12px 24px', 
+              borderRadius: '8px', 
+              background: '#161b22',
               color: message.type === 'success' ? '#3fb950' : '#f85149',
-              border: `1px solid ${message.type === 'success' ? '#2ea043' : '#f85149'}`
+              border: `1px solid ${message.type === 'success' ? 'rgba(63, 185, 80, 0.4)' : 'rgba(248, 81, 73, 0.4)'}`,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
             }}>
+              <span style={{ fontSize: '16px' }}>{message.type === 'success' ? '✓' : '⚠️'}</span>
               {message.text}
             </div>
           )}
 
           {hasActiveBooking && (
             <div style={{ 
-              padding: '12px', 
-              borderRadius: '6px', 
+              padding: '12px 16px', 
+              borderRadius: '4px', 
               marginBottom: '20px',
-              background: 'rgba(250, 173, 20, 0.15)',
-              color: '#faad14',
-              border: '1px solid #faad14'
+              background: '#161b22',
+              color: '#8b949e',
+              borderLeft: '4px solid #1890ff',
+              fontSize: '13px',
+              lineHeight: '1.5'
             }}>
-              ⚠️ You already have an active booking. Please complete or remove it before booking again.
+              <strong style={{ color: '#c9d1d9', marginRight: '6px' }}>Active Booking:</strong> 
+              You currently have a service appointment scheduled. Please complete or cancel your existing appointment before booking a new one.
             </div>
           )}
 
@@ -280,6 +368,7 @@ const CustomerAppointmentsPage = () => {
                     <button
                       key={service}
                       type="button"
+                      className={!isSelected ? "liquid-hover-btn" : ""}
                       onClick={() => {
                         setSelectedServices(prev => 
                           prev.includes(service) 
@@ -296,20 +385,7 @@ const CustomerAppointmentsPage = () => {
                         cursor: 'pointer',
                         textAlign: 'center',
                         fontSize: '13px',
-                        transition: 'all 0.2s ease',
                         boxShadow: isSelected ? '0 0 10px rgba(82, 196, 26, 0.2)' : 'none'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.borderColor = '#1890ff';
-                          e.currentTarget.style.background = 'rgba(24, 144, 255, 0.05)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.borderColor = '#2f363d';
-                          e.currentTarget.style.background = '#0d1117';
-                        }
                       }}
                     >
                       {service}
@@ -324,29 +400,17 @@ const CustomerAppointmentsPage = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>
                 <button
                   type="button"
+                  className={formData.vehicleId !== '' ? "liquid-hover-btn" : ""}
                   onClick={() => setFormData(prev => ({ ...prev, vehicleId: '' }))}
                   style={{
                     padding: '12px',
-                    background: formData.vehicleId === '' ? 'rgba(24, 144, 255, 0.15)' : '#0d1117',
-                    color: formData.vehicleId === '' ? '#1890ff' : '#fff',
-                    border: `1px solid ${formData.vehicleId === '' ? '#1890ff' : '#2f363d'}`,
+                    background: formData.vehicleId === '' ? 'rgba(82, 196, 26, 0.15)' : '#0d1117',
+                    color: formData.vehicleId === '' ? '#52c41a' : '#fff',
+                    border: `1px solid ${formData.vehicleId === '' ? '#52c41a' : '#2f363d'}`,
                     borderRadius: '8px',
                     cursor: 'pointer',
                     textAlign: 'center',
-                    fontSize: '13px',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (formData.vehicleId !== '') {
-                      e.currentTarget.style.borderColor = '#1890ff';
-                      e.currentTarget.style.background = 'rgba(24, 144, 255, 0.05)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (formData.vehicleId !== '') {
-                      e.currentTarget.style.borderColor = '#2f363d';
-                      e.currentTarget.style.background = '#0d1117';
-                    }
+                    fontSize: '13px'
                   }}
                 >
                   -- No specific vehicle --
@@ -357,6 +421,7 @@ const CustomerAppointmentsPage = () => {
                     <button
                       key={v.id}
                       type="button"
+                      className={!isSelected ? "liquid-hover-btn" : ""}
                       onClick={() => setFormData(prev => ({ ...prev, vehicleId: String(v.id) }))}
                       style={{
                         padding: '12px',
@@ -366,20 +431,7 @@ const CustomerAppointmentsPage = () => {
                         borderRadius: '8px',
                         cursor: 'pointer',
                         textAlign: 'center',
-                        fontSize: '13px',
-                        transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.borderColor = '#1890ff';
-                          e.currentTarget.style.background = 'rgba(24, 144, 255, 0.05)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) {
-                          e.currentTarget.style.borderColor = '#2f363d';
-                          e.currentTarget.style.background = '#0d1117';
-                        }
+                        fontSize: '13px'
                       }}
                     >
                       {v.displayName || `${v.make} ${v.model}`}
@@ -395,44 +447,39 @@ const CustomerAppointmentsPage = () => {
               {/* Day Tabs */}
               <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '15px', paddingBottom: '5px' }}>
                 {Object.keys(slots.reduce((acc, slot) => {
-                  const day = slot.display.includes('  •  ') 
-                    ? slot.display.split('  •  ')[0]
-                    : new Date(slot.dateTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                  const day = new Date(slot.dateTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                   if (!acc[day]) acc[day] = [];
                   acc[day].push(slot);
                   return acc;
-                }, {})).map(day => (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => setSelectedDay(day)}
-                    style={{
-                      padding: '8px 16px',
-                      background: selectedDay === day ? '#52c41a' : '#0d1117',
-                      color: '#fff',
-                      border: `1px solid ${selectedDay === day ? '#52c41a' : '#2f363d'}`,
-                      borderRadius: '20px',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      fontWeight: selectedDay === day ? 'bold' : 'normal',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedDay !== day) {
-                        e.currentTarget.style.borderColor = '#1890ff';
-                        e.currentTarget.style.background = 'rgba(24, 144, 255, 0.05)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedDay !== day) {
-                        e.currentTarget.style.borderColor = '#2f363d';
-                        e.currentTarget.style.background = '#0d1117';
-                      }
-                    }}
-                  >
-                    {day}
-                  </button>
-                ))}
+                }, {})).map(day => {
+                  const isDayBooked = appointments.some(appt => {
+                    if (appt.status === 'Cancelled') return false;
+                    const apptDay = new Date(appt.appointmentDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    return apptDay === day;
+                  });
+
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      className={selectedDay !== day ? "liquid-hover-btn" : ""}
+                      onClick={() => setSelectedDay(day)}
+                      style={{
+                        padding: '8px 16px',
+                        background: selectedDay === day ? '#52c41a' : '#0d1117',
+                        color: selectedDay === day ? '#fff' : (isDayBooked ? '#8b949e' : '#fff'),
+                        border: `1px solid ${selectedDay === day ? '#52c41a' : '#2f363d'}`,
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        fontWeight: selectedDay === day ? 'bold' : 'normal',
+                        opacity: isDayBooked && selectedDay !== day ? 0.7 : 1
+                      }}
+                    >
+                      {day} {isDayBooked && '(Booked)'}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Time Pills Grid */}
@@ -443,26 +490,39 @@ const CustomerAppointmentsPage = () => {
               }}>
                 {slots
                   .filter(slot => {
-                    const day = slot.display.includes('  •  ') 
-                      ? slot.display.split('  •  ')[0]
-                      : new Date(slot.dateTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    const day = new Date(slot.dateTime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                     return day === selectedDay;
                   })
                   .map(slot => {
-                    const timeStr = slot.display.includes('  •  ')
-                      ? slot.display.split('  •  ')[1]
-                      : new Date(slot.dateTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                    const timeStr = new Date(slot.dateTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
                     const isSelected = formData.appointmentDate === slot.dateTime;
                     const isBooked = activeDate === slot.dateTime;
                     const isFull = slot.available <= 0;
+                    
+                    const isDayBooked = appointments.some(appt => {
+                      if (appt.status === 'Cancelled') return false;
+                      const apptDay = new Date(appt.appointmentDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                      return apptDay === selectedDay;
+                    });
+
+                    const isDisabled = isFull || hasActiveBooking || isDayBooked;
 
                     return (
                       <button
                         key={slot.dateTime}
                         type="button"
+                        className={!isSelected && !isDisabled ? "liquid-hover-btn" : ""}
                         onClick={() => {
-                          if (hasActiveBooking) return;
-                          if (!isFull) setFormData(prev => ({ ...prev, appointmentDate: slot.dateTime }));
+                          if (isDisabled) {
+                            if (isDayBooked) {
+                              setMessage({ text: 'You already have an appointment scheduled for this day.', type: 'error' });
+                            } else if (isFull) {
+                              setMessage({ text: 'This time slot is fully booked.', type: 'error' });
+                            }
+                            setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+                            return;
+                          }
+                          setFormData(prev => ({ ...prev, appointmentDate: slot.dateTime }));
                         }}
                         style={{
                           padding: '10px',
@@ -470,32 +530,18 @@ const CustomerAppointmentsPage = () => {
                           color: isFull ? '#444' : (isSelected || isBooked) ? '#52c41a' : '#fff',
                           border: `1px solid ${(isSelected || isBooked) ? '#52c41a' : '#2f363d'}`,
                           borderRadius: '6px',
-                          cursor: isFull ? 'not-allowed' : hasActiveBooking ? 'not-allowed' : 'pointer',
+                          cursor: isDisabled ? 'not-allowed' : 'pointer',
                           textAlign: 'center',
                           fontSize: '13px',
-                          transition: 'all 0.2s',
                           display: 'flex',
                           flexDirection: 'column',
                           gap: '4px',
                           alignItems: 'center',
-                          filter: (hasActiveBooking && !isBooked) ? 'blur(1px)' : 'none',
-                          opacity: (hasActiveBooking && !isBooked) ? 0.6 : 1
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!isSelected && !isFull) {
-                            e.currentTarget.style.borderColor = '#1890ff';
-                            e.currentTarget.style.background = 'rgba(24, 144, 255, 0.05)';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!isSelected && !isFull) {
-                            e.currentTarget.style.borderColor = '#2f363d';
-                            e.currentTarget.style.background = '#0d1117';
-                          }
+                          opacity: isDisabled && !isBooked && !isSelected ? 0.4 : 1
                         }}
                       >
                         <span style={{ fontWeight: isSelected ? 'bold' : 'normal' }}>{timeStr}</span>
-                        <span style={{ fontSize: '11px', color: isFull ? '#ff4d4f' : isSelected ? '#1890ff' : '#888' }}>
+                        <span style={{ fontSize: '11px', color: isFull ? '#f85149' : isSelected ? '#52c41a' : '#888' }}>
                           {isFull ? 'Full' : `${slot.available} left`}
                         </span>
                       </button>
@@ -517,11 +563,49 @@ const CustomerAppointmentsPage = () => {
 
             <button 
               type="submit" 
-              className="btn-primary" 
-              style={{ width: '100%' }}
               disabled={submitting || hasActiveBooking}
+              style={{ 
+                width: '100%',
+                padding: '14px',
+                background: (submitting || hasActiveBooking) ? '#21262d' : 'linear-gradient(135deg, #2ea043 0%, #238636 100%)',
+                color: (submitting || hasActiveBooking) ? '#8b949e' : '#ffffff',
+                border: (submitting || hasActiveBooking) ? '1px solid #30363d' : '1px solid rgba(240,246,252,0.1)',
+                borderRadius: '8px',
+                fontSize: '15px',
+                fontWeight: '600',
+                cursor: (submitting || hasActiveBooking) ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: (submitting || hasActiveBooking) ? 'none' : '0 4px 12px rgba(46, 160, 67, 0.3)',
+                textShadow: (submitting || hasActiveBooking) ? 'none' : '0 1px 2px rgba(0,0,0,0.2)'
+              }}
+              onMouseEnter={(e) => {
+                if (!submitting && !hasActiveBooking) {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(46, 160, 67, 0.4)';
+                  e.currentTarget.style.filter = 'brightness(1.1)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!submitting && !hasActiveBooking) {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(46, 160, 67, 0.3)';
+                  e.currentTarget.style.filter = 'brightness(1)';
+                }
+              }}
+              onMouseDown={(e) => {
+                if (!submitting && !hasActiveBooking) {
+                  e.currentTarget.style.transform = 'translateY(1px)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(46, 160, 67, 0.3)';
+                }
+              }}
+              onMouseUp={(e) => {
+                if (!submitting && !hasActiveBooking) {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(46, 160, 67, 0.4)';
+                }
+              }}
             >
-              {submitting ? 'Booking...' : 'Confirm Booking'}
+              {submitting ? 'Confirming Appointment...' : 'Confirm Appointment'}
             </button>
           </form>
         </div>
@@ -599,6 +683,15 @@ const CustomerAppointmentsPage = () => {
           </div>
         </div>
       </div>
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title="Remove Appointment"
+        message="Are you sure you want to remove this appointment? This action cannot be undone."
+        confirmText="Remove"
+        onCancel={() => setConfirmModal({ isOpen: false, idToRemove: null })}
+        onConfirm={executeRemoveAppointment}
+      />
     </div>
   );
 };

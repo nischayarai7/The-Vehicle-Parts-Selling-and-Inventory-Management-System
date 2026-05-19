@@ -1,4 +1,4 @@
-xusing backend.Data;
+using backend.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +13,7 @@ namespace backend.Controllers
 
         // Config constants (keep in sync with frontend)
         private const int MaxPerSlot = 5;
-        private const int BusinessStartHour = 8;   // 8 AM
+        private const int BusinessStartHour = 9;   // 9 AM
         private const int BusinessEndHour = 18;    // 6 PM
         private const int DaysAhead = 5;
         private const int MinHoursAdvance = 24;
@@ -31,27 +31,28 @@ namespace backend.Controllers
         {
             try
             {
-                var now = DateTime.UtcNow;
-                var earliest = now.AddHours(MinHoursAdvance);
+                var localNow = DateTime.Now;
+                var localEarliest = localNow.AddHours(MinHoursAdvance);
 
                 var slots = new List<object>();
 
                 for (int day = 0; day < DaysAhead; day++)
                 {
-                    var baseDate = earliest.AddDays(day).Date;
+                    var baseDate = localEarliest.AddDays(day).Date; // Local date
 
                     for (int hour = BusinessStartHour; hour < BusinessEndHour; hour++)
                     {
-                        var slotStart = baseDate.AddHours(hour);
+                        var localSlotTime = baseDate.AddHours(hour); // Local slot time
 
-                        if (slotStart < earliest) continue;
+                        if (localSlotTime < localEarliest) continue;
 
-                        var slotEnd = slotStart.AddHours(1);
+                        var slotStartUtc = localSlotTime.ToUniversalTime(); // Convert to UTC for DB
+                        var slotEndUtc = slotStartUtc.AddHours(1);
 
                         var booked = await _context.Appointments
                             .CountAsync(a =>
-                                a.AppointmentDate >= slotStart &&
-                                a.AppointmentDate < slotEnd &&
+                                a.AppointmentDate >= slotStartUtc &&
+                                a.AppointmentDate < slotEndUtc &&
                                 a.Status != "Cancelled");
 
                         var available = MaxPerSlot - booked;
@@ -60,7 +61,7 @@ namespace backend.Controllers
                         {
                             slots.Add(new
                             {
-                                dateTime = slotStart,
+                                dateTime = slotStartUtc,
                                 available = available,
                                 total = MaxPerSlot
                             });

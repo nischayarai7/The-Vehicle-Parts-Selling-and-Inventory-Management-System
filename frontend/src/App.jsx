@@ -42,12 +42,13 @@ import AppointmentsManager from './pages/staff/AppointmentsManager';
 // Customer Pages
 import CustomerLayout from './layouts/CustomerLayout';
 import CustomerRoute from './components/CustomerRoute';
-import CustomerDashboard from './pages/CustomerDashboard';
-import PartRequestsPage from './pages/PartRequestsPage';
-import ReviewsPage from './pages/ReviewsPage';
-import CustomerAppointmentsPage from './pages/CustomerAppointmentsPage';
-import CustomerOrdersPage from './pages/CustomerOrdersPage';
-import CustomerServiceHistoryPage from './pages/CustomerServiceHistoryPage';
+import CustomerDashboard from './pages/customer/CustomerDashboard';
+import PartRequestsPage from './pages/customer/PartRequestsPage';
+import ReviewsPage from './pages/customer/ReviewsPage';
+import CustomerAppointmentsPage from './pages/customer/CustomerAppointmentsPage';
+import CustomerOrdersPage from './pages/customer/CustomerOrdersPage';
+import CustomerServiceHistoryPage from './pages/customer/CustomerServiceHistoryPage';
+import CustomerGaragePage from './pages/customer/CustomerGaragePage';
 
 function App() {
   return (
@@ -83,6 +84,7 @@ function App() {
         <Route path="settings" element={<ProfileSettings />} />
         <Route path="orders" element={<CustomerOrdersPage />} />
         <Route path="service-history" element={<CustomerServiceHistoryPage />} />
+        <Route path="garage" element={<CustomerGaragePage />} />
       </Route>
       
       {/* Staff Routes */}
