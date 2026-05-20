@@ -22,6 +22,7 @@ function ShopPage() {
   const [categories, setCategories] = useState([]);
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reviewAverages, setReviewAverages] = useState({});
 
   // Active filters and query parameters
   const makeParam = searchParams.get('make') || '';
@@ -66,12 +67,24 @@ function ShopPage() {
 
   const fetchInitialData = async () => {
     try {
-      const [catsData, vehiclesData] = await Promise.all([
+      const [catsData, vehiclesData, averagesData] = await Promise.all([
         api.getActiveCategories(),
-        api.getVehicles()
+        api.getVehicles(),
+        api.getPartReviewAverages().catch(() => [])
       ]);
       setCategories(catsData);
       setVehicles(vehiclesData);
+
+      const averagesMap = {};
+      if (Array.isArray(averagesData)) {
+        averagesData.forEach(item => {
+          averagesMap[item.partId] = {
+            averageRating: item.averageRating,
+            count: item.count
+          };
+        });
+      }
+      setReviewAverages(averagesMap);
     } catch (err) {
       console.error('Error fetching initial shop data:', err);
     }
@@ -417,19 +430,19 @@ function ShopPage() {
                   <span>Fits: {getCompatibilityText(part.compatibleVehicles)}</span>
                 </div>
                 {(() => {
-                  const local = localStorage.getItem(`part_reviews_${part.id}`);
-                  const reviews = local ? JSON.parse(local) : [
-                    { rating: 5 },
-                    { rating: 4 }
-                  ];
-                  const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+                  const ratingInfo = reviewAverages[part.id] || { averageRating: 0.0, count: 0 };
+                  const avg = ratingInfo.averageRating;
+                  const count = ratingInfo.count;
                   const filledStars = '★'.repeat(Math.round(avg));
                   const emptyStars = '☆'.repeat(5 - Math.round(avg));
                   return (
                     <div className="product-rating" style={{ fontSize: '11px', color: '#e3b341', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      {count > 0 && (
+                        <span style={{ color: '#e3b341', fontWeight: '700', marginRight: '3px' }}>{avg.toFixed(1)}</span>
+                      )}
                       <span style={{ color: '#e3b341' }}>{filledStars}</span>
-                      <span style={{ color: '#555' }}>{emptyStars}</span>
-                      <span className="rating-count" style={{ color: '#888', marginLeft: '4px' }}>({reviews.length})</span>
+                      <span style={{ color: '#475569' }}>{emptyStars}</span>
+                      <span className="rating-count" style={{ color: '#888', marginLeft: '4px' }}>({count})</span>
                     </div>
                   );
                 })()}

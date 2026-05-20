@@ -96,6 +96,23 @@ export const api = {
     method: 'DELETE',
     headers: getAuthHeaders()
   }).then(handleResponse),
+  getPartReviews: (partId) => fetch(`${API_BASE}/partreviews/part/${partId}`).then(handleResponse),
+  getMyLastPartReview: (partId) => fetch(`${API_BASE}/partreviews/part/${partId}/my-last-review`, { headers: getAuthHeaders() }).then(handleResponse),
+  createPartReview: (data) => fetch(`${API_BASE}/partreviews`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  updatePartReview: (id, data) => fetch(`${API_BASE}/partreviews/${id}`, {
+    method: 'PUT',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+  deletePartReview: (id) => fetch(`${API_BASE}/partreviews/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  }).then(handleResponse),
+  getPartReviewAverages: () => fetch(`${API_BASE}/partreviews/averages`).then(handleResponse),
   getMyOrders: () => fetch(`${API_BASE}/orders/my`, { headers: getAuthHeaders() }).then(handleResponse),
   getOrderDetails: (id) => fetch(`${API_BASE}/orders/${id}`, { headers: getAuthHeaders() }).then(handleResponse),
 

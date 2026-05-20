@@ -122,7 +122,7 @@ const Navbar = () => {
                   {user?.role === 'Admin' && (
                     <Link to="/admin" className="dropdown-item">Admin Dashboard</Link>
                   )}
-                  {(user?.role === 'Staff' || user?.role === 'Admin') && (
+                  {user?.role === 'Staff' && (
                     <Link to="/staff" className="dropdown-item">Staff Dashboard</Link>
                   )}
                   {user?.role === 'Customer' && (

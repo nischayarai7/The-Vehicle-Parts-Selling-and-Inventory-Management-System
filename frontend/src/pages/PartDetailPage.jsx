@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { api } from '../services/api';
 import { useCart } from '../context/CartContext';
 import './PartDetailPage.css';
@@ -8,6 +9,8 @@ function PartDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart, showToast } = useCart();
+
+  const { user } = useSelector((state) => state.auth || {});
 
   const [part, setPart] = useState(null);
   const [vehicles, setVehicles] = useState([]);
@@ -18,6 +21,13 @@ function PartDetailPage() {
   const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState({ fullName: '', rating: 5, comment: '' });
   const [hoverRating, setHoverRating] = useState(0);
+  const [daysRemaining, setDaysRemaining] = useState(0);
+
+  // Edit Review States
+  const [editingReviewId, setEditingReviewId] = useState(null);
+  const [editRating, setEditRating] = useState(5);
+  const [editComment, setEditComment] = useState('');
+  const [editHoverRating, setEditHoverRating] = useState(0);
 
   // Fitment Checker States
   const [selectedMake, setSelectedMake] = useState('');
@@ -28,6 +38,13 @@ function PartDetailPage() {
 
   // Image Gallery States
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  // Sync user info into newReview state
+  useEffect(() => {
+    if (user && user.fullName) {
+      setNewReview(prev => ({ ...prev, fullName: user.fullName }));
+    }
+  }, [user]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -50,58 +67,135 @@ function PartDetailPage() {
     fetchDetailData();
   }, [id]);
 
+  const fetchPartReviews = async () => {
+    if (!part?.id) return;
+    try {
+      const dbReviews = await api.getPartReviews(part.id);
+      const mapped = dbReviews.map(r => ({
+        id: r.id,
+        fullName: r.customer?.fullName || 'Anonymous',
+        userId: r.customerId,
+        userEmail: r.customer?.email,
+        rating: r.rating,
+        comment: r.comment,
+        createdAt: r.createdAt
+      }));
+      setReviews(mapped);
+
+      if (user) {
+        const lastReview = await api.getMyLastPartReview(part.id).catch(() => null);
+        if (lastReview) {
+          const lastDate = new Date(lastReview.createdAt);
+          const diffTime = Math.abs(new Date() - lastDate);
+          const diffDays = diffTime / (1000 * 60 * 60 * 24);
+          if (diffDays < 30) {
+            setDaysRemaining(Math.ceil(30 - diffDays));
+          } else {
+            setDaysRemaining(0);
+          }
+        } else {
+          setDaysRemaining(0);
+        }
+      } else {
+        setDaysRemaining(0);
+      }
+    } catch (err) {
+      console.error("Failed to load reviews from backend:", err);
+    }
+  };
+
   useEffect(() => {
     if (part) {
-      const local = localStorage.getItem(`part_reviews_${part.id}`);
-      if (local) {
-        setReviews(JSON.parse(local));
-      } else {
-        const mockReviews = [
-          {
-            id: `mock-1-${part.id}`,
-            fullName: "Arjun Thapa",
-            rating: 5,
-            comment: `Absolutely brilliant! Fits my vehicle perfectly. Highly recommend this ${part.name}.`,
-            createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: `mock-2-${part.id}`,
-            fullName: "Sushant Rai",
-            rating: 4,
-            comment: `Quality materials, looks very premium. Shipping took two days but the packaging was excellent.`,
-            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-          }
-        ];
-        localStorage.setItem(`part_reviews_${part.id}`, JSON.stringify(mockReviews));
-        setReviews(mockReviews);
+      fetchPartReviews();
+    }
+  }, [part, user]);
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!newReview.comment.trim()) return;
+    if (newReview.rating < 1 || newReview.rating > 5) return;
+    if (daysRemaining > 0) {
+      if (showToast) {
+        showToast(`You can only review this item once a month. Please try again in ${daysRemaining} days.`, 'error');
+      }
+      return;
+    }
+
+    try {
+      const data = {
+        partId: parseInt(part.id),
+        rating: newReview.rating,
+        comment: newReview.comment
+      };
+      await api.createPartReview(data);
+
+      setNewReview(prev => ({
+        ...prev,
+        rating: 5,
+        comment: ''
+      }));
+
+      if (showToast) {
+        showToast('Thank you! Your product review has been submitted.', 'success');
+      }
+
+      await fetchPartReviews();
+    } catch (err) {
+      console.error("Failed to submit review:", err);
+      if (showToast) {
+        showToast(err?.message || 'Failed to submit review.', 'error');
       }
     }
-  }, [part]);
+  };
 
-  const handleReviewSubmit = (e) => {
+  const handleStartEdit = (review) => {
+    setEditingReviewId(review.id);
+    setEditRating(review.rating);
+    setEditComment(review.comment);
+    setEditHoverRating(0);
+  };
+
+  const handleReviewUpdateSubmit = async (e, reviewId) => {
     e.preventDefault();
-    if (!newReview.fullName || !newReview.comment) return;
+    if (!editComment.trim()) return;
 
-    const reviewObj = {
-      id: `review-${Date.now()}`,
-      fullName: newReview.fullName,
-      rating: newReview.rating,
-      comment: newReview.comment,
-      createdAt: new Date().toISOString()
-    };
+    try {
+      await api.updatePartReview(reviewId, {
+        rating: editRating,
+        comment: editComment
+      });
 
-    const updatedReviews = [reviewObj, ...reviews];
-    localStorage.setItem(`part_reviews_${part.id}`, JSON.stringify(updatedReviews));
-    setReviews(updatedReviews);
+      setEditingReviewId(null);
+
+      if (showToast) {
+        showToast('Your review has been updated successfully.', 'success');
+      }
+
+      await fetchPartReviews();
+    } catch (err) {
+      console.error("Failed to update review:", err);
+      if (showToast) {
+        showToast(err?.message || 'Failed to update review.', 'error');
+      }
+    }
+  };
+
+  const handleReviewDelete = async (reviewId) => {
+    if (!window.confirm('Are you sure you want to delete this review?')) return;
     
-    setNewReview({
-      fullName: '',
-      rating: 5,
-      comment: ''
-    });
+    try {
+      await api.deletePartReview(reviewId);
 
-    if (showToast) {
-      showToast('Thank you! Your product review has been submitted.', 'success');
+      if (showToast) {
+        showToast('Your review has been deleted.', 'success');
+      }
+
+      await fetchPartReviews();
+    } catch (err) {
+      console.error("Failed to delete review:", err);
+      if (showToast) {
+        showToast(err?.message || 'Failed to delete review.', 'error');
+      }
     }
   };
 
@@ -322,12 +416,15 @@ function PartDetailPage() {
               const totalReviews = reviews.length;
               const avgRating = totalReviews > 0 
                 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews).toFixed(1)
-                : '5.0';
+                : '0.0';
               const filledStars = '★'.repeat(Math.round(parseFloat(avgRating)));
               const emptyStars = '☆'.repeat(5 - Math.round(parseFloat(avgRating)));
               return (
-                <div className="part-rating-stars" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f59e0b', fontSize: '15px' }}>
-                  <span>{filledStars}{emptyStars}</span>
+                <div className="part-rating-stars" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px' }}>
+                  <div style={{ display: 'flex', gap: '2px' }}>
+                    <span style={{ color: '#f59e0b' }}>{filledStars}</span>
+                    <span style={{ color: '#475569' }}>{emptyStars}</span>
+                  </div>
                   <span className="rating-text" style={{ color: '#888', fontSize: '13px', fontWeight: '500' }}>
                     {avgRating} · {totalReviews} product review{totalReviews !== 1 ? 's' : ''}
                   </span>
@@ -461,90 +558,193 @@ function PartDetailPage() {
       </div>
 
       {/* Reviews Section */}
-      <div className="part-reviews-container" style={{ marginTop: '56px', paddingTop: '40px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <h3 style={{ fontSize: '22px', fontWeight: '800', color: '#fff', marginBottom: '28px', letterSpacing: '-0.3px' }}>Customer Reviews & Ratings</h3>
+      <div className="part-reviews-container">
+        <h3 style={{ fontSize: '22px', fontWeight: '800', color: '#0f172a', marginBottom: '28px', letterSpacing: '-0.3px' }}>Customer Reviews & Ratings</h3>
         
-        <div className="reviews-section-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '56px' }}>
+        <div className="reviews-section-layout">
           {/* Reviews List */}
           <div className="reviews-list-col">
-            <h4 style={{ fontSize: '15px', fontWeight: '700', color: '#fff', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Verified Buyer Feedback ({reviews.length})</h4>
+            <h4 style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', marginBottom: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Verified Buyer Feedback ({reviews.length})</h4>
             {reviews.length === 0 ? (
-              <p style={{ color: '#888', fontStyle: 'italic' }}>No customer reviews yet. Be the first to share your experience!</p>
+              <p style={{ color: '#64748b', fontStyle: 'italic' }}>No customer reviews yet. Be the first to share your experience!</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {reviews.map((r, index) => (
-                  <div key={r.id || index} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '20px', transition: 'transform 0.2s' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                      <strong style={{ color: '#fff', fontSize: '14px', fontWeight: '600' }}>{r.fullName}</strong>
-                      <span style={{ color: '#64748b', fontSize: '12px' }}>{new Date(r.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+              <div className="reviews-list-wrapper">
+                {reviews.map((r, index) => {
+                  const isEditing = editingReviewId === r.id;
+                  const canEditDelete = user && r.userEmail === user.email;
+
+                  return (
+                    <div key={r.id || index} className="review-card">
+                      <div className="review-card-header">
+                        <strong className="reviewer-name">{r.fullName}</strong>
+                        <span className="review-date">
+                          {new Date(r.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+
+                      {isEditing ? (
+                        <form onSubmit={(e) => handleReviewUpdateSubmit(e, r.id)} className="review-edit-form">
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <label style={{ fontSize: '11px', fontWeight: '600', color: '#475569', textTransform: 'uppercase' }}>Edit Rating</label>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                  key={star}
+                                  type="button"
+                                  onClick={() => setEditRating(star)}
+                                  onMouseEnter={() => setEditHoverRating(star)}
+                                  onMouseLeave={() => setEditHoverRating(0)}
+                                  className="star-btn"
+                                  style={{ color: star <= (editHoverRating || editRating) ? '#f59e0b' : '#cbd5e1' }}
+                                >
+                                  ★
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <label style={{ fontSize: '11px', fontWeight: '600', color: '#475569', textTransform: 'uppercase' }}>Edit Comment</label>
+                            <textarea
+                              required
+                              value={editComment}
+                              onChange={(e) => setEditComment(e.target.value)}
+                              className="review-edit-textarea"
+                              placeholder="Update your review content..."
+                            />
+                          </div>
+
+                          <div className="review-edit-actions">
+                            <button type="submit" className="btn-edit-save">Save Changes</button>
+                            <button type="button" onClick={() => setEditingReviewId(null)} className="btn-edit-cancel">Cancel</button>
+                          </div>
+                        </form>
+                      ) : (
+                        <>
+                          <div className="review-stars">
+                            {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
+                          </div>
+                          <p className="review-comment">"{r.comment}"</p>
+                          
+                          {canEditDelete && (
+                            <div className="review-actions">
+                              <button 
+                                type="button" 
+                                onClick={() => handleStartEdit(r)} 
+                                className="btn-review-action edit"
+                                title="Edit this review"
+                              >
+                                <svg style={{ width: '13px', height: '13px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                Edit
+                              </button>
+                              <button 
+                                type="button" 
+                                onClick={() => handleReviewDelete(r.id)} 
+                                className="btn-review-action delete"
+                                title="Delete this review"
+                              >
+                                <svg style={{ width: '13px', height: '13px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </div>
-                    <div style={{ color: '#f59e0b', fontSize: '13px', marginBottom: '10px' }}>
-                      {'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}
-                    </div>
-                    <p style={{ color: '#94a3b8', fontSize: '13.5px', lineHeight: '1.5', margin: 0 }}>"{r.comment}"</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
 
           {/* Add Review Form */}
-          <div className="add-review-col" style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '16px', padding: '32px' }}>
-            <h4 style={{ fontSize: '16px', fontWeight: '700', color: '#fff', marginBottom: '4px' }}>Write a Customer Review</h4>
-            <p style={{ fontSize: '13px', color: '#888', marginBottom: '24px' }}>Share your fitment, installation process, and performance experience with other buyers.</p>
+          <div className="add-review-col">
+            <h4>Write a Customer Review</h4>
+            <p>Share your fitment, installation process, and performance experience with other buyers.</p>
             
-            <form onSubmit={handleReviewSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Your Name</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="e.g. Nischaya Rai"
-                  value={newReview.fullName}
-                  onChange={(e) => setNewReview({ ...newReview, fullName: e.target.value })}
-                  style={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px 14px', color: '#fff', fontSize: '13.5px', outline: 'none', transition: 'border 0.2s' }}
-                />
+            {!user ? (
+              <div style={{
+                background: '#f8fafc',
+                border: '1px dashed #cbd5e1',
+                padding: '24px',
+                borderRadius: '12px',
+                textAlign: 'center',
+                marginTop: '16px'
+              }}>
+                <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '14px' }}>
+                  Only registered customers can leave a review.
+                </p>
+                <Link to="/login" className="btn-submit-review" style={{ display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>
+                  Log In to Review
+                </Link>
               </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Overall Rating</label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setNewReview({ ...newReview, rating: star })}
-                      onMouseEnter={() => setHoverRating(star)}
-                      onMouseLeave={() => setHoverRating(0)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: star <= (hoverRating || newReview.rating) ? '#f59e0b' : '#222', fontSize: '26px', transition: 'color 0.1s' }}
-                    >
-                      ★
-                    </button>
-                  ))}
+            ) : (
+              <>
+                <div style={{ marginBottom: '18px' }}>
+                  <span className="badge-logged-in">Logged in as {user.fullName}</span>
                 </div>
-              </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '11px', fontWeight: '600', color: '#888', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Review Comments</label>
-                <textarea 
-                  required
-                  rows="4"
-                  placeholder="Describe vehicle fitment, installation process, or part quality..."
-                  value={newReview.comment}
-                  onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                  style={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '12px 14px', color: '#fff', fontSize: '13.5px', resize: 'vertical', outline: 'none', transition: 'border 0.2s' }}
-                />
-              </div>
+                {daysRemaining > 0 ? (
+                  <div style={{
+                    background: 'rgba(239, 68, 68, 0.08)',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    color: '#ef4444',
+                    padding: '16px',
+                    borderRadius: '8px',
+                    marginBottom: '24px',
+                    fontSize: '13px',
+                    lineHeight: '1.6',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '12px'
+                  }}>
+                    <svg style={{ width: '18px', height: '18px', flexShrink: 0, marginTop: '2px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <div>
+                      <strong style={{ display: 'block', marginBottom: '4px', fontWeight: '700' }}>Monthly Review Limit Reached</strong>
+                      You can only submit one review for this part per month to maintain feedback integrity. You will be eligible to share your next review for this item in <strong>{daysRemaining} days</strong>.
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleReviewSubmit} className="review-form">
+                    <div className="form-group">
+                      <label>Overall Rating</label>
+                      <div className="star-rating-selector">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setNewReview({ ...newReview, rating: star })}
+                            onMouseEnter={() => setHoverRating(star)}
+                            onMouseLeave={() => setHoverRating(0)}
+                            className="star-btn"
+                            style={{ color: star <= (hoverRating || newReview.rating) ? '#f59e0b' : '#cbd5e1' }}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-              <button 
-                type="submit"
-                style={{ background: '#e33b3b', color: '#fff', border: 'none', borderRadius: '24px', height: '46px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', transition: 'background 0.2s', marginTop: '10px' }}
-                onMouseEnter={(e) => e.target.style.background = '#c62e2e'}
-                onMouseLeave={(e) => e.target.style.background = '#e33b3b'}
-              >
-                Submit Review
-              </button>
-            </form>
+                    <div className="form-group">
+                      <label>Review Comments</label>
+                      <textarea 
+                        required
+                        rows="4"
+                        placeholder="Describe vehicle fitment, installation process, or part quality..."
+                        value={newReview.comment}
+                        onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                      />
+                    </div>
+
+                    <button type="submit" className="btn-submit-review">
+                      Submit Review
+                    </button>
+                  </form>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>

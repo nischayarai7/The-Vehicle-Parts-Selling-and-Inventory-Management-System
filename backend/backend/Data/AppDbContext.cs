@@ -33,6 +33,7 @@ namespace backend.Data
         public DbSet<PartRequest> PartRequests { get; set; }
         public DbSet<ServiceReview> ServiceReviews { get; set; }
         public DbSet<SystemSetting> SystemSettings { get; set; }
+        public DbSet<PartReview> PartReviews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

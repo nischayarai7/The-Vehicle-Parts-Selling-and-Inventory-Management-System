@@ -8,6 +8,7 @@ const ProductGrid = () => {
   const navigate = useNavigate();
   const [parts, setParts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reviewAverages, setReviewAverages] = useState({});
   const { addToCart, showToast } = useCart();
 
   const handleBuyNow = (part) => {
@@ -19,18 +20,32 @@ const ProductGrid = () => {
   };
 
   useEffect(() => {
-    const fetchParts = async () => {
+    const fetchPartsAndAverages = async () => {
       try {
-        const data = await api.getAllParts();
-        setParts(data);
+        const [partsData, averagesData] = await Promise.all([
+          api.getAllParts(),
+          api.getPartReviewAverages().catch(() => [])
+        ]);
+        setParts(partsData);
+
+        const averagesMap = {};
+        if (Array.isArray(averagesData)) {
+          averagesData.forEach(item => {
+            averagesMap[item.partId] = {
+              averageRating: item.averageRating,
+              count: item.count
+            };
+          });
+        }
+        setReviewAverages(averagesMap);
       } catch (error) {
-        console.error("Failed to fetch parts:", error);
+        console.error("Failed to fetch parts or averages:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchParts();
+    fetchPartsAndAverages();
   }, []);
 
   const getCompatibilityText = (vehiclesList) => {
@@ -130,19 +145,19 @@ const ProductGrid = () => {
                   <span>Fits: {getCompatibilityText(part.compatibleVehicles)}</span>
                 </div>
                 {(() => {
-                  const local = localStorage.getItem(`part_reviews_${part.id}`);
-                  const reviews = local ? JSON.parse(local) : [
-                    { rating: 5 },
-                    { rating: 4 }
-                  ];
-                  const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+                  const ratingInfo = reviewAverages[part.id] || { averageRating: 0.0, count: 0 };
+                  const avg = ratingInfo.averageRating;
+                  const count = ratingInfo.count;
                   const filledStars = '★'.repeat(Math.round(avg));
                   const emptyStars = '☆'.repeat(5 - Math.round(avg));
                   return (
                     <div className="product-rating" style={{ fontSize: '12px', color: '#e3b341', margin: '4px 0 8px 0', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      {count > 0 && (
+                        <span style={{ color: '#e3b341', fontWeight: '700', marginRight: '3px' }}>{avg.toFixed(1)}</span>
+                      )}
                       <span style={{ color: '#e3b341' }}>{filledStars}</span>
-                      <span style={{ color: '#555' }}>{emptyStars}</span>
-                      <span className="rating-count" style={{ color: '#888', marginLeft: '4px' }}>({reviews.length})</span>
+                      <span style={{ color: '#475569' }}>{emptyStars}</span>
+                      <span className="rating-count" style={{ color: '#888', marginLeft: '4px' }}>({count})</span>
                     </div>
                   );
                 })()}

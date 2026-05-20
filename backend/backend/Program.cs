@@ -100,6 +100,18 @@ using (var scope = app.Services.CreateScope())
                 value TEXT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS ""PartReviews"" (
+                ""Id"" SERIAL PRIMARY KEY,
+                ""PartId"" INTEGER NOT NULL,
+                ""UserId"" INTEGER NOT NULL,
+                ""Rating"" INTEGER NOT NULL,
+                ""Comment"" VARCHAR(1000),
+                ""CreatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                ""UpdatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT ""FK_PartReviews_parts_PartId"" FOREIGN KEY (""PartId"") REFERENCES parts(id) ON DELETE CASCADE,
+                CONSTRAINT ""FK_PartReviews_users_UserId"" FOREIGN KEY (""UserId"") REFERENCES users(id) ON DELETE CASCADE
+            );
+
             INSERT INTO system_settings (key, value) 
             VALUES ('system_wallpaper', NULL) 
             ON CONFLICT (key) DO NOTHING;
@@ -125,7 +137,7 @@ using (var scope = app.Services.CreateScope())
                 END IF;
             END $$;
         ");
-        logger.LogInformation("Database verified: 'created_by_id' column and constraints are active.");
+        logger.LogInformation("Database verified: 'created_by_id' column, constraints and PartReviews are active.");
 
         // Dynamic CSV Catalog Seed
         await CatalogSeeder.SeedCatalogFromCsv(db, logger);
