@@ -65,7 +65,7 @@ const AdminLayout = () => {
         const sortedParts = [...parts].sort((a, b) => b.id - a.id);
         const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        const lowStock = parts.filter(p => p.stockQuantity < 10);
+        const lowStock = parts.filter(p => p.stockQuantity <= (p.reorderLevel !== undefined ? p.reorderLevel : 10));
 
         const recentUserText = sortedUsers.length > 0 
           ? `${sortedUsers[0].fullName || 'New member'} registered`
@@ -231,16 +231,11 @@ const AdminLayout = () => {
       <main className="admin-main">
         <header className="admin-top-bar">
           <h1>{getPageTitle()}</h1>
-          <div className="top-bar-actions">
-            <div className="admin-top-search">
-              <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input 
-                type="text" 
-                placeholder="Search anything..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+          <div className="top-bar-actions" style={{ display: 'flex', alignItems: 'center' }}>
+            <button className="btn-universal-refresh" onClick={() => window.location.reload()} title="Refresh Page">
+              <svg className="btn-universal-refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <span>Refresh</span>
+            </button>
             <button className="btn-storefront" onClick={() => navigate('/')}>
               <svg className="btn-storefront-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
               <span>6ix<span className="accent-text">7</span>even</span>
@@ -259,7 +254,7 @@ const AdminLayout = () => {
           <h4>Notifications</h4>
           {/* Low Stock Alerts */}
           {panelData.lowStockAlerts.length > 0 ? (
-            panelData.lowStockAlerts.slice(0, 2).map((p) => (
+            panelData.lowStockAlerts.map((p) => (
               <div 
                 className="notification-item warning-alert clickable" 
                 key={`stock-${p.id}`}

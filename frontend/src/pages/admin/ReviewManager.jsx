@@ -124,12 +124,6 @@ const ReviewManager = () => {
           <h2>Service Reviews & Feedbacks</h2>
           <p className="subtitle">Audit, moderate, and approve customer testimonial feeds for the storefront landing page.</p>
         </div>
-        <button onClick={loadReviews} className="professional-pdf-btn" disabled={loading} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--admin-border)', color: 'var(--admin-text)' }}>
-          <svg className={loading ? "spin-animation" : ""} style={{ width: '15px', height: '15px', flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-          </svg>
-          <span>{loading ? 'Reloading...' : 'Refresh Records'}</span>
-        </button>
       </div>
 
       {/* KPI Dashboard Stats Cards */}

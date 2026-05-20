@@ -271,7 +271,11 @@ const StaffLayout = () => {
       <main className="admin-main">
         <header className="admin-top-bar">
           <h1>Staff Portal</h1>
-          <div className="top-bar-actions">
+          <div className="top-bar-actions" style={{ display: 'flex', alignItems: 'center' }}>
+            <button className="btn-universal-refresh" onClick={() => window.location.reload()} title="Refresh Page">
+              <svg className="btn-universal-refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <span>Refresh</span>
+            </button>
             <button className="btn-storefront" onClick={() => navigate('/')}>
               <svg className="btn-storefront-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
               <span>6ix<span className="accent-text">7</span>even</span>

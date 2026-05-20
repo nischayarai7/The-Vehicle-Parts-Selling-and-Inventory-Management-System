@@ -56,7 +56,8 @@ namespace backend.Controllers
                     CustomerName = o.User.FullName,
                     o.Status,
                     o.TotalAmount,
-                    o.CreatedAt
+                    o.CreatedAt,
+                    ItemCount = o.Items.Sum(i => i.Quantity)
                 })
                 .ToListAsync();
 

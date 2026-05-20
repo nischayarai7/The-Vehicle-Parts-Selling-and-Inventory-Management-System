@@ -102,7 +102,7 @@ namespace backend.Controllers
                 {
                     InvoiceNumber = dto.InvoiceNumber,
                     VendorId = dto.VendorId,
-                    InvoiceDate = dto.InvoiceDate,
+                    InvoiceDate = DateTime.SpecifyKind(dto.InvoiceDate, DateTimeKind.Utc),
                     Notes = dto.Notes,
                     CreatedAt = DateTime.UtcNow,
                     TotalAmount = 0 // Calculated below
@@ -141,7 +141,8 @@ namespace backend.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return StatusCode(500, new { success = false, message = $"An error occurred: {ex.Message}" });
+                var details = ex.InnerException != null ? $"\nDetails: {ex.InnerException.Message}" : "";
+                return StatusCode(500, new { success = false, message = $"An error occurred: {ex.Message}{details}" });
             }
         }
     }

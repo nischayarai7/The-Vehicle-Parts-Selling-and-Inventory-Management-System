@@ -312,8 +312,22 @@ const PartsManager = () => {
   return (
     <div className="parts-manager">
       {notification && (
-        <div className={`notification ${notification.type}`}>
-          {notification.message}
+        <div className={`notification-toast ${notification.type}`}>
+          <div className="toast-glow"></div>
+          <span className="toast-icon">
+            {notification.type === 'success' ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4caf50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f34e4e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            )}
+          </span>
+          <div className="toast-message">{notification.message}</div>
         </div>
       )}
 
@@ -323,28 +337,6 @@ const PartsManager = () => {
           <p className="subtitle">Manage vehicle components, pricing and stock levels.</p>
         </div>
         <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
-          <button 
-            className="btn-refresh-inventory" 
-            onClick={handleRefresh} 
-            disabled={refreshing}
-            title="Refresh Inventory Data"
-          >
-            <svg 
-              width="20" 
-              height="20" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2.5" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-            >
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-            Refresh
-          </button>
           <button className="btn-add-part" onClick={() => { resetForm(); setShowModal(true); }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Add New Part

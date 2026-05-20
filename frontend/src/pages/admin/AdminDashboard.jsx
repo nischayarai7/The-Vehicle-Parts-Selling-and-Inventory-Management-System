@@ -11,7 +11,17 @@ const AdminDashboard = () => {
   const [itemsInTransit, setItemsInTransit] = useState(0);
   const [stockHealthPercent, setStockHealthPercent] = useState(0);
   const [categoryBreakdown, setCategoryBreakdown] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [timelineData, setTimelineData] = useState([]);
+
+  // Reset pagination to page 1 whenever breakdown changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryBreakdown]);
+
+  // Graph range toggle state
+  const [graphRange, setGraphRange] = useState('yearly');
+  const [graphLoading, setGraphLoading] = useState(false);
 
   // Tooltip hover interactive state
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -44,6 +54,11 @@ const AdminDashboard = () => {
 
         // 3. Compute Category stock/value distribution breakdown
         const catMap = {};
+        // Pre-populate with all categories to ensure none are missing
+        categories.forEach(c => {
+          catMap[c.name] = { name: c.name, count: 0, value: 0 };
+        });
+
         parts.forEach(p => {
           const cat = p.categoryName || 'General';
           if (!catMap[cat]) {
@@ -57,39 +72,22 @@ const AdminDashboard = () => {
         const sortedBreakdown = Object.values(catMap).sort((a, b) => b.value - a.value);
         setCategoryBreakdown(sortedBreakdown);
 
-        // 4. Calculate items in transit from recent purchase invoices
+        // 4. Calculate items in transit dynamically from customer orders with active/pending shipping status
         let transit = 0;
         try {
-          const invoices = await api.getPurchaseInvoices();
-          // Sum items estimated from recent pending invoices, fallback if empty
-          transit = invoices.slice(0, 5).reduce((sum, inv) => sum + Math.round(inv.totalAmount / 3500), 0) || (lowStockCount * 6);
+          const orders = await api.getStaffOrders();
+          const activeOrders = orders.filter(o => {
+            const status = (o.status || '').toLowerCase();
+            return status === 'pending' || status === 'processing' || status === 'shipped';
+          });
+          transit = activeOrders.reduce((sum, order) => {
+            return sum + (order.itemCount || 0);
+          }, 0);
         } catch (err) {
-          transit = lowStockCount * 8;
+          console.error("Failed to load real-time transit metrics:", err);
+          transit = 0;
         }
         setItemsInTransit(transit);
-
-        // 5. Fetch monthly financial timeline data
-        let timeline = [];
-        try {
-          const report = await api.getFinancialReport('monthly');
-          if (report && report.periodicBreakdown && report.periodicBreakdown.length > 0) {
-            timeline = report.periodicBreakdown.slice(-6); // last 6 months
-          }
-        } catch (err) {
-          console.error("Failed to load financial report:", err);
-        }
-
-        if (timeline.length === 0) {
-          timeline = [
-            { periodLabel: 'Dec', revenue: 145000, expenses: 85000 },
-            { periodLabel: 'Jan', revenue: 180000, expenses: 110000 },
-            { periodLabel: 'Feb', revenue: 165000, expenses: 95000 },
-            { periodLabel: 'Mar', revenue: 210000, expenses: 130000 },
-            { periodLabel: 'Apr', revenue: 195000, expenses: 115000 },
-            { periodLabel: 'May', revenue: 240000, expenses: 140000 }
-          ];
-        }
-        setTimelineData(timeline);
 
       } catch (error) {
         console.error("Failed to load dashboard data", error);
@@ -100,6 +98,109 @@ const AdminDashboard = () => {
 
     fetchData();
   }, []);
+
+  // ── Dedicated graph fetch — reruns on range toggle ──────────────────────
+  const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const MONTH_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  useEffect(() => {
+    const fetchGraphData = async () => {
+      setGraphLoading(true);
+      setHoveredIndex(null);
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const currentMonth = today.getMonth(); // 0-indexed
+      const todayStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      let timeline = [];
+      try {
+        if (graphRange === 'yearly') {
+          // 12 monthly buckets for this year — slice to current month
+          const report = await api.getFinancialReport('yearly', `${currentYear}-01-01`);
+          if (report?.periodicBreakdown?.length > 0) {
+            timeline = report.periodicBreakdown
+              .slice(0, currentMonth + 1)
+              .map((item, idx) => ({
+                periodLabel: `${MONTH_ABBR[idx]} ${currentYear}`,
+                fullLabel: `${MONTH_FULL[idx]} ${currentYear}`,
+                revenue: Number(item.revenue) || 0,
+                expenses: Number(item.expenses) || 0,
+              }));
+          }
+        } else if (graphRange === 'monthly') {
+          // Day-by-day buckets for the current month
+          const report = await api.getFinancialReport('monthly', todayStr);
+          if (report?.periodicBreakdown?.length > 0) {
+            const monthName = MONTH_ABBR[currentMonth];
+            timeline = report.periodicBreakdown
+              .filter((_, idx) => idx < today.getDate()) // only days up to today
+              .map((item, idx) => {
+                const dayNum = String(idx + 1).padStart(2, '0');
+                return {
+                  periodLabel: `${monthName} ${dayNum}`,
+                  fullLabel: `${MONTH_FULL[currentMonth]} ${dayNum}, ${currentYear}`,
+                  revenue: Number(item.revenue) || 0,
+                  expenses: Number(item.expenses) || 0,
+                };
+              });
+          }
+        } else if (graphRange === 'daily') {
+          // Hour-by-hour buckets for today (00:00 – current hour)
+          const report = await api.getFinancialReport('daily', todayStr);
+          if (report?.periodicBreakdown?.length > 0) {
+            const currentHour = today.getHours();
+            timeline = report.periodicBreakdown
+              .filter((_, idx) => idx <= currentHour)
+              .map((item, idx) => {
+                const ampm = idx < 12 ? 'AM' : 'PM';
+                const h12 = idx % 12 === 0 ? 12 : idx % 12;
+                return {
+                  periodLabel: `${String(h12).padStart(2, '0')}${ampm}`,
+                  fullLabel: `${today.toDateString()} – ${String(idx).padStart(2, '0')}:00`,
+                  revenue: Number(item.revenue) || 0,
+                  expenses: Number(item.expenses) || 0,
+                };
+              });
+          }
+        }
+      } catch (err) {
+        console.error('Graph data fetch failed:', err);
+      }
+
+      // Fallback: show empty labelled slots so the chart still renders cleanly
+      if (timeline.length === 0) {
+        if (graphRange === 'yearly') {
+          timeline = MONTH_ABBR.slice(0, currentMonth + 1).map((abbr, idx) => ({
+            periodLabel: `${abbr} ${currentYear}`,
+            fullLabel: `${MONTH_FULL[idx]} ${currentYear}`,
+            revenue: 0, expenses: 0,
+          }));
+        } else if (graphRange === 'monthly') {
+          const monthName = MONTH_ABBR[currentMonth];
+          timeline = Array.from({ length: today.getDate() }, (_, i) => ({
+            periodLabel: `${monthName} ${String(i + 1).padStart(2, '0')}`,
+            fullLabel: `${MONTH_FULL[currentMonth]} ${String(i + 1).padStart(2, '0')}, ${currentYear}`,
+            revenue: 0, expenses: 0,
+          }));
+        } else {
+          timeline = Array.from({ length: today.getHours() + 1 }, (_, i) => {
+            const ampm = i < 12 ? 'AM' : 'PM';
+            const h12 = i % 12 === 0 ? 12 : i % 12;
+            return {
+              periodLabel: `${String(h12).padStart(2, '0')}${ampm}`,
+              fullLabel: `${today.toDateString()} – ${String(i).padStart(2, '0')}:00`,
+              revenue: 0, expenses: 0,
+            };
+          });
+        }
+      }
+
+      setTimelineData(timeline);
+      setGraphLoading(false);
+    };
+
+    fetchGraphData();
+  }, [graphRange]);
 
   if (loading) {
     return (
@@ -114,22 +215,37 @@ const AdminDashboard = () => {
     ? Math.max(...timelineData.map(d => Math.max(d.revenue, d.expenses)))
     : 100000;
 
+  const CHART_W = 310;
+  const CHART_H = 130;
+  const PAD_L = 15;
+  const PAD_R = 15;
+  const PAD_T = 10;
+  const PAD_B = 28; // room for 2-line labels
+  const graphW = CHART_W - PAD_L - PAD_R;
+  const graphH = CHART_H - PAD_T - PAD_B;
+  const graphBottom = PAD_T + graphH; // y-baseline
+
   const points = timelineData.map((d, index) => {
-    const x = 30 + index * (245 / (timelineData.length - 1 || 1));
-    const yRev = 90 - (d.revenue / (maxVal || 1)) * 75;
-    const yExp = 90 - (d.expenses / (maxVal || 1)) * 75;
-    return { x, yRev, yExp, label: d.periodLabel, revenue: d.revenue, expenses: d.expenses };
+    const x = PAD_L + index * (graphW / (timelineData.length - 1 || 1));
+    const yRev = graphBottom - (d.revenue / (maxVal || 1)) * graphH;
+    const yExp = graphBottom - (d.expenses / (maxVal || 1)) * graphH;
+    const [abbr, yr] = (d.periodLabel || '').split(' ');
+    return { x, yRev, yExp, abbr: abbr || '', yr: yr || '', fullLabel: d.fullLabel || d.periodLabel, revenue: d.revenue, expenses: d.expenses };
   });
 
-  const revPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.yRev}`).join(' ');
-  const expPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.yExp}`).join(' ');
+  const revPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.yRev.toFixed(1)}`).join(' ');
+  const expPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.yExp.toFixed(1)}`).join(' ');
 
-  const revAreaPath = points.length > 0 ? `${revPath} L ${points[points.length - 1].x} 90 L ${points[0].x} 90 Z` : '';
-  const expAreaPath = points.length > 0 ? `${expPath} L ${points[points.length - 1].x} 90 L ${points[0].x} 90 Z` : '';
+  const revAreaPath = points.length > 0 ? `${revPath} L ${points[points.length-1].x.toFixed(1)} ${graphBottom} L ${points[0].x.toFixed(1)} ${graphBottom} Z` : '';
+  const expAreaPath = points.length > 0 ? `${expPath} L ${points[points.length-1].x.toFixed(1)} ${graphBottom} L ${points[0].x.toFixed(1)} ${graphBottom} Z` : '';
 
-  const latestPeriod = timelineData[timelineData.length - 1] || { revenue: 0, expenses: 0, periodLabel: 'N/A' };
+  const latestPeriod = timelineData[timelineData.length - 1] || { revenue: 0, expenses: 0, periodLabel: 'N/A', fullLabel: 'N/A' };
   const latestRevenue = latestPeriod.revenue;
   const latestProfit = latestPeriod.revenue - latestPeriod.expenses;
+
+  const itemsPerPage = 5;
+  const totalPages = Math.ceil(categoryBreakdown.length / itemsPerPage) || 1;
+  const paginatedCategories = categoryBreakdown.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <div className="dashboard-content">
@@ -157,8 +273,8 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Middle Row: Dynamic Inventory Overview & Premium Plan */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '20px' }}>
+      {/* Middle Row: Dynamic Inventory Overview */}
+      <div style={{ marginBottom: '20px' }}>
         <div className="large-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
           <div>
             <h3 style={{ marginBottom: '10px' }}>Inventory Overview</h3>
@@ -196,17 +312,6 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
-
-        <div className="large-card" style={{ background: 'linear-gradient(135deg, var(--admin-accent), #9e1a1a)', color: 'white', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div>
-            <h4>Premium Plan</h4>
-            <p style={{ fontSize: '13px', margin: '10px 0 20px 0', opacity: 0.8 }}>Upgrade your dashboard to unlock advanced AI forecasting.</p>
-          </div>
-          <div>
-            <div style={{ fontSize: '32px', fontWeight: '800', marginBottom: '20px' }}>$30 <span style={{ fontSize: '14px', fontWeight: 'normal' }}>/ mo</span></div>
-            <button style={{ background: 'white', color: 'var(--admin-accent)', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', width: '100%' }}>Get Started</button>
-          </div>
-        </div>
       </div>
 
       {/* Dynamic Analytics Tools Row */}
@@ -217,7 +322,7 @@ const AdminDashboard = () => {
           <p style={{ color: 'var(--admin-text-muted)', fontSize: '13px', marginBottom: '15px' }}>Financial valuation breakdown grouped by part categories.</p>
           
           <div className="category-progress-container">
-            {categoryBreakdown.slice(0, 5).map(cat => {
+            {paginatedCategories.map(cat => {
               const percentOfTotal = totalValuation > 0 ? (cat.value / totalValuation) * 100 : 0;
               return (
                 <div key={cat.name} className="category-progress-item">
@@ -236,18 +341,83 @@ const AdminDashboard = () => {
             {categoryBreakdown.length === 0 && (
               <div style={{ color: 'var(--admin-text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No category data available</div>
             )}
+
+            {totalPages > 1 && (
+              <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px', borderTop: '1px solid var(--admin-border)', paddingTop: '12px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--admin-text-muted)', fontWeight: '500' }}>
+                  Page {currentPage} of {totalPages}
+                </span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    style={{
+                      background: currentPage === 1 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)',
+                      color: currentPage === 1 ? 'var(--admin-text-muted)' : '#fff',
+                      border: '1px solid var(--admin-border)',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Prev
+                  </button>
+                  <button 
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    style={{
+                      background: currentPage === totalPages ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)',
+                      color: currentPage === totalPages ? 'var(--admin-text-muted)' : '#fff',
+                      border: '1px solid var(--admin-border)',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Dynamic Line Graph Tracker of the System Progress and Revenue */}
         <div className="large-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-            <h3 style={{ margin: 0 }}>System Performance & Revenue</h3>
-            <span style={{ fontSize: '11px', color: 'var(--admin-text-muted)', background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: '4px' }}>
-              Latest: {latestPeriod.periodLabel}
-            </span>
+            <h3 style={{ margin: 0, fontSize: '15px' }}>System Performance &amp; Revenue</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {[['daily', 'Day'], ['monthly', 'Month'], ['yearly', 'Year']].map(([val, label]) => (
+                <button
+                  key={val}
+                  onClick={() => setGraphRange(val)}
+                  style={{
+                    padding: '3px 10px',
+                    fontSize: '11px',
+                    fontWeight: graphRange === val ? '700' : '500',
+                    border: graphRange === val ? '1px solid var(--admin-accent)' : '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '20px',
+                    background: graphRange === val ? 'rgba(227,59,59,0.12)' : 'rgba(255,255,255,0.03)',
+                    color: graphRange === val ? 'var(--admin-accent)' : 'var(--admin-text-muted)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    letterSpacing: '0.3px',
+                  }}
+                >{label}</button>
+              ))}
+            </div>
           </div>
-          <p style={{ color: 'var(--admin-text-muted)', fontSize: '13px', marginBottom: '15px' }}>Gross Revenue vs. Operating Expenses over the last 6 months.</p>
+          <p style={{ color: 'var(--admin-text-muted)', fontSize: '13px', marginBottom: '15px' }}>
+            {graphRange === 'daily' && `Hourly Revenue vs. Expenses — Today, ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`}
+            {graphRange === 'monthly' && `Daily Revenue vs. Expenses — ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`}
+            {graphRange === 'yearly' && `Monthly Revenue vs. Expenses — ${new Date().getFullYear()} Year to Date`}
+          </p>
           
           <div className="forecaster-control-group" style={{ padding: '12px', background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--admin-border)', borderRadius: '10px' }}>
             <div className="forecaster-stats-row" style={{ marginTop: 0, marginBottom: '15px' }}>
@@ -271,24 +441,43 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* SVG Graph */}
-            <div style={{ position: 'relative', height: '110px' }} onMouseLeave={() => setHoveredIndex(null)}>
-              <svg width="100%" height="100%" viewBox="0 0 300 110" style={{ overflow: 'visible' }}>
+            {/* SVG Graph with optional loading overlay */}
+            <div style={{ position: 'relative', height: `${CHART_H}px` }} onMouseLeave={() => setHoveredIndex(null)}>
+              {/* Loading shimmer when re-fetching */}
+              {graphLoading && (
+                <div style={{
+                  position: 'absolute', inset: 0, zIndex: 5,
+                  background: 'rgba(13,13,13,0.7)', borderRadius: '6px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  backdropFilter: 'blur(4px)',
+                }}>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {[0,1,2].map(i => (
+                      <div key={i} style={{
+                        width: '6px', height: '6px', borderRadius: '50%',
+                        background: 'var(--admin-accent)',
+                        animation: `bounce 0.8s ${i * 0.15}s ease-in-out infinite alternate`,
+                      }} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              <svg width="100%" height="100%" viewBox={`0 0 ${CHART_W} ${CHART_H}`} preserveAspectRatio="none" style={{ overflow: 'visible' }}>
                 <defs>
                   <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--admin-accent)" stopOpacity="0.2" />
+                    <stop offset="0%" stopColor="var(--admin-accent)" stopOpacity="0.25" />
                     <stop offset="100%" stopColor="var(--admin-accent)" stopOpacity="0.0" />
                   </linearGradient>
                   <linearGradient id="expGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#8b949e" stopOpacity="0.1" />
+                    <stop offset="0%" stopColor="#8b949e" stopOpacity="0.12" />
                     <stop offset="100%" stopColor="#8b949e" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
 
                 {/* Reference Grid lines */}
-                <line x1="30" y1="15" x2="275" y2="15" stroke="var(--admin-border)" strokeWidth="1" strokeDasharray="3 3" />
-                <line x1="30" y1="52.5" x2="275" y2="52.5" stroke="var(--admin-border)" strokeWidth="1" strokeDasharray="3 3" />
-                <line x1="30" y1="90" x2="275" y2="90" stroke="var(--admin-border)" strokeWidth="1" />
+                <line x1={PAD_L} y1={PAD_T} x2={CHART_W - PAD_R} y2={PAD_T} stroke="var(--admin-border)" strokeWidth="0.5" strokeDasharray="3 3" />
+                <line x1={PAD_L} y1={PAD_T + graphH * 0.5} x2={CHART_W - PAD_R} y2={PAD_T + graphH * 0.5} stroke="var(--admin-border)" strokeWidth="0.5" strokeDasharray="3 3" />
+                <line x1={PAD_L} y1={graphBottom} x2={CHART_W - PAD_R} y2={graphBottom} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
 
                 {/* Expenses Area Fill */}
                 {points.length > 0 && (
@@ -302,118 +491,144 @@ const AdminDashboard = () => {
 
                 {/* Vertical Hover Indicator Line */}
                 {hoveredIndex !== null && points[hoveredIndex] && (
-                  <line 
-                    x1={points[hoveredIndex].x} 
-                    y1="15" 
-                    x2={points[hoveredIndex].x} 
-                    y2="90" 
-                    stroke="rgba(255, 255, 255, 0.25)" 
-                    strokeWidth="1.5" 
-                    strokeDasharray="3 3" 
-                    pointerEvents="none" 
+                  <line
+                    x1={points[hoveredIndex].x}
+                    y1={PAD_T}
+                    x2={points[hoveredIndex].x}
+                    y2={graphBottom}
+                    stroke="rgba(255,255,255,0.3)"
+                    strokeWidth="1"
+                    strokeDasharray="4 3"
+                    pointerEvents="none"
                   />
                 )}
 
                 {/* Expenses Line */}
                 {points.length > 0 && (
-                  <path d={expPath} fill="none" stroke="#8b949e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'all 0.3s ease-out' }} />
+                  <path d={expPath} fill="none" stroke="#8b949e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'all 0.3s ease-out' }} />
                 )}
 
                 {/* Revenue Line */}
                 {points.length > 0 && (
-                  <path d={revPath} fill="none" stroke="var(--admin-accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'all 0.3s ease-out' }} />
+                  <path d={revPath} fill="none" stroke="var(--admin-accent)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'all 0.3s ease-out' }} />
                 )}
 
-                {/* Points & Interactive Nodes */}
+                {/* Points & Interactive Nodes + Labels */}
                 {points.map((p, idx) => (
                   <g key={idx}>
-                    <circle 
-                      cx={p.x} 
-                      cy={p.yExp} 
-                      r={hoveredIndex === idx ? 5 : 3} 
-                      fill="#8b949e" 
+                    {/* Expense dot */}
+                    <circle
+                      cx={p.x} cy={p.yExp}
+                      r={hoveredIndex === idx ? 4.5 : 2.5}
+                      fill="#8b949e"
                       stroke={hoveredIndex === idx ? '#fff' : 'none'}
-                      strokeWidth="1"
-                      style={{ transition: 'all 0.15s ease-out' }} 
+                      strokeWidth="1.2"
+                      style={{ transition: 'all 0.15s ease-out' }}
                     />
-                    <circle 
-                      cx={p.x} 
-                      cy={p.yRev} 
-                      r={hoveredIndex === idx ? 5 : 3} 
-                      fill="var(--admin-accent)" 
+                    {/* Revenue dot */}
+                    <circle
+                      cx={p.x} cy={p.yRev}
+                      r={hoveredIndex === idx ? 4.5 : 2.5}
+                      fill="var(--admin-accent)"
                       stroke={hoveredIndex === idx ? '#fff' : 'none'}
-                      strokeWidth="1"
-                      style={{ transition: 'all 0.15s ease-out' }} 
+                      strokeWidth="1.2"
+                      style={{ transition: 'all 0.15s ease-out' }}
                     />
-                    
-                    {/* End Point Glow (only when not hovering others) */}
+
+                    {/* Pulsing glow on latest point when nothing is hovered */}
                     {idx === points.length - 1 && hoveredIndex === null && (
                       <circle cx={p.x} cy={p.yRev} r="7" fill="var(--admin-accent)" fillOpacity="0.3">
                         <animate attributeName="r" values="5;9;5" dur="2s" repeatCount="indefinite" />
                       </circle>
                     )}
-                    
-                    {/* Labels */}
-                    <text x={p.x} y="102" fill="var(--admin-text-muted)" fontSize="8" textAnchor="middle">{p.label}</text>
+
+                    {/* 2-line axis label: abbreviated month on top, year below */}
+                    <text x={p.x} y={graphBottom + 11} fill={hoveredIndex === idx ? '#fff' : 'var(--admin-text-muted)'} fontSize="7" textAnchor="middle" style={{ transition: 'fill 0.15s' }}>{p.abbr}</text>
+                    <text x={p.x} y={graphBottom + 20} fill={hoveredIndex === idx ? 'rgba(255,255,255,0.55)' : 'rgba(139,148,158,0.5)'} fontSize="6" textAnchor="middle" style={{ transition: 'fill 0.15s' }}>{p.yr}</text>
                   </g>
                 ))}
 
-                {/* Invisible hover overlay rectangles covering columns */}
+                {/* Invisible hover hit-areas (column slabs) */}
                 {points.map((p, idx) => {
-                  const colWidth = 245 / (timelineData.length - 1 || 1);
-                  const rectX = p.x - colWidth / 2;
+                  const colW = graphW / (timelineData.length - 1 || 1);
                   return (
                     <rect
-                      key={`hover-rect-${idx}`}
-                      x={rectX}
-                      y="10"
-                      width={colWidth}
-                      height="80"
+                      key={`hit-${idx}`}
+                      x={p.x - colW / 2}
+                      y={PAD_T}
+                      width={colW}
+                      height={graphH + 10}
                       fill="transparent"
-                      style={{ cursor: 'pointer' }}
+                      style={{ cursor: 'crosshair' }}
                       onMouseEnter={() => setHoveredIndex(idx)}
                     />
                   );
                 })}
               </svg>
 
-              {/* Glassmorphic Tooltip */}
-              {hoveredIndex !== null && points[hoveredIndex] && (
-                <div style={{
-                  position: 'absolute',
-                  top: '0px',
-                  left: points[hoveredIndex].x > 150 ? 'auto' : `${points[hoveredIndex].x + 10}px`,
-                  right: points[hoveredIndex].x > 150 ? `${300 - points[hoveredIndex].x + 10}px` : 'auto',
-                  background: 'rgba(18, 18, 18, 0.95)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  border: '1px solid var(--admin-border)',
-                  borderRadius: '8px',
-                  padding: '8px 12px',
-                  zIndex: 10,
-                  pointerEvents: 'none',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-                  minWidth: '130px'
-                }}>
-                  <div style={{ fontWeight: 'bold', fontSize: '11px', color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '3px', marginBottom: '5px' }}>
-                    {points[hoveredIndex].label} Report
+              {/* Glassmorphic Tooltip — smart left/right flip */}
+              {hoveredIndex !== null && points[hoveredIndex] && (() => {
+                const hp = points[hoveredIndex];
+                const flipRight = hp.x > CHART_W * 0.55;
+                const netProfit = hp.revenue - hp.expenses;
+                const isGain = netProfit >= 0;
+                return (
+                  <div style={{
+                    position: 'absolute',
+                    top: '4px',
+                    left: flipRight ? 'auto' : `calc(${(hp.x / CHART_W) * 100}% + 10px)`,
+                    right: flipRight ? `calc(${((CHART_W - hp.x) / CHART_W) * 100}% + 10px)` : 'auto',
+                    background: 'rgba(13,13,13,0.97)',
+                    backdropFilter: 'blur(14px)',
+                    WebkitBackdropFilter: 'blur(14px)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderTop: `2px solid var(--admin-accent)`,
+                    borderRadius: '8px',
+                    padding: '9px 13px',
+                    zIndex: 20,
+                    pointerEvents: 'none',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
+                    minWidth: '148px',
+                    animation: 'fadeIn 0.1s ease'
+                  }}>
+                    <div style={{ fontWeight: '700', fontSize: '11px', color: '#fff', marginBottom: '6px', letterSpacing: '0.3px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                      </svg>
+                      {hp.fullLabel}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginBottom: '3px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--admin-accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+                        </svg>
+                        Revenue
+                      </span>
+                      <span style={{ color: 'var(--admin-accent)', fontWeight: '700' }}>Rs. {hp.revenue.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginBottom: '3px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8b949e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>
+                        </svg>
+                        Expenses
+                      </span>
+                      <span style={{ color: '#8b949e', fontWeight: '700' }}>Rs. {hp.expenses.toLocaleString()}</span>
+                    </div>
+                    <div style={{ borderTop: '1px dashed rgba(255,255,255,0.08)', paddingTop: '5px', marginTop: '5px', display: 'flex', justifyContent: 'space-between', fontSize: '10px', alignItems: 'center' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'rgba(255,255,255,0.5)' }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={isGain ? '#3fb950' : '#da3633'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                        </svg>
+                        Net Profit
+                      </span>
+                      <span style={{ fontWeight: '800', color: isGain ? '#3fb950' : '#da3633', fontSize: '11px' }}>
+                        {isGain ? '+' : ''}Rs. {netProfit.toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--admin-text-muted)', margin: '2px 0' }}>
-                    <span>Revenue:</span>
-                    <span style={{ color: 'var(--admin-accent)', fontWeight: 'bold' }}>Rs. {points[hoveredIndex].revenue.toLocaleString()}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--admin-text-muted)', margin: '2px 0' }}>
-                    <span>Expenses:</span>
-                    <span style={{ color: '#8b949e', fontWeight: 'bold' }}>Rs. {points[hoveredIndex].expenses.toLocaleString()}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--admin-text-muted)', margin: '2px 0', borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: '3px', marginTop: '3px' }}>
-                    <span>Net Profit:</span>
-                    <span style={{ color: points[hoveredIndex].revenue - points[hoveredIndex].expenses >= 0 ? '#238636' : '#da3633', fontWeight: 'bold' }}>
-                      Rs. {(points[hoveredIndex].revenue - points[hoveredIndex].expenses).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         </div>

@@ -423,6 +423,53 @@
   color: var(--admin-primary, #e04f5f);
 }
 
+/* Universal Refresh Button */
+.btn-universal-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--admin-border, #30363d);
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-right: 10px;
+}
+
+.btn-universal-refresh:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(227, 59, 59, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn-universal-refresh:active {
+  transform: translateY(0);
+}
+
+.btn-universal-refresh-icon {
+  width: 15px;
+  height: 15px;
+  color: var(--admin-primary, #e04f5f);
+  flex-shrink: 0;
+  transition: transform 0.4s ease;
+}
+
+.btn-universal-refresh:hover .btn-universal-refresh-icon {
+  transform: rotate(180deg);
+}
+
+.btn-universal-refresh span {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.2px;
+}
+
 /* --- Responsive Media Queries --- */
 @media (max-width: 1200px) {
   .admin-right-panel {
@@ -569,5 +616,13 @@
   color: #fff;
 }
 
+/* ── Graph Loading Indicator & Tooltip Animations ── */
+@keyframes bounce {
+  from { transform: translateY(0); opacity: 0.5; }
+  to   { transform: translateY(-6px); opacity: 1; }
+}
 
-
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

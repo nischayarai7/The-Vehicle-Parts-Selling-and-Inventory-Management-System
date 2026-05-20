@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { api } from '../../services/api';
 import CreatePurchaseInvoice from './CreatePurchaseInvoice';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import './PurchaseInvoiceManager.css';
 
 const PurchaseInvoiceManager = () => {
@@ -46,6 +48,129 @@ const PurchaseInvoiceManager = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  const handleDownloadInvoicePDF = () => {
+    if (!selectedInvoice) return;
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+
+      // Header Banner
+      doc.setFillColor(30, 41, 59); // Slate Dark Blue Theme matching Admin Dashboard
+      doc.rect(0, 0, pageWidth, 40, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.text("6IX7EVEN AUTO PARTS", 14, 18);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text("VENDOR PURCHASE INVOICE RECORD", 14, 30);
+
+      // Metadata right-aligned
+      doc.setFontSize(9);
+      doc.text(`INVOICE NO: ${selectedInvoice.invoiceNumber}`, pageWidth - 90, 16);
+      doc.text(`VENDOR: ${selectedInvoice.vendorName.toUpperCase()}`, pageWidth - 90, 23);
+      doc.text(`DATE: ${new Date(selectedInvoice.invoiceDate).toLocaleDateString()}`, pageWidth - 90, 30);
+
+      doc.setTextColor(30, 41, 59);
+
+      // 1. Transaction Info
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text("1. Purchase & Stocking Details", 14, 52);
+
+      const summaryRows = [
+        ["Vendor Name", selectedInvoice.vendorName],
+        ["Invoice Date", new Date(selectedInvoice.invoiceDate).toLocaleDateString()],
+        ["Fulfillment Type", "Inventory Restock / Purchase"]
+      ];
+
+      autoTable(doc, {
+        startY: 56,
+        head: [["Parameter", "Details"]],
+        body: summaryRows,
+        theme: 'grid',
+        headStyles: { fillColor: [46, 175, 80], textColor: [255, 255, 255] },
+        columnStyles: {
+          0: { fontStyle: 'bold', width: 60 },
+          1: { halign: 'left' }
+        }
+      });
+
+      let lastY = doc.lastAutoTable.finalY + 12;
+
+      // 2. Purchased Items Breakdown
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text("2. Restocked Components Breakdown", 14, lastY);
+
+      const itemHeaders = [["Item #", "Component Description", "Unit Cost", "Qty Purchased", "Subtotal"]];
+      const itemBody = selectedInvoice.items.map((item, idx) => [
+        `#${idx + 1}`,
+        item.partName,
+        `Rs. ${item.unitPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+        item.quantity.toString(),
+        `Rs. ${item.subtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+      ]);
+
+      autoTable(doc, {
+        startY: lastY + 4,
+        head: itemHeaders,
+        body: itemBody,
+        theme: 'striped',
+        headStyles: { fillColor: [54, 69, 79], textColor: [255, 255, 255] },
+        columnStyles: {
+          2: { halign: 'right' },
+          3: { halign: 'center' },
+          4: { halign: 'right' }
+        }
+      });
+
+      lastY = doc.lastAutoTable.finalY + 10;
+
+      // 3. Totals Block
+      const totalRows = [
+        ["Total Purchase Settle Amount:", `Rs. ${selectedInvoice.totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`]
+      ];
+
+      autoTable(doc, {
+        startY: lastY,
+        body: totalRows,
+        theme: 'plain',
+        columnStyles: {
+          0: { fontStyle: 'bold', halign: 'right', width: pageWidth - 70 },
+          1: { fontStyle: 'bold', halign: 'right', textColor: [46, 175, 80] }
+        }
+      });
+
+      if (selectedInvoice.notes) {
+        lastY = doc.lastAutoTable.finalY + 10;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text("Purchase Memo / Notes:", 14, lastY);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9);
+        doc.text(selectedInvoice.notes, 14, lastY + 5);
+      }
+
+      // Signature line
+      lastY = doc.lastAutoTable.finalY + 25;
+      doc.setDrawColor(200, 200, 200);
+      doc.line(14, lastY, 74, lastY);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.text("Authorized Procurement Officer", 14, lastY + 4);
+
+      doc.save(`Purchase_Invoice_${selectedInvoice.invoiceNumber}.pdf`);
+      showNotification('Invoice PDF downloaded successfully!');
+    } catch (err) {
+      console.error("Failed to generate purchase invoice PDF:", err);
+      showNotification('Failed to generate PDF', 'error');
+    }
+  };
+
   const filteredInvoices = invoices.filter(inv => {
     const search = searchTerm.toLowerCase();
     return (
@@ -55,15 +180,25 @@ const PurchaseInvoiceManager = () => {
     );
   });
 
-  if (loading) {
-    return <div className="purchase-manager">Loading...</div>;
-  }
-
   return (
     <div className="purchase-manager">
       {notification && (
-        <div className={`notification ${notification.type}`}>
-          {notification.message}
+        <div className={`notification-toast ${notification.type}`}>
+          <div className="toast-glow"></div>
+          <span className="toast-icon">
+            {notification.type === 'success' ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4caf50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f34e4e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            )}
+          </span>
+          <div className="toast-message">{notification.message}</div>
         </div>
       )}
 
@@ -182,8 +317,12 @@ const PurchaseInvoiceManager = () => {
               </table>
             </div>
             
-            <div className="modal-actions">
-              <button className="btn-close-modal" onClick={() => setShowDetailsModal(false)}>Close</button>
+            <div className="modal-actions" style={{ gap: '1rem' }}>
+              <button onClick={handleDownloadInvoicePDF} className="professional-pdf-btn">
+                <svg className="pdf-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <span>Download Invoice PDF</span>
+              </button>
+              <button className="btn-close-details" onClick={() => setShowDetailsModal(false)}>Close</button>
             </div>
           </div>
         </div>

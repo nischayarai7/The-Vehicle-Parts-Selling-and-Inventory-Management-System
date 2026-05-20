@@ -297,30 +297,6 @@ const CustomerReports = () => {
           <p className="subtitle">Real-time behavior tracking, lifetime value stats, and credit lines.</p>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <button 
-            onClick={fetchReports} 
-            className="professional-pdf-btn" 
-            style={{ 
-              background: 'rgba(255, 255, 255, 0.04)', 
-              border: '1px solid var(--admin-border)',
-              color: 'var(--admin-text)'
-            }}
-            disabled={loading}
-            title="Reload analytics and client ledger records"
-          >
-            <svg 
-              className={loading ? "spin-animation" : ""} 
-              style={{ width: '15px', height: '15px', flexShrink: 0 }} 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2.5"
-            >
-              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-            </svg>
-            <span>{loading ? 'Refreshing...' : 'Refresh Data'}</span>
-          </button>
-
           <button onClick={exportToPDF} className="professional-pdf-btn">
             <svg className="pdf-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
             <span>Download Executive PDF</span>

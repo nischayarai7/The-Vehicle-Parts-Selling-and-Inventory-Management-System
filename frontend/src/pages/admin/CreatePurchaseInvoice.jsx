@@ -6,6 +6,7 @@ const CreatePurchaseInvoice = ({ onClose, onSuccess }) => {
   const [parts, setParts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [alertInfo, setAlertInfo] = useState(null);
   
   const [formData, setFormData] = useState({
     invoiceNumber: `PI-${Date.now().toString().slice(-6)}`,
@@ -26,7 +27,7 @@ const CreatePurchaseInvoice = ({ onClose, onSuccess }) => {
         setParts(partsData.filter(p => p.isActive));
       } catch (error) {
         console.error('Error loading form data:', error);
-        alert('Failed to load vendors or parts');
+        setAlertInfo({ message: 'Failed to load vendors or parts data. Please refresh and try again.', type: 'error' });
       } finally {
         setLoading(false);
       }
@@ -73,14 +74,15 @@ const CreatePurchaseInvoice = ({ onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setAlertInfo(null);
     
     if (!formData.vendorId) {
-      alert('Please select a vendor');
+      setAlertInfo({ message: 'Please select a vendor to proceed.', type: 'warning' });
       return;
     }
 
     if (formData.items.some(item => !item.partId || item.quantity <= 0)) {
-      alert('Please ensure all items have a part and a valid quantity');
+      setAlertInfo({ message: 'Please ensure all items have a part and a valid quantity.', type: 'warning' });
       return;
     }
 
@@ -101,7 +103,7 @@ const CreatePurchaseInvoice = ({ onClose, onSuccess }) => {
       onSuccess();
     } catch (error) {
       console.error('Error creating purchase invoice:', error);
-      alert(error.message || 'Failed to create purchase invoice');
+      setAlertInfo({ message: error.message || 'Failed to create purchase invoice. Verify invoice details and try again.', type: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -116,6 +118,24 @@ const CreatePurchaseInvoice = ({ onClose, onSuccess }) => {
           <h3>Create Purchase Invoice</h3>
           <button className="btn-close" onClick={onClose}>&times;</button>
         </div>
+        
+        {alertInfo && (
+          <div className={`modal-alert ${alertInfo.type}`}>
+            <span className="alert-icon">
+              {alertInfo.type === 'error' ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              )}
+            </span>
+            <div className="alert-content">{alertInfo.message}</div>
+            <button className="btn-alert-dismiss" onClick={() => setAlertInfo(null)}>&times;</button>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="invoice-form">
           <div className="form-section main-info">
