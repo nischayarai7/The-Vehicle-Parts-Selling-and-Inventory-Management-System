@@ -44,7 +44,7 @@ function CheckoutPage() {
         const redirectPath = partIdParam 
           ? `/login?redirect=/checkout?partId=${partIdParam}&quantity=${quantityParam}`
           : '/login?redirect=/checkout';
-        navigate(redirectPath);
+        navigate(redirectPath, { replace: true });
         return;
       }
 
@@ -338,7 +338,7 @@ function CheckoutPage() {
             </div>
             {successOrder.discountAmount > 0 && (
               <div className="receipt-row discount">
-                <span>Loyalty Discount:</span>
+                <span>Loyalty Discount ({Math.round(loyaltyRate * 100)}%):</span>
                 <span>-{formatCurrency(successOrder.discountAmount)}</span>
               </div>
             )}
@@ -553,7 +553,7 @@ function CheckoutPage() {
 
           {discount > 0 && (
             <div className="summary-row discount">
-              <span>Loyalty Discount</span>
+              <span>Loyalty Discount ({Math.round(loyaltyRate * 100)}%)</span>
               <span>-{formatCurrency(discount)}</span>
             </div>
           )}

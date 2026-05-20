@@ -46,6 +46,7 @@ namespace backend.Controllers
             {
                 FullName = dto.FullName,
                 Email = dto.Email.ToLower(),
+                PhoneNumber = dto.PhoneNumber,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 CreatedAt = DateTime.UtcNow,
                 IsEmailVerified = false,

@@ -20,11 +20,11 @@ async function handleResponse(response) {
 
 export const api = {
   // --- Auth ---
-  async register(fullName, email, password) {
+  async register(fullName, email, phoneNumber, password) {
     const response = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fullName, email, password }),
+      body: JSON.stringify({ fullName, email, phoneNumber, password }),
     });
     return handleResponse(response);
   },

@@ -20,6 +20,9 @@
 .hero-container {
   position: relative;
   z-index: 1;
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
 }
 
 .vehicle-selector-box {
