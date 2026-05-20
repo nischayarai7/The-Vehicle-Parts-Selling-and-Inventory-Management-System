@@ -50,6 +50,9 @@
   position: relative;
   background: white;
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .product-card:hover {
@@ -115,10 +118,17 @@
   font-size: 12px;
 }
 
+.product-info {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
 .product-price {
   font-size: 18px;
   font-weight: 700;
   color: var(--primary);
+  margin-top: auto;
   margin-bottom: 15px;
 }
 

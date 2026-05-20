@@ -453,7 +453,7 @@ function ShopPage() {
                   <span className="price">{formatCurrency(part.price)}</span>
                   {part.stockQuantity <= 0 ? (
                     <button 
-                      className="btn-secondary add-to-cart-btn" 
+                      className="add-to-cart-btn disabled" 
                       disabled 
                       style={{ 
                         opacity: 0.5, 
@@ -473,7 +473,7 @@ function ShopPage() {
                   ) : (
                     <div style={{ display: 'flex', gap: '8px', width: '100%', alignItems: 'center' }}>
                       <button 
-                        className="btn-primary add-to-cart-btn" 
+                        className="add-to-cart-btn" 
                         onClick={() => handleBuyNow(part)}
                         style={{ flex: 1, padding: '0 12px', fontSize: '13px', height: '36px', margin: 0 }}
                       >
