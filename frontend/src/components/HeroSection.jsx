@@ -12,6 +12,8 @@ const HeroSection = () => {
   const [vehicles, setVehicles] = useState([]);
   const [myVehicles, setMyVehicles] = useState([]);
   const [wallpaperUrl, setWallpaperUrl] = useState(null);
+  const [promoParts, setPromoParts] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const [selectedMake, setSelectedMake] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
@@ -28,6 +30,7 @@ const HeroSection = () => {
   useEffect(() => {
     fetchVehicles();
     fetchWallpaper();
+    fetchPromoParts();
     if (isAuthenticated) fetchMyVehicles();
   }, [isAuthenticated]);
 
@@ -51,6 +54,24 @@ const HeroSection = () => {
       setMyVehicles(data);
     } catch (err) { console.error(err); }
   };
+
+  const fetchPromoParts = async () => {
+    try {
+      const allParts = await api.getAllParts();
+      const available = allParts.filter(p => p.stockQuantity > 0).slice(0, 4);
+      setPromoParts(available);
+    } catch (err) {
+      console.error("Failed to fetch promo parts:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (promoParts.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentIndex(prev => (prev + 1) % promoParts.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [promoParts]);
 
   const makes  = [...new Set(vehicles.map(v => v.make))].sort();
   const models = [...new Set(vehicles.filter(v => v.make === selectedMake).map(v => v.model))].sort();
@@ -351,6 +372,68 @@ const HeroSection = () => {
           )}
 
         </div>
+
+        {promoParts.length > 0 && (
+          <div className="hero-promo-carousel">
+            <div className="promo-header">
+              <span className="promo-badge-glow">LIMITED TIME PROMO</span>
+              <h3 className="promo-title">50% OFF FLASH SALE</h3>
+            </div>
+            <div className="promo-card-slider">
+              {promoParts.map((part, idx) => {
+                const isCurrent = idx === currentIndex;
+                const originalPrice = part.price * 2;
+                const promoPrice = part.price;
+                return (
+                  <div
+                    key={part.id}
+                    className={`promo-slide-card ${isCurrent ? 'active' : ''}`}
+                  >
+                    <div className="promo-card-badge">50% OFF</div>
+                    <div className="promo-image-container">
+                      <img 
+                        src={part.imageUrl} 
+                        alt={part.name}
+                        onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b` }}
+                      />
+                    </div>
+                    <div className="promo-info">
+                      <span className="promo-part-brand">{part.brand || '6IX7EVEN Premium'}</span>
+                      <h4 className="promo-part-name">{part.name}</h4>
+                      
+                      <div className="promo-pricing">
+                        <span className="original-price-strike">Rs. {originalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        <span className="promo-discounted-price">Rs. {promoPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+
+                      <div className="promo-actions">
+                        <button
+                          className="btn-promo-quick-buy"
+                          onClick={() => navigate(`/checkout?partId=${part.id}&quantity=1`)}
+                        >
+                          Buy Now
+                        </button>
+                        <Link to={`/part/${part.id}`} className="btn-promo-details">
+                          View Details
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="promo-dots">
+              {promoParts.map((_, idx) => (
+                <button
+                  key={idx}
+                  className={`promo-dot ${idx === currentIndex ? 'active' : ''}`}
+                  onClick={() => setCurrentIndex(idx)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
     </section>
   );
