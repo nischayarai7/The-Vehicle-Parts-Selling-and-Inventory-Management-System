@@ -65,14 +65,7 @@ export const api = {
     return handleResponse(response);
   },
 
-  // --- Customer Features ---
-  getMyAppointments: () => fetch(`${API_BASE}/appointments/my`, { headers: getAuthHeaders() }).then(handleResponse),
   getAvailableSlots: () => fetch(`${API_BASE}/appointments/slots`, { headers: getAuthHeaders() }).then(handleResponse),
-  bookAppointment: (data) => fetch(`${API_BASE}/appointments`, {
-    method: 'POST',
-    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  }).then(handleResponse),
   getMyPartRequests: () => fetch(`${API_BASE}/partrequests/my`, { headers: getAuthHeaders() }).then(handleResponse),
   createPartRequest: (data) => fetch(`${API_BASE}/partrequests`, {
     method: 'POST',
@@ -115,6 +108,15 @@ export const api = {
   getPartReviewAverages: () => fetch(`${API_BASE}/partreviews/averages`).then(handleResponse),
   getMyOrders: () => fetch(`${API_BASE}/orders/my`, { headers: getAuthHeaders() }).then(handleResponse),
   getOrderDetails: (id) => fetch(`${API_BASE}/orders/${id}`, { headers: getAuthHeaders() }).then(handleResponse),
+
+  // ── System Settings ───────────────────────────────────────────────────────
+  getStoreSettings: () => fetch(`${API_BASE}/systemsettings/store`).then(handleResponse),
+  updateStoreSettings: (data) => fetch(`${API_BASE}/systemsettings/store`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  }).then(handleResponse),
+
 
   // ── Roles & Permissions ───────────────────────────────────────────────────
   getRoles: () => fetch(`${API_BASE}/roles`, { headers: getAuthHeaders() }).then(handleResponse),
@@ -357,10 +359,7 @@ export const api = {
     headers: getAuthHeaders()
   }).then(handleResponse),
 
-  // --- Utility ---
-  getToken() {
-    return localStorage.getItem('token');
-  },
+
 
   // --- Staff Operations ---
   getStaffCustomers: () => fetch(`${API_BASE}/StaffCustomers`, { headers: getAuthHeaders() }).then(handleResponse),

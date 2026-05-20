@@ -32,6 +32,9 @@ builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 
+// Background Workers
+builder.Services.AddHostedService<CreditNotificationWorker>();
+
 // ── 4. CORS ──────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
 {
@@ -138,6 +141,16 @@ using (var scope = app.Services.CreateScope())
             END $$;
         ");
         logger.LogInformation("Database verified: 'created_by_id' column, constraints and PartReviews are active.");
+
+        await db.Database.ExecuteSqlRawAsync(@"
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='pending_credits' AND column_name='LastNotificationSentAt') THEN
+                    ALTER TABLE pending_credits ADD COLUMN ""LastNotificationSentAt"" timestamp with time zone NULL;
+                END IF;
+            END $$;
+        ");
+        logger.LogInformation("Database verified: 'LastNotificationSentAt' added to pending_credits.");
 
         // Dynamic CSV Catalog Seed
         await CatalogSeeder.SeedCatalogFromCsv(db, logger);

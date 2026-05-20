@@ -6,6 +6,19 @@ function ContactPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [storeSettings, setStoreSettings] = useState(null);
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await api.getStoreSettings();
+        setStoreSettings(data);
+      } catch (err) {
+        console.error('Failed to load store settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -144,19 +157,19 @@ function ContactPage() {
           <h3 style={{ marginBottom: '20px', fontSize: '20px' }}>Store Information</h3>
           <div style={{ marginBottom: '15px' }}>
             <strong style={{ display: 'block', marginBottom: '5px' }}>Address</strong>
-            <span style={{ color: 'var(--text-muted)' }}>123 Auto Parts Blvd,<br />Motor City, MI 48201</span>
+            <span style={{ color: 'var(--text-muted)', whiteSpace: 'pre-line' }}>{storeSettings?.address || '123 Auto Parts Blvd,\nMotor City, MI 48201'}</span>
           </div>
           <div style={{ marginBottom: '15px' }}>
             <strong style={{ display: 'block', marginBottom: '5px' }}>Phone</strong>
-            <span style={{ color: 'var(--text-muted)' }}>+1 (555) 123-4567</span>
+            <span style={{ color: 'var(--text-muted)' }}>{storeSettings?.phone || '+1 (555) 123-4567'}</span>
           </div>
           <div style={{ marginBottom: '15px' }}>
             <strong style={{ display: 'block', marginBottom: '5px' }}>Email</strong>
-            <span style={{ color: 'var(--text-muted)' }}>nischayachamlingraii@gmail.com</span>
+            <span style={{ color: 'var(--text-muted)' }}>{storeSettings?.email || 'contact@6ix7even.com'}</span>
           </div>
           <div style={{ marginTop: '30px' }}>
             <strong style={{ display: 'block', marginBottom: '5px' }}>Business Hours</strong>
-            <span style={{ color: 'var(--text-muted)' }}>Monday - Friday: 8AM - 6PM<br />Saturday: 9AM - 4PM</span>
+            <span style={{ color: 'var(--text-muted)', whiteSpace: 'pre-line' }}>{storeSettings?.businessHours ? storeSettings.businessHours.replace(/\\n/g, '\n') : 'Monday - Friday: 8AM - 6PM\nSaturday: 9AM - 4PM'}</span>
           </div>
         </div>
       </div>

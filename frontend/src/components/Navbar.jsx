@@ -164,8 +164,12 @@ const Navbar = () => {
               <li><NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>Home</NavLink></li>
               <li><NavLink to="/shop" className={({ isActive }) => (isActive ? 'active' : '')}>Shop</NavLink></li>
               <li><NavLink to="/categories" className={({ isActive }) => (isActive ? 'active' : '')}>Categories</NavLink></li>
-              <li><NavLink to="/about" className={({ isActive }) => (isActive ? 'active' : '')}>About Us</NavLink></li>
-              <li><NavLink to="/contact" className={({ isActive }) => (isActive ? 'active' : '')}>Contact</NavLink></li>
+              {!isAuthenticated && (
+                <>
+                  <li><a href="/#about" className={location.hash === '#about' ? 'active' : ''}>About Us</a></li>
+                  <li><a href="/#contact" className={location.hash === '#contact' ? 'active' : ''}>Contact</a></li>
+                </>
+              )}
             </ul>
           </div>
         </div>

@@ -69,14 +69,24 @@ const ProductGrid = () => {
     switch (activeTab) {
       case 'New Arrival':
         return [...parts].sort((a, b) => b.id - a.id).slice(0, 20);
-      case 'Featured':
-        return parts.filter(p => p.price > 5000).slice(0, 20);
       case 'Popular':
-        return parts.filter(p => p.compatibleVehicles && p.compatibleVehicles.length > 0).slice(0, 20);
+        return [...parts].sort((a, b) => {
+          const ratingA = reviewAverages[a.id]?.averageRating || 0;
+          const ratingB = reviewAverages[b.id]?.averageRating || 0;
+          if (ratingB !== ratingA) return ratingB - ratingA;
+          const countA = reviewAverages[a.id]?.count || 0;
+          const countB = reviewAverages[b.id]?.count || 0;
+          return countB - countA;
+        }).slice(0, 20);
       case 'On Sale':
         return parts.filter(p => p.price < 3000).slice(0, 20);
+      case 'Highest Price':
+        return [...parts].sort((a, b) => b.price - a.price).slice(0, 20);
+      case 'Lowest Price':
+        return [...parts].sort((a, b) => a.price - b.price).slice(0, 20);
+      case 'Featured':
       default:
-        return parts.slice(0, 20);
+        return parts.filter(p => p.price > 5000).slice(0, 20);
     }
   };
 
@@ -99,10 +109,15 @@ const ProductGrid = () => {
   return (
     <section className="product-section">
       <div className="container">
-        <div className="product-header">
-          <h2 className="section-title">What We Offer</h2>
-          <div className="product-tabs">
-            {['New Arrival', 'Featured', 'Popular', 'On Sale'].map((tab) => (
+        <div className="product-header category-section-header" style={{ marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
+          <div className="section-header-left">
+            <span className="section-eyebrow">Discover Premium Parts</span>
+            <h2 className="section-title-modern">
+              What We <span className="accent-text">Offer</span>
+            </h2>
+          </div>
+          <div className="product-tabs" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+            {['New Arrival', 'Featured', 'Popular', 'On Sale', 'Highest Price', 'Lowest Price'].map((tab) => (
               <button 
                 key={tab}
                 className={`tab ${activeTab === tab ? 'active' : ''}`}
@@ -122,18 +137,21 @@ const ProductGrid = () => {
           <div className="product-grid">
             {currentParts.map((part) => (
               <div key={part.id} className="product-card">
-                {part.isLowStock && <div className="badge low-stock">Low Stock</div>}
-                <Link to={`/shop/part/${part.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-                <div className="product-img-wrapper">
-                  <img 
-                    src={part.imageUrl || `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b&size=250`} 
-                    alt={part.name} 
-                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b&size=250` }}
-                  />
-                </div>
+              <Link to={`/shop/part/${part.id}`} className="product-image" style={{ background: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', borderBottom: '1px solid var(--border-color)', textDecoration: 'none', overflow: 'hidden' }}>
+                {part.imageUrl && !part.imageUrl.includes('unsplash') ? (
+                  <img src={part.imageUrl} alt={part.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                  </svg>
+                )}
               </Link>
               <div className="product-info">
-                <p className="product-cat">{part.categoryName}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <p className="product-cat" style={{ margin: 0 }}>{part.categoryName}</p>
+                  {part.isLowStock && <div className="badge low-stock" style={{ position: 'static' }}>Low Stock</div>}
+                </div>
                 <Link to={`/shop/part/${part.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
                   <h3 className="product-title" style={{ cursor: 'pointer' }}>{part.name}</h3>
                 </Link>

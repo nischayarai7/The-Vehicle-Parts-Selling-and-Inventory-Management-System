@@ -45,7 +45,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Roles");
+                    b.ToTable("Roles", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Appointment", b =>
@@ -87,7 +87,7 @@ namespace backend.Migrations
 
                     b.HasIndex("VehicleId");
 
-                    b.ToTable("Appointments");
+                    b.ToTable("Appointments", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Category", b =>
@@ -171,7 +171,7 @@ namespace backend.Migrations
 
                     b.HasIndex("VehicleId");
 
-                    b.ToTable("CustomerVehicles");
+                    b.ToTable("CustomerVehicles", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Order", b =>
@@ -452,7 +452,7 @@ namespace backend.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("PartRequests");
+                    b.ToTable("PartRequests", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.PendingCredit", b =>
@@ -531,7 +531,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Permissions");
+                    b.ToTable("Permissions", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.PurchaseInvoice", b =>
@@ -566,7 +566,7 @@ namespace backend.Migrations
 
                     b.HasIndex("VendorId");
 
-                    b.ToTable("PurchaseInvoices");
+                    b.ToTable("PurchaseInvoices", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.PurchaseInvoiceItem", b =>
@@ -598,7 +598,7 @@ namespace backend.Migrations
 
                     b.HasIndex("PurchaseInvoiceId");
 
-                    b.ToTable("PurchaseInvoiceItems");
+                    b.ToTable("PurchaseInvoiceItems", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.RolePermission", b =>
@@ -613,7 +613,7 @@ namespace backend.Migrations
 
                     b.HasIndex("PermissionId");
 
-                    b.ToTable("RolePermissions");
+                    b.ToTable("RolePermissions", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.ServiceReview", b =>
@@ -653,7 +653,7 @@ namespace backend.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("ServiceReviews");
+                    b.ToTable("ServiceReviews", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.SystemSetting", b =>
@@ -668,7 +668,7 @@ namespace backend.Migrations
 
                     b.HasKey("Key");
 
-                    b.ToTable("system_settings");
+                    b.ToTable("system_settings", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.User", b =>
@@ -756,7 +756,7 @@ namespace backend.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("UserRoles");
+                    b.ToTable("UserRoles", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Vehicle", b =>
@@ -845,7 +845,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Vendors");
+                    b.ToTable("Vendors", (string)null);
                 });
 
             modelBuilder.Entity("backend.Models.Appointment", b =>

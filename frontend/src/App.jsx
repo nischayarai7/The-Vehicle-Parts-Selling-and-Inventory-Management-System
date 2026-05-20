@@ -27,6 +27,7 @@ import OrderManager from './pages/admin/OrderManager'
 import VehiclesManager from './pages/admin/VehiclesManager'
 import ProfileSettings from './pages/ProfileSettings'
 import AppointmentsPage from './pages/AppointmentsPage'
+import StoreSettingsManager from './pages/admin/StoreSettingsManager'
 import { api } from './services/api'
 import './App.css'
 
@@ -113,7 +114,6 @@ function App() {
         <Route path="orders" element={<OrderManager />} />
       </Route>
 
-      {/* Admin Routes - Protected by AdminRoute */}
       <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
         <Route index element={<AdminDashboard />} />
         <Route path="parts" element={<PartsManager />} />
@@ -126,6 +126,7 @@ function App() {
         <Route path="reports" element={<FinancialReports />} />
         <Route path="reviews" element={<ReviewManager />} />
         <Route path="settings" element={<ProfileSettings />} />
+        <Route path="store-settings" element={<StoreSettingsManager />} />
         <Route path="orders" element={<OrderManager />} />
         <Route path="vehicles" element={<VehiclesManager />} />
       </Route>
