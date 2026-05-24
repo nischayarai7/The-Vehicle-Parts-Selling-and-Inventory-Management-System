@@ -394,6 +394,7 @@
 .about-cta-btn:hover {
   transform: translateY(-2px);
   background: var(--primary-hover);
+  color: white;
   box-shadow: 0 6px 20px rgba(227, 59, 59, 0.35);
 }
 

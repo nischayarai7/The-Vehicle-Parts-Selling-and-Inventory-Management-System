@@ -21,9 +21,10 @@ const StoreLayout = () => {
     if (link) {
       const href = link.getAttribute('href');
       if (href) {
-        const path = href.split('?')[0]; // strip query params
+        // Strip query params and hash links to get clean path
+        const path = href.split('?')[0].split('#')[0];
         // Allow public pages: home, auth, about, contact, verify-email, shop, product details, categories
-        const publicPaths = ['/', '/login', '/register', '/about', '/contact', '/verify-email', '/shop', '/categories'];
+        const publicPaths = ['/', '/login', '/register', '/about', '/contact', '/verify-email', '/shop', '/categories', ''];
         const isPublicPath = publicPaths.includes(path) || path.startsWith('/shop/');
         if (!isPublicPath) {
           shouldBlock = true;
