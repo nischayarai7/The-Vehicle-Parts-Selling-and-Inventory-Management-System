@@ -376,46 +376,63 @@ const HeroSection = () => {
         {promoParts.length > 0 && (
           <div className="hero-promo-carousel">
             <div className="promo-header">
-              <span className="promo-badge-glow">LIMITED TIME PROMO</span>
-              <h3 className="promo-title">50% OFF FLASH SALE</h3>
+              <span className="promo-badge-glow">⚡ FLASH SALE</span>
+              <h3 className="promo-title">TOP PICKS FOR YOU</h3>
             </div>
             <div className="promo-card-slider">
               {promoParts.map((part, idx) => {
                 const isCurrent = idx === currentIndex;
-                const originalPrice = part.price * 2;
-                const promoPrice = part.price;
+                // Dynamic discount tier based on part.id — 4 tiers: 10%, 15%, 20%, 25%
+                const discountPercent = [10, 15, 20, 25][part.id % 4];
+                // Back-calculate the "original" price so part.price IS the sale price
+                const originalPrice = Math.ceil(part.price / (1 - discountPercent / 100) / 10) * 10;
+                const savings = originalPrice - part.price;
+                const offerLabels = ['HOT DEAL', 'BEST PRICE', 'TOP PICK', 'MUST HAVE'];
+                const offerLabel = offerLabels[part.id % 4];
                 return (
                   <div
                     key={part.id}
                     className={`promo-slide-card ${isCurrent ? 'active' : ''}`}
                   >
-                    <div className="promo-card-badge">50% OFF</div>
+                    {/* Image with flash sale overlay sticker */}
                     <div className="promo-image-container">
-                      <img 
-                        src={part.imageUrl} 
+                      <img
+                        src={part.imageUrl}
                         alt={part.name}
                         onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b` }}
                       />
+                      {/* Discount ribbon sticker */}
+                      <div className="promo-sticker-ribbon">
+                        <span className="promo-sticker-pct">{discountPercent}%</span>
+                        <span className="promo-sticker-off">OFF</span>
+                      </div>
+                      {/* Offer label top-left */}
+                      <div className="promo-offer-tag">{offerLabel}</div>
                     </div>
+
                     <div className="promo-info">
                       <span className="promo-part-brand">{part.brand || '6IX7EVEN Premium'}</span>
                       <h4 className="promo-part-name">{part.name}</h4>
-                      
+
+                      {/* Savings banner */}
+                      <div className="promo-savings-banner">
+                        <span>⚡</span>
+                        <span>You save <strong>Rs. {savings.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong> on this deal!</span>
+                      </div>
+
                       <div className="promo-pricing">
                         <span className="original-price-strike">Rs. {originalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        <span className="promo-discounted-price">Rs. {promoPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        <span className="promo-discounted-price">Rs. {part.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        <span className="promo-discount-badge">{discountPercent}% off</span>
                       </div>
 
                       <div className="promo-actions">
                         <button
                           className="btn-promo-quick-buy"
-                          onClick={() => navigate(`/checkout?partId=${part.id}&quantity=1`)}
+                          onClick={() => navigate(`/shop/part/${part.id}`)}
                         >
-                          Buy Now
+                          ⚡ Buy Now
                         </button>
-                        <Link to={`/part/${part.id}`} className="btn-promo-details">
-                          View Details
-                        </Link>
                       </div>
                     </div>
                   </div>
