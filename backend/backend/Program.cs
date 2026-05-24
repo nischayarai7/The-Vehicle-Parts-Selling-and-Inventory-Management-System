@@ -97,67 +97,12 @@ using (var scope = app.Services.CreateScope())
 
     try
     {
-        db.Database.ExecuteSqlRaw(@"
-            CREATE TABLE IF NOT EXISTS system_settings (
-                key VARCHAR(100) PRIMARY KEY,
-                value TEXT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS ""PartReviews"" (
-                ""Id"" SERIAL PRIMARY KEY,
-                ""PartId"" INTEGER NOT NULL,
-                ""UserId"" INTEGER NOT NULL,
-                ""Rating"" INTEGER NOT NULL,
-                ""Comment"" VARCHAR(1000),
-                ""CreatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                ""UpdatedAt"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                CONSTRAINT ""FK_PartReviews_parts_PartId"" FOREIGN KEY (""PartId"") REFERENCES parts(id) ON DELETE CASCADE,
-                CONSTRAINT ""FK_PartReviews_users_UserId"" FOREIGN KEY (""UserId"") REFERENCES users(id) ON DELETE CASCADE
-            );
-
-            INSERT INTO system_settings (key, value) 
-            VALUES ('system_wallpaper', NULL) 
-            ON CONFLICT (key) DO NOTHING;
-
-            DO $$
-            BEGIN
-                IF NOT EXISTS (
-                    SELECT 1 
-                    FROM information_schema.columns 
-                    WHERE table_name='orders' AND column_name='created_by_id'
-                ) THEN
-                    ALTER TABLE orders ADD COLUMN created_by_id INTEGER NULL;
-                END IF;
-
-                IF NOT EXISTS (
-                    SELECT 1 
-                    FROM information_schema.table_constraints 
-                    WHERE constraint_name='fk_orders_users_created_by_id'
-                ) THEN
-                    ALTER TABLE orders 
-                    ADD CONSTRAINT fk_orders_users_created_by_id 
-                    FOREIGN KEY (created_by_id) REFERENCES users(id) ON DELETE RESTRICT;
-                END IF;
-            END $$;
-        ");
-        logger.LogInformation("Database verified: 'created_by_id' column, constraints and PartReviews are active.");
-
-        await db.Database.ExecuteSqlRawAsync(@"
-            DO $$
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='pending_credits' AND column_name='LastNotificationSentAt') THEN
-                    ALTER TABLE pending_credits ADD COLUMN ""LastNotificationSentAt"" timestamp with time zone NULL;
-                END IF;
-            END $$;
-        ");
-        logger.LogInformation("Database verified: 'LastNotificationSentAt' added to pending_credits.");
-
         // Dynamic CSV Catalog Seed
         await CatalogSeeder.SeedCatalogFromCsv(db, logger);
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Failed to apply dynamic database updates or catalog CSV seed.");
+        logger.LogError(ex, "Failed to apply catalog CSV seed.");
     }
 }
 

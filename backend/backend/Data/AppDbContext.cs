@@ -42,6 +42,11 @@ namespace backend.Data
             // Automatically discovers and applies every IEntityTypeConfiguration<T>
             // class found in this assembly — keeps this file clean as the schema grows.
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+            // Seed default system settings
+            modelBuilder.Entity<SystemSetting>().HasData(
+                new SystemSetting { Key = "system_wallpaper", Value = null }
+            );
         }
     }
 }
