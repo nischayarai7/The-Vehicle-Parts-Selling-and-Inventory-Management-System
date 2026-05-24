@@ -21,18 +21,21 @@ const StoreLayout = () => {
     if (link) {
       const href = link.getAttribute('href');
       if (href) {
-        // If it goes anywhere other than landing home page, login, register, about, contact, or verify-email
         const path = href.split('?')[0]; // strip query params
-        const publicPaths = ['/', '/login', '/register', '/about', '/contact', '/verify-email'];
-        if (!publicPaths.includes(path)) {
+        // Allow public pages: home, auth, about, contact, verify-email, shop, product details, categories
+        const publicPaths = ['/', '/login', '/register', '/about', '/contact', '/verify-email', '/shop', '/categories'];
+        const isPublicPath = publicPaths.includes(path) || path.startsWith('/shop/');
+        if (!isPublicPath) {
           shouldBlock = true;
         }
       }
     } else if (button) {
-      // Block search buttons, add to carts, and other action buttons unless they are login/register or close buttons
-      const isCloseBtn = button.classList.contains('close-modal-btn');
-      const isAllowedButton = button.closest('.auth-card') || button.closest('.navbar-auth-buttons') || isCloseBtn;
-      if (!isAllowedButton) {
+      // Only block purchase / add-to-cart action buttons for non-logged-in users
+      const isBuyAction = button.classList.contains('add-to-cart-btn') || 
+                          button.classList.contains('btn-add-to-cart-icon-small') || 
+                          button.classList.contains('btn-buy-now') || 
+                          button.classList.contains('btn-add-to-cart-icon');
+      if (isBuyAction) {
         shouldBlock = true;
       }
     } else if (promoCard) {
