@@ -14,7 +14,7 @@
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .hero-container {
@@ -22,7 +22,7 @@
   z-index: 1;
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   gap: 40px;
   width: 100%;
@@ -640,7 +640,8 @@
 /* ── Hero Carousel Container & Layout ── */
 .hero-promo-carousel {
   flex: 1;
-  max-width: 400px;
+  max-width: 520px;
+  margin: 0 auto 0 -80px;
   background: rgba(30, 41, 59, 0.4);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);

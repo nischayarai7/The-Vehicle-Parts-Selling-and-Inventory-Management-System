@@ -126,7 +126,10 @@ const Navbar = () => {
                     <Link to="/staff" className="dropdown-item">Staff Dashboard</Link>
                   )}
                   {user?.role === 'Customer' && (
-                    <Link to="/customer/dashboard" className="dropdown-item">My Dashboard</Link>
+                    <>
+                      <Link to="/customer/dashboard" className="dropdown-item">My Dashboard</Link>
+                      <Link to="/customer/garage" className="dropdown-item">My Garage</Link>
+                    </>
                   )}
                   <Link 
                     to={user?.role === 'Admin' ? '/admin/settings' : user?.role === 'Staff' ? '/staff/settings' : '/customer/settings'} 
@@ -164,6 +167,9 @@ const Navbar = () => {
               <li><NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>Home</NavLink></li>
               <li><NavLink to="/shop" className={({ isActive }) => (isActive ? 'active' : '')}>Shop</NavLink></li>
               <li><NavLink to="/categories" className={({ isActive }) => (isActive ? 'active' : '')}>Categories</NavLink></li>
+              {isAuthenticated && user?.role === 'Customer' && (
+                <li><NavLink to="/customer/garage" className={({ isActive }) => (isActive ? 'active' : '')}>My Garage</NavLink></li>
+              )}
               {!isAuthenticated && (
                 <>
                   <li><a href="/#about" className={location.hash === '#about' ? 'active' : ''}>About Us</a></li>
