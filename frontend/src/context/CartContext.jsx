@@ -137,6 +137,7 @@ export const CartProvider = ({ children }) => {
               {toast.type === 'success' && '✓'}
               {toast.type === 'error' && '✕'}
               {toast.type === 'warning' && '⚠'}
+              {toast.type === 'info' && 'ℹ'}
             </span>
             <p className="toast-msg">{toast.message}</p>
           </div>
@@ -147,7 +148,7 @@ export const CartProvider = ({ children }) => {
       <style>{`
         .storefront-toast-alert {
           position: fixed;
-          top: 30px;
+          top: 76px;
           right: 30px;
           z-index: 99999;
           padding: 16px 24px;
@@ -175,6 +176,11 @@ export const CartProvider = ({ children }) => {
           background: linear-gradient(135deg, #221a10 0%, #15100a 100%);
           border-left: 4px solid #d29922;
           color: #d29922;
+        }
+        .storefront-toast-alert.info {
+          background: linear-gradient(135deg, #0e1621 0%, #0a1018 100%);
+          border-left: 4px solid #58a6ff;
+          color: #79c0ff;
         }
         .toast-content-wrapper {
           display: flex;
