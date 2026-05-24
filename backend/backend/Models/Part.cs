@@ -13,6 +13,8 @@ namespace backend.Models
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public string? ImageUrl { get; set; }
+        public string? ImageUrl2 { get; set; }
+        public string? ImageUrl3 { get; set; }
 
         /// <summary>Selling price in NPR (or configured currency).</summary>
         public decimal Price { get; set; }

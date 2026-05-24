@@ -31,6 +31,14 @@ namespace backend.Data.Configurations
                 .HasColumnName("image_url")
                 .HasMaxLength(500);
 
+            builder.Property(p => p.ImageUrl2)
+                .HasColumnName("image_url_2")
+                .HasMaxLength(500);
+
+            builder.Property(p => p.ImageUrl3)
+                .HasColumnName("image_url_3")
+                .HasMaxLength(500);
+
             builder.Property(p => p.Price)
                 .HasColumnName("price")
                 .HasPrecision(10, 2)   // Up to 99,999,999.99

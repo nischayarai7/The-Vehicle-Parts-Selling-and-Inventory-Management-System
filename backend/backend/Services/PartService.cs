@@ -100,6 +100,8 @@ namespace backend.Services
                 Name          = dto.Name.Trim(),
                 Description   = dto.Description?.Trim(),
                 ImageUrl      = dto.ImageUrl?.Trim(),
+                ImageUrl2     = dto.ImageUrl2?.Trim(),
+                ImageUrl3     = dto.ImageUrl3?.Trim(),
                 Price         = dto.Price,
                 StockQuantity = dto.StockQuantity,
                 ReorderLevel  = dto.ReorderLevel,
@@ -135,6 +137,8 @@ namespace backend.Services
             part.Name          = dto.Name.Trim();
             part.Description   = dto.Description?.Trim();
             part.ImageUrl      = dto.ImageUrl?.Trim();
+            part.ImageUrl2     = dto.ImageUrl2?.Trim();
+            part.ImageUrl3     = dto.ImageUrl3?.Trim();
             part.Price         = dto.Price;
             part.StockQuantity = dto.StockQuantity;
             part.ReorderLevel  = dto.ReorderLevel;
@@ -187,6 +191,8 @@ namespace backend.Services
             Name          = p.Name,
             Description   = p.Description,
             ImageUrl      = p.ImageUrl,
+            ImageUrl2     = p.ImageUrl2,
+            ImageUrl3     = p.ImageUrl3,
             Price         = p.Price,
             StockQuantity = p.StockQuantity,
             ReorderLevel  = p.ReorderLevel,

@@ -19,6 +19,12 @@ namespace backend.DTOs.Part
         [MaxLength(500)]
         public string? ImageUrl { get; set; }
 
+        [MaxLength(500)]
+        public string? ImageUrl2 { get; set; }
+
+        [MaxLength(500)]
+        public string? ImageUrl3 { get; set; }
+
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than zero.")]
         public decimal Price { get; set; }

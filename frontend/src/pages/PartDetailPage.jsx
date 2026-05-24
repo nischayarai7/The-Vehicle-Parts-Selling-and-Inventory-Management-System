@@ -266,12 +266,15 @@ function PartDetailPage() {
     setDoesFit(null);
   };
 
-  // Generate simulated thumbnail images
-  const mainImage = part.imageUrl || `https://ui-avatars.com/api/?name=${part.name}&background=fff&color=e33b3b&size=500`;
+  // Build gallery from the 3 stored image URLs; fall back to avatar placeholder only when a slot is empty
+  const mainImage = part.imageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(part.name)}&background=fff&color=e33b3b&size=500`;
+  const img2 = part.imageUrl2 || null;
+  const img3 = part.imageUrl3 || null;
+  // Only include real images; if secondary slots are empty show a graceful fallback placeholder
   const galleryImages = [
     mainImage,
-    part.imageUrl ? `${part.imageUrl}?index=1` : `https://ui-avatars.com/api/?name=${part.name}+angle+2&background=f9f9f9&color=e33b3b&size=500`,
-    part.imageUrl ? `${part.imageUrl}?index=2` : `https://ui-avatars.com/api/?name=${part.name}+box+view&background=eaeaea&color=e33b3b&size=500`
+    ...(img2 ? [img2] : [`https://ui-avatars.com/api/?name=${encodeURIComponent(part.name)}+alt&background=f4f4f4&color=e33b3b&size=500`]),
+    ...(img3 ? [img3] : [`https://ui-avatars.com/api/?name=${encodeURIComponent(part.name)}+box&background=eaeaea&color=e33b3b&size=500`]),
   ];
 
   const handleNextImage = () => {

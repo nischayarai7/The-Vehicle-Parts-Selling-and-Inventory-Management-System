@@ -13,7 +13,8 @@ const StaffDashboard = () => {
     todaySales: 0,
     todayTransactions: 0,
     totalCustomers: 0,
-    activeDebts: 0
+    activeDebts: 0,
+    totalRevenue: 0
   });
   
   const [recentOrders, setRecentOrders] = useState([]);
@@ -52,11 +53,15 @@ const StaffDashboard = () => {
       const pendingCredits = reportsRes?.pendingCredits || reportsRes?.data?.pendingCredits || [];
       const activeDebts = pendingCredits.reduce((sum, c) => sum + (c.pendingAmount || 0), 0);
 
+      // Calculate Total Revenue from all orders
+      const totalRevenue = allOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+
       setStats({
         todaySales,
         todayTransactions,
         totalCustomers,
-        activeDebts
+        activeDebts,
+        totalRevenue
       });
 
       // Get latest 5 recent orders overall
@@ -119,6 +124,16 @@ const StaffDashboard = () => {
           <div className="kpi-info-content">
             <span className="kpi-title">Today's Sales</span>
             <span className="kpi-value">{formatCurrency(stats.todaySales)}</span>
+          </div>
+        </div>
+
+        <div className="staff-kpi-card">
+          <div className="kpi-icon-wrapper revenue">
+            <svg style={{ width: '22px', height: '22px' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div className="kpi-info-content">
+            <span className="kpi-title">Total Revenue</span>
+            <span className="kpi-value">{formatCurrency(stats.totalRevenue)}</span>
           </div>
         </div>
 

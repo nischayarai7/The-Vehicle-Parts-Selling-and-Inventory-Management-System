@@ -14,8 +14,13 @@ const PartsManager = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [notification, setNotification] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [localPreview, setLocalPreview] = useState(null);
-  const [selectedImageFile, setSelectedImageFile] = useState(null);
+  // Three independent image slots: local preview + selected file
+  const [localPreview1, setLocalPreview1] = useState(null);
+  const [localPreview2, setLocalPreview2] = useState(null);
+  const [localPreview3, setLocalPreview3] = useState(null);
+  const [selectedFile1, setSelectedFile1] = useState(null);
+  const [selectedFile2, setSelectedFile2] = useState(null);
+  const [selectedFile3, setSelectedFile3] = useState(null);
 
   // Advanced Filters State
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -40,6 +45,8 @@ const PartsManager = () => {
     brand: '',
     condition: 'New',
     imageUrl: '',
+    imageUrl2: '',
+    imageUrl3: '',
     isActive: true
   });
 
@@ -89,33 +96,41 @@ const PartsManager = () => {
     });
   };
 
-  const handleImageUpload = (e) => {
+  // Generic per-slot image selection handler
+  const handleImageUpload = (slot) => (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    // Show local preview immediately and store file for later upload
     const objectUrl = URL.createObjectURL(file);
-    setLocalPreview(objectUrl);
-    setSelectedImageFile(file);
-    // Clear any previously uploaded imageUrl to signify we want to use the new file
-    setFormData(prev => ({ ...prev, imageUrl: '' }));
+    if (slot === 1) { setLocalPreview1(objectUrl); setSelectedFile1(file); setFormData(prev => ({ ...prev, imageUrl: '' })); }
+    if (slot === 2) { setLocalPreview2(objectUrl); setSelectedFile2(file); setFormData(prev => ({ ...prev, imageUrl2: '' })); }
+    if (slot === 3) { setLocalPreview3(objectUrl); setSelectedFile3(file); setFormData(prev => ({ ...prev, imageUrl3: '' })); }
+  };
+
+  const clearSlot = (slot) => {
+    if (slot === 1) { setLocalPreview1(null); setSelectedFile1(null); setFormData(prev => ({ ...prev, imageUrl: '' })); }
+    if (slot === 2) { setLocalPreview2(null); setSelectedFile2(null); setFormData(prev => ({ ...prev, imageUrl2: '' })); }
+    if (slot === 3) { setLocalPreview3(null); setSelectedFile3(null); setFormData(prev => ({ ...prev, imageUrl3: '' })); }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      let finalImageUrl = formData.imageUrl;
+      setUploadingImage(true);
 
-      if (selectedImageFile) {
-        setUploadingImage(true);
-        const response = await api.uploadPartImage(selectedImageFile);
-        finalImageUrl = response.url;
-        setUploadingImage(false);
-      }
+      // Upload each slot in parallel if a new file was selected
+      const [url1, url2, url3] = await Promise.all([
+        selectedFile1 ? api.uploadPartImage(selectedFile1).then(r => r.url) : Promise.resolve(formData.imageUrl || ''),
+        selectedFile2 ? api.uploadPartImage(selectedFile2).then(r => r.url) : Promise.resolve(formData.imageUrl2 || ''),
+        selectedFile3 ? api.uploadPartImage(selectedFile3).then(r => r.url) : Promise.resolve(formData.imageUrl3 || '')
+      ]);
+
+      setUploadingImage(false);
 
       const payload = {
         ...formData,
-        imageUrl: finalImageUrl,
+        imageUrl:  url1,
+        imageUrl2: url2,
+        imageUrl3: url3,
         categoryId: parseInt(formData.categoryId),
         price: parseFloat(formData.price),
         stockQuantity: parseInt(formData.stockQuantity),
@@ -133,6 +148,7 @@ const PartsManager = () => {
       resetForm();
       fetchData();
     } catch (error) {
+      setUploadingImage(false);
       console.error('Error saving part:', error);
       showNotification(error.message || 'Failed to save part', 'error');
     }
@@ -150,9 +166,15 @@ const PartsManager = () => {
       categoryId: part.categoryId.toString(),
       brand: part.brand || '',
       condition: part.condition || 'New',
-      imageUrl: part.imageUrl || '',
+      imageUrl:  part.imageUrl  || '',
+      imageUrl2: part.imageUrl2 || '',
+      imageUrl3: part.imageUrl3 || '',
       isActive: part.isActive
     });
+    // Clear any pending file selections from a prior modal open
+    setLocalPreview1(null); setSelectedFile1(null);
+    setLocalPreview2(null); setSelectedFile2(null);
+    setLocalPreview3(null); setSelectedFile3(null);
     setShowModal(true);
   };
 
@@ -186,11 +208,14 @@ const PartsManager = () => {
       brand: '',
       condition: 'New',
       imageUrl: '',
+      imageUrl2: '',
+      imageUrl3: '',
       isActive: true
     });
     setCurrentPart(null);
-    setLocalPreview(null);
-    setSelectedImageFile(null);
+    setLocalPreview1(null); setSelectedFile1(null);
+    setLocalPreview2(null); setSelectedFile2(null);
+    setLocalPreview3(null); setSelectedFile3(null);
   };
 
   // Get unique brands dynamically
@@ -675,44 +700,56 @@ const PartsManager = () => {
                     <option value="Refurbished">Refurbished</option>
                   </select>
                 </div>
-                <div className="form-group-part">
-                  <label>Part Image</label>
-                  <div className="image-upload-container">
-                    {(formData.imageUrl || localPreview) && (
-                      <div className="image-preview">
-                        <img src={localPreview || formData.imageUrl} alt="Part preview" style={{ opacity: uploadingImage ? 0.5 : 1 }} />
-                        {!uploadingImage && (
-                          <button 
-                            type="button" 
-                            className="btn-remove-image"
-                            onClick={() => {
-                              setFormData({ ...formData, imageUrl: '' });
-                              setLocalPreview(null);
-                              setSelectedImageFile(null);
-                            }}
-                          >
-                            &times;
-                          </button>
-                        )}
-                        {uploadingImage && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '12px' }}>Uploading...</div>}
+              </div>
+
+              {/* ── 3 Image Upload Slots ─────────────────────── */}
+              <div className="form-group-part" style={{ gridColumn: '1 / -1' }}>
+                <label style={{ marginBottom: '10px', display: 'block', fontWeight: 600 }}>
+                  Part Images
+                  <span style={{ fontWeight: 400, marginLeft: '8px', fontSize: '12px', opacity: 0.6 }}>(up to 3 photos)</span>
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                  {[
+                    { slot: 1, label: 'Main Photo',    preview: localPreview1, saved: formData.imageUrl  },
+                    { slot: 2, label: 'Angle 2',       preview: localPreview2, saved: formData.imageUrl2 },
+                    { slot: 3, label: 'Angle 3',       preview: localPreview3, saved: formData.imageUrl3 },
+                  ].map(({ slot, label, preview, saved }) => {
+                    const displaySrc = preview || saved;
+                    return (
+                      <div key={slot} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 600, opacity: 0.7 }}>{label}</span>
+                        <div className="image-upload-container" style={{ height: '120px', position: 'relative' }}>
+                          {displaySrc ? (
+                            <div className="image-preview" style={{ height: '100%' }}>
+                              <img src={displaySrc} alt={`${label} preview`} style={{ opacity: uploadingImage ? 0.5 : 1, width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                              {!uploadingImage && (
+                                <button type="button" className="btn-remove-image" onClick={() => clearSlot(slot)}>&times;</button>
+                              )}
+                              {uploadingImage && (
+                                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '11px' }}>
+                                  Uploading...
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="upload-placeholder" style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageUpload(slot)}
+                                disabled={uploadingImage}
+                                id={`partImageUpload${slot}`}
+                                className="file-input-hidden"
+                              />
+                              <label htmlFor={`partImageUpload${slot}`} className={`btn-upload ${uploadingImage ? 'uploading' : ''}`} style={{ fontSize: '12px', padding: '8px 14px' }}>
+                                {uploadingImage ? 'Uploading...' : '+ Upload'}
+                              </label>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    {!(formData.imageUrl || localPreview) && (
-                      <div className="upload-placeholder">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          disabled={uploadingImage}
-                          id="partImageUpload"
-                          className="file-input-hidden"
-                        />
-                        <label htmlFor="partImageUpload" className={`btn-upload ${uploadingImage ? 'uploading' : ''}`}>
-                          {uploadingImage ? 'Uploading...' : 'Upload Photo'}
-                        </label>
-                      </div>
-                    )}
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
 
